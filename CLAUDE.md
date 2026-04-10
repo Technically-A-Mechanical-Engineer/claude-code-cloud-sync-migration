@@ -2,9 +2,15 @@
 
 ## What This Is
 
-A single-file prompt that Claude Code users paste into CLI to migrate project folders from cloud-synced storage (OneDrive, Dropbox, Google Drive, iCloud) to local paths. It auto-detects the environment, runs a phased migration with verification at every step, and generates a Session 2 continuation prompt from actual results.
+A three-prompt toolkit that Claude Code users paste into CLI to migrate project folders from cloud-synced storage, clean up stale artifacts, and verify project health. Each prompt is an independent markdown file — one file, one paste.
 
-The target audience is Claude Code users hitting git errors, file lock failures, or sync conflicts from working in cloud-synced folders. Distribution is a single markdown file — not a skill, not a plugin, not a package. One file, one paste.
+| Prompt | File | Purpose |
+|---|---|---|
+| Migration | `claude-code-cloud-sync-migration.md` | Copies projects from cloud-synced storage to local paths |
+| Cleanup | `cloud-sync-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries |
+| Verification | `cloud-sync-verification.md` | Audits current state, reports findings, recommends next steps |
+
+The target audience is Claude Code users hitting git errors, file lock failures, or sync conflicts from working in cloud-synced folders. Distribution is markdown files — not skills, not plugins, not packages.
 
 ## Project Owner
 
@@ -12,17 +18,22 @@ Robert LaSalle
 
 ## Current State
 
-- **Current version:** v1.1.1 (release candidate)
-- **Next version:** v1.2.0 — five findings documented in `cloud-sync-migration-dev-status.md`
+- **Migration prompt:** v1.1.1 (release candidate). Next: v1.2.0 — six findings documented in dev status report.
+- **Cleanup prompt:** Not yet built. v1.0.0 spec in design doc.
+- **Verification prompt:** Not yet built. v1.0.0 spec in design doc.
+- **Design spec:** `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the three-prompt expansion. This is the requirements source for all GSD planning.
 - **Evaluation:** v1.1.1 passed all eight Nate's Executive Circle prompt frameworks (details in `prompt-evaluation.md`)
 
 ## File Map
 
 | File | Purpose |
 |---|---|
-| `claude-code-cloud-sync-migration.md` | The prompt file users paste into Claude Code CLI (current version: v1.1.1). Prior versions are in git history. |
-| `cloud-sync-migration-dev-status.md` | Development status report, version history, v1.2.0 requirements, and testing plan |
+| `claude-code-cloud-sync-migration.md` | Migration prompt (current: v1.1.1, next: v1.2.0). Prior versions in git history. |
+| `cloud-sync-cleanup.md` | Cleanup prompt (not yet built, v1.0.0 spec in design doc) |
+| `cloud-sync-verification.md` | Verification prompt (not yet built, v1.0.0 spec in design doc) |
+| `cloud-sync-migration-dev-status.md` | Development status report, version history, requirements, and testing plans |
 | `prompt-evaluation.md` | Framework evaluation against eight prompt engineering frameworks |
+| `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
 
 ## Architecture
 

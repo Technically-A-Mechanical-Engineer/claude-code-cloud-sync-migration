@@ -100,10 +100,177 @@ When multiple valid approaches exist:
 
 ## Phase 1 — Environment Detection
 
-<!-- Phase 1 content: auto-detection, dual-mode, path-hash decoding, inventory -->
-<!-- Populated by Plan 02 -->
+Detect the following automatically. Do not ask the user for information you can determine from the system.
 
-*[Phase content to be added]*
+### 1.1 — OS and shell
+
+Detect the operating system and active shell. Set the shell context for all subsequent commands using three-way detection:
+
+| Detection | Shell Context | Deletion Tool | Utility Commands |
+|---|---|---|---|
+| PowerShell prompt detected (`$PSVersionTable` exists) | PowerShell | `Remove-Item -Recurse -Force` | PowerShell (Get-ChildItem, Test-Path, Measure-Object, etc.) |
+| bash-on-Windows detected (`$OSTYPE` contains "msys", "mingw", or "cygwin", OR `uname -s` returns "MINGW*" or "MSYS*") | bash-on-Windows | `rm -rf` | bash (find, wc, du, stat) |
+| bash/zsh on macOS or Linux (`uname -s` returns "Darwin" or "Linux") | native bash/zsh | `rm -rf` | bash (find, wc, du, stat) |
+
+Do not mix shell syntaxes. Every command in this session must match the detected shell context.
+
+### 1.2 — Prior cleanup detection (crash recovery)
+
+Check CWD for `cleanup-results.md`. If found:
+
+1. Read the log and build a set of already-deleted paths
+2. Count items by category (path-hash, orphan, source)
+3. Report: "Found cleanup log from a prior run. [N] items already deleted ([X] path-hash, [Y] orphan, [Z] source). Resuming from where the previous run stopped."
+4. For each item in the log, verify: if the log says deleted but the item still exists on disk, flag it for re-presentation
+
+If not found: No prior cleanup detected. Proceed normally.
+
+### 1.3 — Migration artifact detection (mode selection)
+
+Scan for migration artifacts in this order:
+
+1. `migration-session-1-results.md` in CWD
+2. `migration-session-2-results.md` in CWD
+3. Either file at `~/Projects/` (the default migration target)
+
+**If any artifact found: Post-migration mode.** Read the artifacts to extract:
+- Migrated folder source paths
+- Migrated folder target paths
+- Verification results
+- Path-hash directory mappings
+
+**If no artifact found: Standalone mode.** Path-hash directories under `~/.claude/projects/` are the sole discovery source. No filesystem scanning of cloud folders.
+
+Report the detected mode to the user.
+
+### 1.4 — Cloud service detection
+
+Scan for known cloud sync folder patterns under the user's home directory:
+
+- **OneDrive / OneDrive for Business:** `$env:USERPROFILE\OneDrive*\` (Windows), `~/Library/CloudStorage/OneDrive*` (macOS)
+- **Dropbox:** `$env:USERPROFILE\Dropbox\` or `~/Dropbox`
+- **Google Drive:** `$env:USERPROFILE\Google Drive\` or `~/Google Drive` or `~/Library/CloudStorage/GoogleDrive*`
+- **iCloud Drive:** `~/Library/Mobile Documents/com~apple~CloudDocs`
+
+Report detected services with their recycle bin retention periods:
+
+| Service | Retention Period |
+|---|---|
+| OneDrive (personal) | 30 days |
+| OneDrive (business) | 93 days |
+| Dropbox (Basic/Plus) | 30 days |
+| Dropbox (Professional/Business) | 180 days |
+| Google Drive | 30 days |
+| iCloud | 30 days |
+
+### 1.5 — Path-hash inventory and classification
+
+Scan `~/.claude/projects/`. For each directory, decode the name, check filesystem state, and classify.
+
+**Path-hash decoding algorithm (self-contained):**
+
+Claude Code encodes filesystem paths as directory names by replacing path separators (`\`, `/`), drive colons (`:`), spaces, commas, and other special characters each with a single hyphen (`-`). Consecutive hyphens are NOT collapsed — they indicate adjacent special characters in the original path.
+
+Examples:
+- `C:\Users\rlasalle\Projects\Claude-Home` -> `C--Users-rlasalle-Projects-Claude-Home`
+- `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\OB1` -> `C--Users-rlasalle-OneDrive---ThermoTek--Inc-Documents-Projects-OB1`
+
+**Decoding approach (reverse direction):**
+
+The encoding is lossy — multiple source characters all map to `-`. Decoding requires platform-aware heuristics:
+
+1. The directory name starts with a drive letter pattern on Windows (`C--` = `C:\`) or a leading hyphen on macOS/Linux (`-Users-` = `/Users/`)
+2. After the drive/root prefix, each `-` could be a path separator or an original hyphen in a folder name
+3. To resolve ambiguity: attempt to reconstruct the path segment by segment, checking each candidate against the actual filesystem to find the longest matching prefix
+4. If the fully reconstructed path exists on disk, decoding succeeds
+5. If no valid path can be reconstructed, classify as "undecodable"
+
+**Classification:** For each decoded entry, classify using this table:
+
+| Classification | Criteria | Action Phase |
+|---|---|---|
+| **Stale** | Decoded path is under a cloud-synced location AND a local equivalent path-hash directory exists (pointing to a non-cloud path for the same project) | Phase 2 |
+| **Orphan** | Decoded path does not exist on disk anywhere (folder was deleted, renamed, or moved without migration) | Phase 3 |
+| **Valid** | Decoded path exists and is NOT under cloud-synced storage | Skip (no action needed) |
+| **Undecodable** | Directory name cannot be decoded to any valid filesystem path | Phase 3 |
+
+**Mode-specific classification behavior:**
+
+- **Post-migration mode:** Cross-reference against migration artifact data. Entries matching migrated source paths are classified as stale with high confidence. Entries not in the artifact but pointing to cloud paths are classified based on filesystem checks.
+- **Standalone mode:** Classification relies entirely on filesystem checks. When uncertain (decoded path exists but cloud status is ambiguous), classify as uncertain and ask the user.
+
+**For each directory, also record:**
+- Contents: number of memory files, whether `settings.json` exists, total size
+- For undecodable entries: scan memory files and settings files inside the directory for project name references (fuzzy-match guess)
+
+**PowerShell — gather directory contents:**
+```powershell
+$dir = "~/.claude/projects/[entry]"
+$files = Get-ChildItem -Recurse -File -Force $dir
+$memoryFiles = Get-ChildItem -Path "$dir/memory" -File -ErrorAction SilentlyContinue
+$hasSettings = Test-Path "$dir/settings.json"
+$size = ($files | Measure-Object -Property Length -Sum).Sum
+```
+
+**bash — gather directory contents:**
+```bash
+dir=~/.claude/projects/[entry]
+find "$dir" -type f | wc -l
+ls "$dir/memory/" 2>/dev/null | wc -l
+test -f "$dir/settings.json" && echo "yes" || echo "no"
+du -sh "$dir"
+```
+
+### 1.6 — Present findings and confirm
+
+Present a summary grouped by classification:
+
+```
+Environment:
+  OS: [detected]
+  Shell: [PowerShell / bash-on-Windows / native bash/zsh]
+  Mode: [Post-migration (artifacts found at [path]) / Standalone]
+
+Cloud services detected:
+  [service]: [sync root path] (recycle bin: [retention period])
+
+Path-hash inventory ([total] entries):
+
+  Stale ([n] — Phase 2):
+    1. [directory name]
+       Decoded: [cloud path]
+       Local equivalent: [local path-hash directory name] ([n] memory files, settings.json)
+       Size: [size]
+
+  Orphan ([n] — Phase 3):
+    2. [directory name]
+       Decoded: [path that no longer exists]
+       Contents: [n] memory files, [size]
+
+  Undecodable ([n] — Phase 3):
+    3. [directory name]
+       Best guess: [fuzzy-match project name from memory files] (guess based on memory file contents)
+       Contents: [n] memory files, [size]
+
+  Valid ([n] — no action):
+    - [directory name] -> [decoded local path]
+
+  [If prior cleanup log found]:
+  Previously deleted ([n] — from prior run):
+    - [paths from log, with any still-on-disk flagged for re-presentation]
+```
+
+In post-migration mode, also show:
+```
+Migration artifacts:
+  Source folders identified: [list from artifacts]
+  Target paths: [list from artifacts]
+  [Any discrepancies between artifacts and current state noted here]
+```
+
+Ask: "Review the inventory above. Proceed to Phase 2 (stale path-hash directories)?"
+
+Wait for user confirmation before proceeding.
 
 ---
 

@@ -22,7 +22,7 @@ Robert LaSalle
 |---|---|
 | `claude-code-cloud-sync-migration.md` | The prompt file users paste into Claude Code CLI (current version: v1.1.1). Prior versions are in git history. |
 | `cloud-sync-migration-dev-status.md` | Development status report, version history, v1.2.0 requirements, and testing plan |
-| `v1_1_1-evaluation.md` | Framework evaluation of v1.1.1 against eight prompt engineering frameworks |
+| `prompt-evaluation.md` | Framework evaluation against eight prompt engineering frameworks |
 
 ## Architecture
 

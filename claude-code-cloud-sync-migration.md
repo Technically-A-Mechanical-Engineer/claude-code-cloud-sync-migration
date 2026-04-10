@@ -63,7 +63,7 @@ When multiple valid approaches exist:
 
 ### Recovery
 
-**Prior migration detection:** Before running Phase 1.1, Phase 1.2 checks for evidence of prior migrations using a four-signal priority cascade (see Phase 1.2). If a prior migration is detected, the user chooses how to proceed rather than the prompt assuming a fresh start.
+**Prior migration detection:** After Phase 1.1 completes, Phase 1.2 checks for evidence of prior migrations using a four-signal priority cascade (see Phase 1.2). If a prior migration is detected, the user chooses how to proceed rather than the prompt assuming a fresh start.
 
 **Session interruption:** If a session is interrupted during Phase 4, the results log (`migration-session-1-results.md`) contains the verified-so-far record. On re-run, the prior migration detection cascade will find this file and present options including quick-verify (to confirm existing copies) and fresh re-run (to continue from where the interruption occurred).
 

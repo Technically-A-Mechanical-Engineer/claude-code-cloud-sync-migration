@@ -386,7 +386,7 @@ rsync -avHE --progress "<source>/" "<target>/"
 - `/DCOPY:DAT` — same for directories
 - `/R:3 /W:5` — retry 3x with 5s wait on locked files
 - `/XJ` — exclude junction points. Junctions are common in cloud sync folder structures; following them can copy unintended data or create loops. If the user's project intentionally uses junctions, they will need to recreate them manually in the target.
-- **Exit code check:** If exit code > 7, stop and report. Codes 0-3 indicate normal success. Codes 4-7 indicate non-fatal mismatches (extra files, timestamp differences) — report them but continue.
+- **Exit code check:** Codes 0-1 indicate clean success. Code 3 indicates files were copied but extra files exist in the destination — report and continue. Codes 2, 4, 5, 6, 7 indicate mismatches, nothing copied, or both — stop and report. If exit code > 7, stop and report.
 
 **rsync flags (macOS/Linux):**
 - Trailing slashes are critical — they copy contents, not the directory itself into a subdirectory.

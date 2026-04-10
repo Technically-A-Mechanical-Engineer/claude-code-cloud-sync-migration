@@ -1,7 +1,7 @@
 # Cloud-Sync Migration Prompt — Development Status Report
 **Updated:** 2026-04-10
 **Project owner:** Robert LaSalle
-**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\Claude-Home`
+**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
 
 ---
 
@@ -10,18 +10,6 @@
 A single-file prompt that any Claude Code user can paste into CLI to migrate their project folders from cloud-synced storage (OneDrive, Dropbox, Google Drive, iCloud) to a local path. It auto-detects the environment, walks the user through a phased migration with verification at every step, and generates a Session 2 continuation prompt from actual results.
 
 The prompt originated from Robert's own OneDrive-to-local migration (April 9–10, 2026) and was generalized into a distributable tool through iterative review against prompting best practices from Nate's Executive Circle content library.
-
----
-
-## File Locations
-
-| File | Location | Purpose |
-|---|---|---|
-| `claude-code-cloud-sync-migration-v1_1_1.md` | `C:\Users\rlasalle\Projects\Claude-Home\` | Current release candidate |
-| `claude-code-cloud-sync-migration.md` | `C:\Users\rlasalle\Projects\Claude-Home\` | v1.0.0 (superseded) |
-| `v1_1_1-evaluation.md` | `C:\Users\rlasalle\Projects\Claude-Home\` | Framework evaluation of v1.1.1 |
-
-This status report is also in `Claude-Home\` and should be updated as development progresses.
 
 ---
 
@@ -46,7 +34,7 @@ v1.1.1 was evaluated against eight frameworks from Nate's Executive Circle:
 
 **Result: Pass on all eight frameworks.** No critical or moderate findings. One positive observation: the prompt's five-dimension constraint model (Must / Must-not / Prefer / Escalate / Recover) extends the standard four-quadrant Constraint Architecture pattern.
 
-Full evaluation in `v1_1_1-evaluation.md`.
+Full evaluation in `prompt-evaluation.md`.
 
 ---
 
@@ -190,10 +178,10 @@ This exercises: three-way shell detection, multi-signal prior migration detectio
 
 ## Next Steps
 
-1. **Build v1.2.0** — Incorporate the five findings above into the prompt. Start from `claude-code-cloud-sync-migration-v1_1_1.md` as the base.
+1. **Build v1.2.0** — Incorporate the five findings above into the prompt. Start from `claude-code-cloud-sync-migration.md` as the base.
 2. **Peer review v1.2.0** — Run through the same evaluation framework used on v1.1.1 (eight Nate's Executive Circle frameworks). Focus review effort on the new branch logic and shell detection, since the rest of the prompt is already validated.
 3. **Test v1.2.0** — Execute the testing plan above using the parallel target approach.
-4. **Distribution** — Once v1.2.0 passes testing, publish as a GitHub gist or repo for the Claude Code user community. The OneDrive + git worktree conflict is a common pain point.
+4. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud-sync-migration. Push updated version after testing passes.
 
 ---
 

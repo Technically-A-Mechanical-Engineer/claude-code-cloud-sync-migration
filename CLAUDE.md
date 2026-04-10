@@ -14,7 +14,7 @@ Robert LaSalle
 
 - **Current version:** v1.1.1 (release candidate)
 - **Next version:** v1.2.0 — five findings documented in `cloud-sync-migration-dev-status.md`
-- **Evaluation:** v1.1.1 passed all eight Nate's Executive Circle prompt frameworks (details in `v1_1_1-evaluation.md`)
+- **Evaluation:** v1.1.1 passed all eight Nate's Executive Circle prompt frameworks (details in `prompt-evaluation.md`)
 
 ## File Map
 
@@ -57,7 +57,7 @@ The prompt's constraint architecture extends the standard four-quadrant pattern 
 ## Development Workflow
 
 - Development happens in this folder
-- Changes to the prompt go in a new versioned file (e.g., `claude-code-cloud-sync-migration-v1.2.0.md`)
+- Changes to the prompt update `claude-code-cloud-sync-migration.md` in place — git tracks version history
 - The dev status report (`cloud-sync-migration-dev-status.md`) tracks findings, requirements, version history, and testing plans
 - Evaluation uses Nate's Executive Circle prompt frameworks — run the same eight-framework review on each new version
 - Testing uses the "fresh re-run, new target" approach documented in the dev status report

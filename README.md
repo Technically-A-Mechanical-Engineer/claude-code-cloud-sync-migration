@@ -23,7 +23,7 @@ Claude Code users who launched their projects from a OneDrive, Dropbox, Google D
 
 ## How to Use It
 
-1. Download [`claude-code-cloud-sync-migration-v1.1.1.md`](claude-code-cloud-sync-migration-v1.1.1.md)
+1. Download [`claude-code-cloud-sync-migration.md`](claude-code-cloud-sync-migration.md)
 2. Open Claude Code CLI from your current (cloud-synced) project folder
 3. Copy the entire contents of the file and paste it as your first message
 4. Follow the prompts — Claude Code handles the rest

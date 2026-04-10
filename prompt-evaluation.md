@@ -1,7 +1,7 @@
 # Cloud-Sync Migration Prompt — v1.1.1 Evaluation
 **Evaluated:** 2026-04-10
 **Evaluator:** Claude (claude.ai peer review session)
-**Document under review:** `claude-code-cloud-sync-migration-v1_1_1.md`
+**Document under review:** `claude-code-cloud-sync-migration.md` (v1.1.1)
 
 ---
 

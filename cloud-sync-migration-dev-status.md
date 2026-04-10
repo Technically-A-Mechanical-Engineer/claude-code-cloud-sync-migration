@@ -20,6 +20,7 @@ The prompt originated from Robert's own OneDrive-to-local migration (April 9–1
 | v1.0.0 | 2026-04-09 | Initial generalized prompt. Auto-detection, phased migration (1–6), Session 2 generation, constraint architecture (must/must-not/prefer/escalate), crash recovery, Definition of Done. Platform support for Windows (PowerShell) and macOS/Linux (bash). | claude.ai peer review session |
 | v1.1.0 | 2026-04-10 | `/XJ` for Windows junctions. Path-hash decoding rules with examples. Pre-existing target detection. Continuous phase numbering (1–9 across both sessions). Disk space check. Batch confirmation after 3 clean passes. Match categorization (auto-update / preserve / flag-for-user). Symlink detection. `.planning/` preservation preference. Git submodule flagging. Removed admin rights question — hard "no elevation" constraint. Default rename for spaces (not just shell-failure cases). | Claude Code CLI review + real migration experience |
 | v1.1.1 | 2026-04-10 | Simplified crash recovery (CWD-only check). macOS symlink absolute-target warning. iCloud xattr handling. Three-state path-hash classification (has memory / settings only / empty). Removed "merge" option for path-hash conflicts (overwrite/keep/skip only). Proportional output reframed as completeness principle. CLI version change escalation trigger in Phase 7.1. | Claude Code CLI review addressing v1.1.0 findings |
+| v1.2.0 | 2026-04-10 | Three-way shell detection (PowerShell / bash-on-Windows / native bash). Four-signal prior migration detection cascade with confidence labels replacing single-file crash recovery. Four-option branch (quick verify / fresh re-run new target / fresh re-run same target / done) with per-option artifact production. Subdirectory migration scope in Phase 3 inventory. Pre-copy placeholder verification (OneDrive, iCloud, Dropbox). Phase 9 references cleanup prompt instead of manual steps. Graceful cross-prompt state in Guardrails. Five-dimension constraint model updated. | Claude Code CLI — GSD Phase 1 execution |
 
 ---
 
@@ -75,7 +76,7 @@ Non-git folders: hidden directories present where expected. No submodules. No er
 
 ## Findings from v1.1.1 Test → v1.2.0 Requirements
 
-Five findings from testing and verification require changes in v1.2.0:
+Six findings require changes in v1.2.0 (five from testing, one from design brainstorm):
 
 ### Finding 1: Three-way shell detection
 
@@ -154,6 +155,18 @@ The full source folders (1232, 1012, 262 files respectively) remained on OneDriv
 
 This also affects the Session 2 prompt: Phase 8 reference searches should know which source path to search for (the subdirectory path, not the parent).
 
+### Finding 6: Pre-copy placeholder verification
+
+**Origin:** Design brainstorm (2026-04-10), not field testing.
+
+**Problem:** The prompt's pre-flight checklist tells the user to force files local (step 2.3), then trusts that they did it. The only check is after copying — if file counts are low, it flags possible placeholders. This catches the problem too late, after time has already been wasted on a copy that produced empty files.
+
+**Fix for v1.2.0:** Add a verification step before starting Phase 4 copies. Sample files in each source folder to confirm they're actually local:
+
+- **Windows (OneDrive):** Check for `FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS` attribute on a sample of files. If cloud-only stubs are detected, stop and direct user back to pre-flight step 2.3.
+- **macOS (iCloud):** Check for `.icloud` placeholder files (files prefixed with `.` and suffixed with `.icloud`). If found, stop and direct user to force-download.
+- **Dropbox:** Check for Smart Sync placeholder attributes.
+
 ---
 
 ## v1.2.0 Testing Plan
@@ -176,12 +189,21 @@ This exercises: three-way shell detection, multi-signal prior migration detectio
 
 ---
 
+## Design Spec
+
+The approved design for expanding this project into a three-prompt toolkit is in:
+`docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md`
+
+This is the requirements source for all GSD planning. It covers the migration v1.2.0 changes, cleanup prompt v1.0.0 architecture, verification prompt v1.0.0 architecture, shared design principles, build sequence, and versioning/contribution model.
+
 ## Next Steps
 
-1. **Build v1.2.0** — Incorporate the five findings above into the prompt. Start from `claude-code-cloud-sync-migration.md` as the base.
-2. **Peer review v1.2.0** — Run through the same evaluation framework used on v1.1.1 (eight Nate's Executive Circle frameworks). Focus review effort on the new branch logic and shell detection, since the rest of the prompt is already validated.
-3. **Test v1.2.0** — Execute the testing plan above using the parallel target approach.
-4. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud-sync-migration. Push updated version after testing passes.
+1. **v1.2.0 migration prompt — BUILT.** Evaluate against eight NEC frameworks (DOC-07).
+2. **Build cleanup prompt v1.0.0** — New file `cloud-sync-cleanup.md`. Requirements in design spec.
+3. **Build verification prompt v1.0.0** — New file `cloud-sync-verification.md`. Requirements in design spec.
+4. **Peer review all three prompts** — Eight Nate's Executive Circle frameworks per prompt.
+5. **Test all three prompts** — Migration: "fresh re-run, new target" plan above. Cleanup: test against Robert's stale path-hash dirs and source folders. Verification: test against post-cleanup state.
+6. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud-sync-migration. Push after testing passes. Tag releases per prompt.
 
 ---
 

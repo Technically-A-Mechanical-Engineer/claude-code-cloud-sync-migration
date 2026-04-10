@@ -378,10 +378,129 @@ Wait for user confirmation before proceeding.
 
 ## Phase 3 — Orphan and Undecodable Path-Hash Directories
 
-<!-- Phase 3 content: identify orphans/undecodable, deletion dialogs with fuzzy matching -->
-<!-- Populated by Plan 03 -->
+Process each orphan and undecodable path-hash directory identified in Phase 1, one at a time. These are directories under `~/.claude/projects/` where the decoded path no longer exists on disk, or the directory name cannot be decoded. Deleting these removes Claude Code memory and settings for projects that are no longer accessible from their original paths.
 
-*[Phase content to be added]*
+### 3.1 — Gather context for each entry
+
+For each orphan or undecodable entry, gather:
+
+1. **Raw directory name** (always available)
+2. **Decoded path** (for orphans — the path that no longer exists on disk)
+3. **Contents summary:**
+
+**PowerShell:**
+```powershell
+$dir = "~/.claude/projects/[entry]"
+$files = Get-ChildItem -Recurse -File -Force $dir
+$memoryFiles = Get-ChildItem -Path "$dir/memory" -File -ErrorAction SilentlyContinue
+$hasSettings = Test-Path "$dir/settings.json"
+$size = ($files | Measure-Object -Property Length -Sum).Sum
+```
+
+**bash:**
+```bash
+dir=~/.claude/projects/[entry]
+find "$dir" -type f | wc -l
+ls "$dir/memory/" 2>/dev/null | wc -l
+test -f "$dir/settings.json" && echo "yes" || echo "no"
+du -sh "$dir"
+```
+
+4. **Fuzzy-match guess (undecodable entries only):** Read memory files and settings files inside the directory. Search for project name references, path fragments, or identifiable strings. Present the best guess explicitly labeled as a guess.
+
+### 3.2 — Present deletion dialog (orphan entries — decoded path known)
+
+For each orphan entry where the decoded path is known but no longer exists on disk:
+
+```
+Path-hash: [raw directory name]
+Decoded to: [path that no longer exists on disk]
+Note: This path no longer exists. Deleting removes Claude Code memory/settings for this project.
+Contents: [n] memory files, settings.json [present/absent], [total size]
+
+Delete this orphan path-hash directory? [y/n]
+```
+
+### 3.3 — Present deletion dialog (undecodable entries — decoded path unknown)
+
+For each undecodable entry where the directory name cannot be mapped to a valid filesystem path:
+
+```
+Path-hash: [raw directory name]
+Cannot decode: This directory name does not map to any valid filesystem path.
+Best guess: "[project name extracted from memory files]" (guess based on memory file contents)
+Contents: [n] memory files, settings.json [present/absent], [total size]
+
+Memory file excerpts:
+  [First 2-3 lines of the most recent memory file, or "No memory files found"]
+
+Delete this undecodable path-hash directory? [y/n]
+```
+
+If memory files provide no useful context and the directory name provides no clues, note: "Unable to determine what project this directory belongs to. Contents are [n] files totaling [size]. Inspect manually if unsure."
+
+### 3.4 — Execute deletion
+
+Same as Phase 2.3 — use platform-specific deletion command:
+
+**PowerShell:**
+```powershell
+Remove-Item -Recurse -Force "~/.claude/projects/[entry]"
+```
+
+**bash-on-Windows / macOS / Linux:**
+```bash
+rm -rf ~/.claude/projects/[entry]
+```
+
+After deletion, verify the directory no longer exists:
+
+**PowerShell:** `Test-Path "~/.claude/projects/[entry]"` should return `False`
+
+**bash:** `test -d ~/.claude/projects/[entry]` should fail (non-zero exit)
+
+If deletion fails (permission error, locked files), stop and report: "Deletion failed for [entry]: [error message]. Close any editors or Claude Code sessions that may have handles on files in this directory, then try again."
+
+### 3.5 — Log the deletion
+
+Same incremental logging pattern as Phase 2.4. Append to `cleanup-results.md` in CWD.
+
+For orphan deletions:
+```
+| [ISO timestamp] | orphan | ~/.claude/projects/[entry] | Decoded path no longer exists: [decoded path] |
+```
+
+For undecodable deletions:
+```
+| [ISO timestamp] | orphan | ~/.claude/projects/[entry] | Undecodable. Best guess: [guess or "none"] |
+```
+
+For skipped entries:
+```
+| [ISO timestamp] | orphan | ~/.claude/projects/[entry] | SKIPPED by user |
+```
+
+### 3.6 — Phase 3 summary and gate
+
+After all orphan and undecodable entries have been processed, present a summary:
+
+```
+Phase 3 complete:
+  [n] orphan path-hash directories deleted
+  [n] undecodable path-hash directories deleted
+  [n] skipped by user
+
+Phases 2-3 summary:
+  Total path-hash directories deleted: [n]
+  Total skipped: [n]
+  Remaining valid entries: [n]
+```
+
+Ask: "Proceed to Phase 4 (source folders on cloud storage)? This is the highest-risk phase — each folder requires full verification before deletion."
+
+If there were no orphan or undecodable entries, report: "No orphan or undecodable path-hash directories found." and proceed to the confirmation gate.
+
+Wait for user confirmation before proceeding.
 
 ---
 

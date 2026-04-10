@@ -78,3 +78,129 @@ The prompt's constraint architecture extends the standard four-quadrant pattern 
 - New versions update `claude-code-cloud-sync-migration.md` in place — prior versions are preserved in git history
 - The dev status report is the single source of truth for what needs to change in the next version
 - When building a new version, start from the most recent prompt file as the base
+
+<!-- GSD:project-start source:PROJECT.md -->
+## Project
+
+**Cloud-Sync Toolkit for Claude Code**
+
+A three-prompt toolkit that Claude Code CLI users paste into their terminal to migrate project folders off cloud-synced storage, clean up stale artifacts afterward, and verify project health. Each prompt is an independent markdown file — one file, one paste, no installation. The target audience is Claude Code users hitting git errors, file lock failures, or sync conflicts from working in OneDrive, Dropbox, Google Drive, or iCloud folders.
+
+**Core Value:** Get Claude Code users off cloud-synced storage safely — no data loss, no silent failures, every action verified before and after.
+
+### Constraints
+
+- **Distribution format**: One markdown file per prompt, paste into Claude Code CLI. No dependencies, no installation, no build step.
+- **Platform support**: Windows (PowerShell and Git Bash), macOS (zsh/bash), Linux (bash). Three-way shell detection required.
+- **CLI compatibility**: Claude Code CLI as of April 2026. Must detect and handle CLI version changes between sessions.
+- **Safety**: Migration never deletes. Cleanup deletes only with individual confirmation and verified local copy. Verification never modifies.
+- **Evaluation standard**: Every version of every prompt evaluated against eight NEC prompt frameworks before release.
+<!-- GSD:project-end -->
+
+<!-- GSD:stack-start source:codebase/STACK.md -->
+## Technology Stack
+
+## Languages
+- Markdown — Prompt specification, user-facing documentation, dev status reporting, evaluation records
+- PowerShell — Target shell for Windows users executing the migration (specified inside the prompt)
+- Bash — Target shell for macOS/Linux users and Windows Git Bash users executing the migration
+## Runtime
+- Claude Code CLI — The runtime that executes the prompt. Tested against Claude Code CLI as of April 2026.
+- Not applicable — no packages, no dependencies, no build step.
+- Lockfile: Not present.
+## Frameworks
+- None — This is a single-file prompt. No frameworks are installed or required.
+- Nate's Executive Circle prompt kits (State of Prompt Engineering Kit, Six Weeks Kit, Building Agents Is 80% Plumbing Kit, Skills Are Infrastructure Now Kit) — Used to evaluate the prompt against eight frameworks. Not runtime dependencies.
+- Manual testing via fresh re-run to a parallel target path — No automated test runner exists.
+- Not applicable — development is editing `claude-code-cloud-sync-migration.md` in place.
+## Key Dependencies
+- Claude Code CLI (user's installation) — The prompt is useless without it. Version matters: Phase 7.1 includes an escalation trigger if the `~/.claude/projects/` directory structure changes between sessions (CLI update risk).
+- robocopy (Windows built-in) — Copy tool for Windows migrations. Called from within the prompt's Phase 4 instructions.
+- rsync (macOS/Linux standard) — Copy tool for macOS/Linux migrations.
+- git — Required for git integrity verification steps (Phase 4.6). Present on any system where Claude Code users have repos.
+## Configuration
+- No environment variables required for this project.
+- No `.env` file exists or is needed.
+- No build configuration. The prompt file is the artifact.
+## Platform Requirements
+- Any text editor capable of editing Markdown
+- Git for version control
+- Claude Code CLI for testing
+- Claude Code CLI installed
+- Windows: PowerShell or Git Bash (MINGW64/MSYS2/WSL) available
+- macOS/Linux: bash or zsh available
+- robocopy (Windows, built-in since Vista) or rsync (macOS/Linux standard) available
+<!-- GSD:stack-end -->
+
+<!-- GSD:conventions-start source:CONVENTIONS.md -->
+## Conventions
+
+Conventions not yet established. Will populate as patterns emerge during development.
+<!-- GSD:conventions-end -->
+
+<!-- GSD:architecture-start source:ARCHITECTURE.md -->
+## Architecture
+
+## Pattern Overview
+- One Markdown file contains both the human-facing user guide (above the separator) and the Claude Code instructions (below the separator). The user pastes the entire file.
+- Execution is split across two Claude Code sessions by design — Session 1 copies files, Session 2 migrates settings and updates references. The split is mandatory because Claude Code must be relaunched from the new path to generate correct path-hash directories.
+- The Session 2 prompt is generated dynamically from actual Session 1 results, not from a static template. It is written to the user's filesystem as `session-2-prompt.md`.
+- A five-dimension constraint model governs all execution behavior: Must / Must-not / Prefer / Escalate / Recover.
+## Session Architecture
+- Purpose: Environment detection, pre-flight, folder copy-and-verify, Session 2 prompt generation
+- Phases: 1 (auto-detect), 2 (pre-flight), 3 (inventory/naming), 4 (copy-and-verify), 5 (generate Session 2 prompt), 6 (handoff)
+- Outputs: `migration-session-1-results.md` (crash-recovery log), `session-2-prompt.md` (continuation prompt)
+- Purpose: Settings/memory migration, path reference updates, post-migration reminders
+- Phases: 7 (settings migration), 8 (reference updates), 9 (post-migration reminders)
+- Outputs: `migration-session-2-results.md`
+## Constraint Architecture
+| Dimension | What It Controls |
+|---|---|
+| **Must** | Confirmation gates between phases, per-folder confirmation before proceeding, results log written incrementally |
+| **Must-not** | No deletions ever, no admin elevation, no silent overwrites of pre-existing targets, no partial-state cleanup |
+| **Prefer** | Rename spaces/special chars to hyphens in folder names, report anomalies don't investigate, preserve `.planning/` history |
+| **Escalate** | Unmapped path-hash entries, CLI version mismatch detected in Phase 7.1, permission failures |
+| **Recover** | Crash recovery: check CWD for `migration-session-1-results.md` before Phase 1, cross-reference prior results against current target state |
+## Phase Flow
+## Data Flow
+## Error Handling
+- robocopy exit code > 7: stop and report (codes 0-7 are success/non-fatal)
+- rsync non-zero exit: stop and report
+- File count significantly lower in target than source: flag (likely Files On-Demand placeholders)
+- git fsck warnings: report and continue; git fsck errors: stop
+- Pre-existing target folder: stop, present three options (skip / alternate name / user deletes manually)
+- Partial copy failure: stop, do not delete partial target, wait for instructions
+- Unmapped path-hash entries: report separately, do not modify
+- CLI version change (Phase 7.1): stop and report before any settings migration
+## Key Decisions Encoded in the Design
+- **No deletions ever:** Source folders, old path-hash directories, partial copies — nothing gets deleted at any point. The user handles all cleanup manually.
+- **Platform-specific command selection:** The prompt branches on detected shell (PowerShell, bash-on-Windows, native bash/zsh) and uses the appropriate copy tool and verification commands throughout. Commands are never mixed across shells.
+- **Session 2 prompt is self-contained:** It does not depend on Session 1's context window. It reads from the results log on disk.
+- **Proportional output:** Generated artifacts scale to migration scope — same structural completeness, but a 2-folder migration doesn't get padded with bulk.
+<!-- GSD:architecture-end -->
+
+<!-- GSD:skills-start source:skills/ -->
+## Project Skills
+
+No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, or `.github/skills/` with a `SKILL.md` index file.
+<!-- GSD:skills-end -->
+
+<!-- GSD:workflow-start source:GSD defaults -->
+## GSD Workflow Enforcement
+
+Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
+
+Use these entry points:
+- `/gsd-quick` for small fixes, doc updates, and ad-hoc tasks
+- `/gsd-debug` for investigation and bug fixing
+- `/gsd-execute-phase` for planned phase work
+
+Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
+<!-- GSD:workflow-end -->
+
+<!-- GSD:profile-start -->
+## Developer Profile
+
+> Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
+> This section is managed by `generate-claude-profile` -- do not edit manually.
+<!-- GSD:profile-end -->

@@ -506,10 +506,327 @@ Wait for user confirmation before proceeding.
 
 ## Phase 4 — Source Folders on Cloud Storage
 
-<!-- Phase 4 content: full verification, cloud-propagation warning, soak period, deletion -->
-<!-- Populated by Plan 03 -->
+Process each source folder on cloud-synced storage, one at a time. These are the original project folders that were migrated to local paths. This is the highest-risk phase — you are deleting actual project data, and the deletion will propagate to cloud storage. Every folder requires full verification before the deletion option is presented.
 
-*[Phase content to be added]*
+**Prerequisite:** Phase 4 runs only after Phases 2 and 3 are complete.
+
+### 4.1 — Identify source folders
+
+**Post-migration mode:** Source folders are listed in the migration artifacts (`migration-session-1-results.md`). Cross-reference each source path against the filesystem — if the source folder no longer exists (already deleted manually), skip it and note: "[folder] — source no longer exists (may have been deleted manually)."
+
+**Standalone mode:** Derive source folders from the stale path-hash entries processed in Phase 2. Each stale entry decoded to a cloud-synced path — the parent project folder at that path is a candidate source folder. Present the list for user confirmation before proceeding:
+
+```
+Source folders identified from stale path-hash entries:
+  1. [cloud-synced path] -> local copy at [local path]
+  2. [cloud-synced path] -> local copy at [local path]
+  ...
+
+These are the source folders I identified from stale path-hash entries.
+Confirm, modify, or add folders before proceeding.
+```
+
+Wait for user confirmation.
+
+### 4.2 — Soak-period check
+
+Before processing any individual folder, check how long the user has been using the local paths.
+
+**Post-migration mode — read migration artifact timestamp:**
+
+**PowerShell:**
+```powershell
+$migrationFile = Get-Item "migration-session-1-results.md" -ErrorAction SilentlyContinue
+if ($migrationFile) { $daysSince = ((Get-Date) - $migrationFile.LastWriteTime).Days }
+```
+
+**bash (Linux):**
+```bash
+if [ -f "migration-session-1-results.md" ]; then
+  migrationEpoch=$(stat -c '%Y' "migration-session-1-results.md")
+  daysSince=$(( ($(date +%s) - migrationEpoch) / 86400 ))
+fi
+```
+
+**bash (macOS):**
+```bash
+if [ -f "migration-session-1-results.md" ]; then
+  migrationEpoch=$(stat -f '%m' "migration-session-1-results.md")
+  daysSince=$(( ($(date +%s) - migrationEpoch) / 86400 ))
+fi
+```
+
+**Standalone mode — check most recent file modification in local project directory:**
+
+**PowerShell:**
+```powershell
+$newest = (Get-ChildItem -Recurse -File "[local-path]" | Sort-Object LastWriteTime -Descending | Select-Object -First 1).LastWriteTime
+$daysSince = ((Get-Date) - $newest).Days
+```
+
+**bash (Linux):**
+```bash
+newestEpoch=$(find "[local-path]" -type f -printf '%T@\n' 2>/dev/null | sort -rn | head -1)
+daysSince=$(( ($(date +%s) - ${newestEpoch%.*}) / 86400 ))
+```
+
+**bash (macOS):**
+```bash
+newestEpoch=$(find "[local-path]" -type f -exec stat -f '%m' {} + 2>/dev/null | sort -rn | head -1)
+daysSince=$(( ($(date +%s) - newestEpoch) / 86400 ))
+```
+
+**If less than 3 days since migration (or since local copy creation in standalone mode):**
+
+Present the soak-period recommendation:
+
+```
+Your migration was completed [N] day(s) ago ([date]).
+
+We recommend working from the new local paths for at least a few days before
+deleting source folders. This gives you time to discover any issues with the
+local copies — missing files, broken git state, missing configurations — while
+the source folders still exist as a safety net.
+
+Options:
+  [p] Proceed with Phase 4 now
+  [d] Defer Phase 4 — skip source folder deletions, finish cleanup with Phases 2-3 results only
+
+Choose [p/d]:
+```
+
+**If the user chooses defer (`d`):** Record in `cleanup-results.md`:
+
+```
+| [ISO timestamp] | source | (Phase 4 deferred) | Soak period: [N] days since migration. User chose to defer. |
+```
+
+Skip to Phase 5. Report: "Phase 4 deferred. Re-run this cleanup prompt when you're ready to delete source folders."
+
+**If the user chooses proceed (`p`):** Continue to 4.3.
+
+**If 3 or more days have passed:** Skip the soak-period prompt and proceed directly to 4.3.
+
+### 4.3 — Verify local copy for each source folder
+
+For each source folder, run full verification against its local copy.
+
+**A. File count comparison:**
+
+**PowerShell:**
+```powershell
+$sourceCount = (Get-ChildItem -Recurse -File -Force "[source-path]").Count
+$localCount = (Get-ChildItem -Recurse -File -Force "[local-path]").Count
+```
+
+**bash-on-Windows:**
+```bash
+sourceCount=$(find "[source-path]" -type f | wc -l)
+localCount=$(find "[local-path]" -type f | wc -l)
+```
+
+**macOS/Linux:**
+```bash
+sourceCount=$(find "[source-path]" -type f | wc -l)
+localCount=$(find "[local-path]" -type f | wc -l)
+```
+
+**B. File size comparison:**
+
+**PowerShell:**
+```powershell
+$sourceSize = (Get-ChildItem -Recurse -Force -File "[source-path]" | Measure-Object -Property Length -Sum).Sum
+$localSize = (Get-ChildItem -Recurse -Force -File "[local-path]" | Measure-Object -Property Length -Sum).Sum
+```
+
+**bash (Linux):**
+```bash
+sourceSize=$(du -sb "[source-path]" | cut -f1)
+localSize=$(du -sb "[local-path]" | cut -f1)
+```
+
+**bash (macOS):**
+```bash
+sourceSize=$(find "[source-path]" -type f -exec stat -f '%z' {} + | awk '{s+=$1} END {print s}')
+localSize=$(find "[local-path]" -type f -exec stat -f '%z' {} + | awk '{s+=$1} END {print s}')
+```
+
+**C. Git integrity (if applicable):**
+
+If the local copy contains a `.git` directory:
+
+```
+git -C "[local-path]" fsck --no-dangling
+```
+
+Git fsck warnings are reported but do not block deletion. Git fsck errors block deletion.
+
+**D. Hidden directory check:**
+
+Confirm key hidden directories present in local copy match those in source:
+
+**PowerShell:**
+```powershell
+# Source hidden dirs
+Get-ChildItem -Force -Directory "[source-path]" | Where-Object { $_.Name -match '^\.' } | Select-Object Name
+# Local hidden dirs
+Get-ChildItem -Force -Directory "[local-path]" | Where-Object { $_.Name -match '^\.' } | Select-Object Name
+```
+
+**bash:**
+```bash
+# Source hidden dirs
+ls -d "[source-path]"/.[^.]* 2>/dev/null
+# Local hidden dirs
+ls -d "[local-path]"/.[^.]* 2>/dev/null
+```
+
+Check for: `.git`, `.planning`, `.vscode`, `.claude` — report which are present in both source and local.
+
+### 4.4 — Incomplete copy gate
+
+If ANY of these conditions are true, do NOT offer deletion for this folder:
+
+1. Local file count is lower than source file count (more than 5 files difference, to allow for cloud-sync metadata files)
+2. Local total size is significantly smaller than source total size (more than 5% smaller)
+3. Git fsck reports errors (not warnings — warnings are reported but do not block)
+4. Key hidden directories present in source are missing from local
+
+If blocked, report:
+
+```
+[folder name] — LOCAL COPY INCOMPLETE. Deletion not offered.
+
+  Source file count: [n]
+  Local file count:  [n]  [MISMATCH — [delta] fewer files in local]
+  Source total size:  [size]
+  Local total size:   [size]  [MISMATCH — [delta] smaller]
+  Git fsck:          [ERRORS FOUND — see details above]
+  Hidden dirs:       [.git MISSING from local]
+
+Recommendation: Re-run the migration prompt (claude-code-cloud-sync-migration.md)
+for this specific folder to ensure a complete copy before deleting the source.
+```
+
+Log the block:
+
+```
+| [ISO timestamp] | source | [source-path] | BLOCKED — incomplete local copy. File count: source [n] vs local [n]. |
+```
+
+Proceed to the next source folder.
+
+### 4.5 — Present verification-forward deletion dialog
+
+For each source folder that passes all verification checks in 4.3 and 4.4, present the full dialog:
+
+```
+Source folder: [full source path]
+Local copy: [full local path]
+
+Verification:
+  Source file count: [n]
+  Local file count:  [n]  [MATCH]
+  Source total size:  [size]
+  Local total size:   [size]  [MATCH]
+  Git fsck (local):  [PASS (no errors) / N/A (not a git repo)]
+  Hidden dirs:       [.git present]  [.planning present]  [.vscode present]
+
+WARNING: This folder is on [service name]. Deleting it here will propagate
+to [service name] cloud storage — the cloud copy will also be removed.
+[Service name] retains deleted files in its recycle bin for [retention period].
+
+Delete this source folder? [y/n]
+```
+
+The cloud-propagation warning MUST appear on every Phase 4 deletion dialog — not just the first one. Users may not read carefully after the first few; the risk is too high to show it only once.
+
+### 4.6 — Execute deletion
+
+On user confirmation (`y`):
+
+**PowerShell:**
+```powershell
+Remove-Item -Recurse -Force "[source-path]"
+```
+
+**bash-on-Windows / macOS / Linux:**
+```bash
+rm -rf "[source-path]"
+```
+
+After deletion, verify the directory no longer exists:
+
+**PowerShell:** `Test-Path "[source-path]"` should return `False`
+
+**bash:** `test -d "[source-path]"` should fail (non-zero exit)
+
+If deletion fails (permission error, locked files, partial deletion):
+
+```
+Deletion failed for [folder]: [error message]
+
+This may be caused by:
+- Open editors or terminals with handles on files in this folder
+- Cloud sync agent actively syncing (check that sync is paused)
+- System processes using files in this directory
+
+Close any processes that may have handles on this folder and try again.
+Do not proceed to the next folder until this is resolved or skipped.
+
+Retry or skip? [r/s]
+```
+
+If retry (`r`): re-attempt the deletion command.
+
+If skip (`s`): log as skipped and proceed to the next folder.
+
+If the deletion partially succeeded (some files deleted, directory still exists with fewer files), report: "Partial deletion — directory still exists with [n] remaining files. Do not attempt to re-run without investigating." Log as partial.
+
+### 4.7 — Log the deletion
+
+Append to `cleanup-results.md` in CWD immediately after each deletion outcome.
+
+For successful deletions:
+
+```
+| [ISO timestamp] | source | [source-path] | Verified: [sourceCount] files, [sourceSize]. Git fsck: [PASS/N/A]. Local match confirmed. [service] propagation acknowledged. |
+```
+
+For skipped folders:
+
+```
+| [ISO timestamp] | source | [source-path] | SKIPPED by user |
+```
+
+For failed deletions:
+
+```
+| [ISO timestamp] | source | [source-path] | FAILED — [error description] |
+```
+
+For partial deletions:
+
+```
+| [ISO timestamp] | source | [source-path] | PARTIAL — [n] files remaining. Investigation required. |
+```
+
+### 4.8 — Phase 4 summary
+
+After all source folders have been processed, present a summary:
+
+```
+Phase 4 complete:
+  [n] source folders deleted
+  [n] skipped by user
+  [n] blocked (incomplete local copy)
+  [n] failed (see log for details)
+
+Cloud services affected:
+  [service]: [n] folders deleted (recycle bin retains for [period])
+```
+
+Proceed directly to Phase 5 (no confirmation gate needed — Phase 4 is the last deletion phase).
 
 ---
 

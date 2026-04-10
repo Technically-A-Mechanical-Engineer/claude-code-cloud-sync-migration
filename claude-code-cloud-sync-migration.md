@@ -96,9 +96,8 @@ After shell detection completes, check for evidence of a prior migration using t
 | 1 | `migration-session-1-results.md` in CWD | Highest | Read the file — it contains verified migration records from a v1.1.1+ run |
 | 2 | `migration-log.md` in CWD | High | Read the file — it is a pre-v1 migration artifact |
 | 3 | Either file found at default target path (`~/Projects/`) | Moderate | Scan the default target for migration artifacts |
-| 4 | Target path exists with folders matching decoded cloud-synced project names | Low | Cross-reference folder names against path-hash inventory from Phase 1.5 |
 
-**If no signal fires:** No prior migration detected. Proceed to Phase 1.3 normally.
+**If no signal fires:** No prior migration detected. Proceed to Phase 1.3 normally. (A deferred low-confidence check runs after Phase 1.6 — see below.)
 
 **If a signal fires:** Present the detection result to the user with confidence level, detection evidence, and contextual guidance before showing options.
 
@@ -106,7 +105,7 @@ After shell detection completes, check for evidence of a prior migration using t
 
 **Moderate confidence (Signal 3):** Note the location difference. Example: "Found migration-session-1-results.md at ~/Projects/ (not in the current directory). This appears to be from a prior migration."
 
-**Low confidence (Signal 4):** Use hedged language. Example: "No migration artifacts found, but ~/Projects/ contains folders that might be from a prior migration (names match decoded cloud-synced project names). This could also be a coincidence."
+**Low confidence (deferred Signal 4 — runs after Phase 1.6):** Use hedged language. See the deferred prior-migration check in Phase 1.6 for details.
 
 Then present four options with "pick this if" guidance:
 
@@ -189,6 +188,8 @@ Stale/unknown path-hash entries:
 
 Suggested target: [user-profile]\Projects\
 ```
+
+**Deferred prior-migration check (Signal 4):** If no prior migration was detected in Phase 1.2, cross-reference the decoded path-hash directory names from Phase 1.5 against the folder list at the default target path (`~/Projects/`). If matches are found, present a low-confidence prior migration warning using hedged language (e.g., "No migration artifacts found, but `~/Projects/` contains folders that match decoded cloud-synced project names. This could be from a prior migration or a coincidence.") and show the four-option branch from Phase 1.2 before asking the target path question.
 
 Then ask one question:
 

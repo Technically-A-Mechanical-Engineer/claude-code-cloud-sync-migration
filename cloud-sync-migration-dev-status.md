@@ -20,6 +20,7 @@ The prompt originated from Robert's own OneDrive-to-local migration (April 9–1
 | v1.0.0 | 2026-04-09 | Initial generalized prompt. Auto-detection, phased migration (1–6), Session 2 generation, constraint architecture (must/must-not/prefer/escalate), crash recovery, Definition of Done. Platform support for Windows (PowerShell) and macOS/Linux (bash). | claude.ai peer review session |
 | v1.1.0 | 2026-04-10 | `/XJ` for Windows junctions. Path-hash decoding rules with examples. Pre-existing target detection. Continuous phase numbering (1–9 across both sessions). Disk space check. Batch confirmation after 3 clean passes. Match categorization (auto-update / preserve / flag-for-user). Symlink detection. `.planning/` preservation preference. Git submodule flagging. Removed admin rights question — hard "no elevation" constraint. Default rename for spaces (not just shell-failure cases). | Claude Code CLI review + real migration experience |
 | v1.1.1 | 2026-04-10 | Simplified crash recovery (CWD-only check). macOS symlink absolute-target warning. iCloud xattr handling. Three-state path-hash classification (has memory / settings only / empty). Removed "merge" option for path-hash conflicts (overwrite/keep/skip only). Proportional output reframed as completeness principle. CLI version change escalation trigger in Phase 7.1. | Claude Code CLI review addressing v1.1.0 findings |
+| v1.2.0 | 2026-04-10 | Three-way shell detection (PowerShell / bash-on-Windows / native bash). Four-signal prior migration detection cascade with confidence labels replacing single-file crash recovery. Four-option branch (quick verify / fresh re-run new target / fresh re-run same target / done) with per-option artifact production. Subdirectory migration scope in Phase 3 inventory. Pre-copy placeholder verification (OneDrive, iCloud, Dropbox). Phase 9 references cleanup prompt instead of manual steps. Graceful cross-prompt state in Guardrails. Five-dimension constraint model updated. | Claude Code CLI — GSD Phase 1 execution |
 
 ---
 
@@ -197,7 +198,7 @@ This is the requirements source for all GSD planning. It covers the migration v1
 
 ## Next Steps
 
-1. **Build v1.2.0 migration prompt** — Incorporate the six findings above into `claude-code-cloud-sync-migration.md`. Use GSD for planning and execution. Reference the design spec for requirements.
+1. **v1.2.0 migration prompt — BUILT.** Evaluate against eight NEC frameworks (DOC-07).
 2. **Build cleanup prompt v1.0.0** — New file `cloud-sync-cleanup.md`. Requirements in design spec.
 3. **Build verification prompt v1.0.0** — New file `cloud-sync-verification.md`. Requirements in design spec.
 4. **Peer review all three prompts** — Eight Nate's Executive Circle frameworks per prompt.

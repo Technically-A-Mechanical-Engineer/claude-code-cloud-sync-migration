@@ -832,10 +832,76 @@ Proceed directly to Phase 5 (no confirmation gate needed — Phase 4 is the last
 
 ## Phase 5 — Report
 
-<!-- Phase 5 content: finalize cleanup log, present summary -->
-<!-- Populated by Plan 04 -->
+Finalize the cleanup log and present a summary of all actions taken.
 
-*[Phase content to be added]*
+### 5.1 — Finalize cleanup log
+
+Append a summary section to the bottom of `cleanup-results.md`:
+
+```markdown
+
+---
+
+## Summary
+
+**Completed:** [ISO timestamp]
+**Mode:** [Post-migration / Standalone]
+**Shell:** [PowerShell / bash-on-Windows / native bash/zsh]
+
+### Actions Taken
+
+| Category | Deleted | Skipped | Blocked/Failed |
+|----------|---------|---------|----------------|
+| Stale path-hash directories | [n] | [n] | [n] |
+| Orphan/undecodable path-hash directories | [n] | [n] | [n] |
+| Source folders | [n] | [n] | [n] |
+| **Total** | **[n]** | **[n]** | **[n]** |
+
+### Phase 4 Status
+
+[One of:]
+- Completed: [n] source folders processed
+- Deferred: User chose to defer source folder deletion (soak period: [n] days since migration)
+- Not applicable: No source folders identified
+
+### Cloud Services Affected
+
+[For each service where source folders were deleted:]
+- [service]: [n] folders deleted. Recycle bin retains deleted files for [retention period].
+
+### Items Requiring Attention
+
+[List any:]
+- Blocked source folders (incomplete local copy): [list with recommendation]
+- Failed deletions: [list with error details]
+- Unresolved items: [anything skipped that the user should revisit]
+
+[If none:] None — all items processed successfully.
+```
+
+Populate each field from the actual Phase 2-4 results. Counts come from the deletion rows already written incrementally during Phases 2-4.
+
+### 5.2 — Present summary to user
+
+Display the summary in the terminal — the same content written to the log in 5.1. Then present next steps:
+
+```
+Cleanup complete. Results saved to cleanup-results.md in [CWD path].
+
+Next steps:
+- If Phase 4 was deferred: Re-run this cleanup prompt when you're ready to delete source folders
+- If any source folders were blocked: Re-run the migration prompt (claude-code-cloud-sync-migration.md) for those specific folders, then re-run cleanup
+- To verify overall project health: Paste cloud-sync-verification.md into Claude Code CLI
+- Resume cloud sync if it was paused during cleanup
+```
+
+**If no items were deleted across all phases** (everything was skipped or nothing needed cleanup):
+
+Report: "No cleanup actions were taken. Your environment appears clean. If you expected items to clean up, verify that you're running this prompt from the correct directory."
+
+**If the only action was Phase 4 deferral** (Phases 2-3 had no items or all were skipped):
+
+Report: "Path-hash directory cleanup is complete. Source folder deletion was deferred. Re-run this prompt after working from the new paths for a few more days."
 
 ---
 

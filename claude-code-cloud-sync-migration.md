@@ -1,5 +1,5 @@
 # Cloud-Sync Migration for Claude Code Projects
-**v1.1.0** | 2026-04-10
+**v1.1.1** | 2026-04-10
 
 If you're seeing git errors, file lock failures, or sync conflicts when using Claude Code from a OneDrive, Dropbox, or Google Drive folder, this is the fix. Copy everything in this file — from this line to the end — and paste it into Claude Code CLI as your first message. Claude Code will use the instructions below the separator line; the text above it is for your reference.
 
@@ -44,7 +44,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 
 - **No deletions.** Do NOT delete any source folders, old path-hash directories, or any files at any point. The user handles all deletions manually after confirming everything works.
 - **No admin elevation.** Do not attempt elevation, `runas`, `sudo`, `Start-Process -Verb RunAs`, or any operation requiring administrator privileges. If a step fails due to permissions, stop and report — do not attempt workarounds that require elevation.
-- **Confirmation gates.** Do NOT proceed between phases without explicit user confirmation. Within the copy phase, do NOT proceed to the next folder until the user confirms the current one (see Phase 4.6 for a batch option after consecutive successes).
+- **Confirmation gates.** Do NOT proceed between phases without explicit user confirmation. Within the copy phase, do NOT proceed to the next folder until the user confirms the current one (see Phase 4.7 for a batch option after consecutive successes).
 - **No partial-state cleanup.** If a copy operation fails or is incomplete, do NOT delete or overwrite the partial target. Report the state and wait for instructions.
 - **Escalation trigger.** If you encounter path references, path-hash directories, or settings that don't map to known source paths or the expected target, report them separately and do not modify them — wait for instructions.
 - **rsync trailing slashes (macOS/Linux only).** Always include trailing slashes on both source and target paths in rsync commands. Missing slashes cause rsync to create a nested subdirectory instead of copying contents.
@@ -60,15 +60,10 @@ When multiple valid approaches exist:
 
 ### Crash Recovery
 
-If this prompt is pasted into a session that may be a restart of a prior migration attempt:
+Before running Phase 1, check the current working directory for `migration-session-1-results.md`.
 
-1. Before running Phase 1, check common target paths (`~/Projects/`, `~/Dev/`, the current working directory) for `migration-session-1-results.md`.
-2. If found, read it. This file contains the verified-so-far record from the prior attempt.
-3. Run Phase 1 auto-detect normally to establish environment context.
-4. Cross-reference: for any folder listed as verified in the results file, run the verification checks (file count, hidden dirs, git integrity) on the existing target. Present results and ask the user for each: skip, re-copy, or stop.
-5. If `migration-session-1-results.md` is not found but target folders exist in a plausible target location, ask the user: "It looks like a prior migration attempt may have left folders at [path]. Do you want me to check their state, or start fresh with a different target?"
-
-Do not re-copy any folder without explicit user confirmation.
+- **If found:** Read it. This file is the verified-so-far record from a prior attempt. Run Phase 1 auto-detect normally, then cross-reference: for any folder listed as verified in the results file, run the verification checks (file count, hidden dirs, git integrity) on the existing target. Present results and ask the user for each: skip, re-copy, or stop. Do not re-copy any folder without explicit user confirmation.
+- **If not found:** Proceed to Phase 1 normally. If the user mentions a prior interrupted migration at a different path, ask them for the target directory so you can check for the results file there.
 
 ---
 
@@ -109,15 +104,18 @@ Scan `~/.claude/projects/` (all platforms). If this directory does not exist or 
 **Path-hash decoding:** Claude Code encodes filesystem paths as directory names by replacing path separators (`\`, `/`), drive colons (`:`), spaces, commas, and other special characters each with a single hyphen (`-`). Consecutive hyphens are NOT collapsed — they indicate adjacent special characters in the original path.
 
 Examples:
-- `C:\Users\rlasalle\Projects\Claude-Home` → `C--Users-rlasalle-Projects-Claude-Home`
-- `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\OB1` → `C--Users-rlasalle-OneDrive---ThermoTek--Inc-Documents-Projects-OB1`
+- `C:\Users\rlasalle\Projects\Claude-Home` -> `C--Users-rlasalle-Projects-Claude-Home`
+- `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\OB1` -> `C--Users-rlasalle-OneDrive---ThermoTek--Inc-Documents-Projects-OB1`
 
 For each path-hash directory:
 - Decode the directory name back to a filesystem path using the rules above
 - If the name cannot be decoded to a valid filesystem path (e.g., `C--` or `R--` with no further content), classify as "undecodable/corrupt"
 - Check whether the decoded path falls under any detected sync folder — if yes, classify as cloud-synced and identify which sync service and source root
 - Check whether the decoded path points to a **subdirectory** of a project folder (e.g., a `Robert-Sandbox` subfolder within a larger project). If so, note the parent-child relationship
-- Check whether the directory contains any memory or settings files (non-empty `memory/` subdirectory, `settings.json`, etc.) — flag as "has settings" or "empty"
+- Check what the directory contains and classify:
+  - **"has memory (n files)"** — non-empty `memory/` subdirectory present
+  - **"settings only"** — `settings.json` or other config present, but no memory files
+  - **"empty"** — no meaningful content
 
 ### 1.5 — Present findings and confirm
 
@@ -137,10 +135,10 @@ Cloud sync detected:
 
 Claude Code projects on cloud-synced storage:
   1. [folder name] <- [full cloud path] ([service], [source root])
-     Path-hash: [directory name] [has settings / empty]
+     Path-hash: [directory name] [has memory (n files) / settings only / empty]
   2. [folder name] <- [full cloud path] ([service], [source root])
-     Path-hash: [directory name] [has settings / empty]
-     Also: [subdirectory path-hash] [has settings / empty]
+     Path-hash: [directory name] [has memory (n files) / settings only / empty]
+     Also: [subdirectory path-hash] [has memory (n files) / settings only / empty]
   ...
 
 Claude Code projects already local (no action needed):
@@ -189,16 +187,16 @@ If free space is less than 1.5x the total source size, warn the user: "You have 
 ### 2.2 — Pause cloud sync
 
 Provide platform-specific instructions:
-- **OneDrive:** Right-click tray icon → Pause syncing → 24 hours
-- **Dropbox:** Right-click tray icon → Pause syncing
-- **Google Drive:** Right-click tray icon → Pause syncing
+- **OneDrive:** Right-click tray icon -> Pause syncing -> 24 hours
+- **Dropbox:** Right-click tray icon -> Pause syncing
+- **Google Drive:** Right-click tray icon -> Pause syncing
 - **iCloud:** No pause option — warn that iCloud may interfere; suggest disconnecting from internet briefly during copy if issues arise
 
 ### 2.3 — Force all files local
 
 Cloud sync services use placeholder files (Files On-Demand, Smart Sync, Streaming) that copy as empty stubs. For each source folder:
-- **OneDrive:** Right-click → "Always keep on this device" — wait for all cloud icons to become solid green checkmarks
-- **Dropbox:** Right-click → Smart Sync → Local — wait for sync to complete
+- **OneDrive:** Right-click -> "Always keep on this device" — wait for all cloud icons to become solid green checkmarks
+- **Dropbox:** Right-click -> Smart Sync -> Local — wait for sync to complete
 - **Google Drive:** Verify files are in "Available offline" mode
 - Warn the user: "Do not proceed until all files show as locally available. This can take time for large repos."
 
@@ -223,7 +221,7 @@ Ask the user to confirm: **"Pre-flight complete. Proceed."**
 Present the cloud-synced folders from Phase 1, grouped by source root.
 
 For each folder:
-- **Default: replace spaces and special characters with hyphens.** `0106 ATP Relaunch` → `0106-ATP-Relaunch`. `R Drive NCM Playground1` → `R-Drive-NCM-Playground1`. Preserve underscores, existing hyphens, and dots.
+- **Default: replace spaces and special characters with hyphens.** `0106 ATP Relaunch` -> `0106-ATP-Relaunch`. `R Drive NCM Playground1` -> `R-Drive-NCM-Playground1`. Preserve underscores, existing hyphens, and dots.
 - If the original name already has no spaces or special characters, keep it as-is.
 - If the folder name would collide with an existing folder in the target (from a prior migration or any other cause), flag the collision and suggest appending a suffix.
 - If one of the folders is the current Claude Code working directory (the directory this session launched from), label it explicitly — it must be copied last. If the CWD is not one of the cloud-synced project folders, no folder needs special ordering.
@@ -274,7 +272,7 @@ robocopy "<source>" "<target>" /E /COPY:DAT /DCOPY:DAT /R:3 /W:5 /XJ
 - `/DCOPY:DAT` — same for directories
 - `/R:3 /W:5` — retry 3x with 5s wait on locked files
 - `/XJ` — exclude junction points. Junctions are common in cloud sync folder structures; following them can copy unintended data or create loops. If the user's project intentionally uses junctions, they will need to recreate them manually in the target.
-- **Exit code check:** If exit code > 7, stop and report. Codes 0–3 indicate normal success. Codes 4–7 indicate non-fatal mismatches (extra files, timestamp differences) — report them but continue.
+- **Exit code check:** If exit code > 7, stop and report. Codes 0-3 indicate normal success. Codes 4-7 indicate non-fatal mismatches (extra files, timestamp differences) — report them but continue.
 
 **macOS/Linux:**
 ```bash
@@ -282,6 +280,7 @@ rsync -avHE --progress "<source>/" "<target>/"
 ```
 - Trailing slashes are critical — they copy contents, not the directory itself into a subdirectory.
 - `-a` archive (preserves symlinks as symlinks, does not follow them), `-v` verbose, `-H` hard links, `-E` extended attributes
+- **iCloud note:** If migrating from iCloud, consider adding `--exclude='._*'` to skip Apple Double files. After copying, verify extended attributes on a sample file with `xattr -l <file>`. iCloud-specific xattrs (`com.apple.icloud.*`, `com.apple.quarantine`) on migrated files could trigger unexpected behavior — clear with `xattr -cr <target>` if needed.
 - **Exit code check:** If non-zero, stop and report.
 
 ### 4.3 — Check for symlinks and junctions
@@ -298,7 +297,11 @@ Get-ChildItem -Recurse -Force "<source>" | Where-Object { $_.Attributes -match '
 find "<source>" -type l
 ```
 
-If any are found, report them: "The source folder contains [n] symlinks/junctions that were [excluded by /XJ (Windows) / copied as symlinks (macOS/Linux)]. If any of these are critical to your project, you may need to recreate them manually in the target." Do not attempt to resolve or follow them.
+If any are found, report them: "The source folder contains [n] symlinks/junctions that were [excluded by /XJ (Windows) / copied as symlinks (macOS/Linux)]. If any of these are critical to your project, you may need to recreate them manually in the target."
+
+**macOS/Linux additional check:** For any symlinks that were copied, check whether their targets are absolute paths pointing to the old cloud-sync location. These symlinks survived the copy but still point to the original path — they may need their targets updated manually. Report any such symlinks with their current targets.
+
+Do not attempt to resolve or follow symlinks/junctions.
 
 ### 4.4 — Verify file counts
 
@@ -400,12 +403,13 @@ Identical in substance to Session 1's Role — migration assistant, methodical, 
 
 **Phase 7 — Settings Migration (steps numbered 7.1, 7.2, etc.):**
 
-7.1 — List `~/.claude/projects/` contents.
+7.1 — List `~/.claude/projects/` contents. Compare against what was recorded during Session 1. If the directory structure looks different from what Session 1 recorded (directories missing, unexpected naming convention, new structure), stop and report before proceeding — a Claude Code CLI update between sessions may have changed the path-hash convention.
 
 7.2 — For each migrated project, identify old path-hash directories that map to it (there may be more than one — some projects had Claude Code launched from subdirectories). Only migrate path-hash directories that contain memory or settings files. Flag empty ones as "no settings to migrate."
 
 7.3 — For each old path-hash directory with settings, determine the corresponding new path-hash directory name by encoding the new target path. Check whether the new directory already exists in `~/.claude/projects/`:
-  - If it exists, check whether it already has content (from Claude Code sessions launched at the new path). If so, report both old and new contents and ask the user whether to merge, overwrite, or skip.
+  - If it exists and already has content (from Claude Code sessions launched at the new path), report both old and new contents and ask the user: **(a) overwrite with old** (restore the historical version from before migration), **(b) keep new** (preserve what the new session has already created), or **(c) skip** (leave both untouched, user resolves later).
+  - If it exists but is empty, proceed with copying.
   - If it doesn't exist, create it (including the `memory/` subdirectory).
 
 7.4 — Copy memory and settings files from old to new. Do not delete old directories.
@@ -429,7 +433,7 @@ Prerequisite: Phase 7 must complete first.
   - **Flag for user:** Hardcoded paths in scripts, configuration files, or documentation — report location and let the user decide
   - Wait for approval before making any changes.
 
-8.3 — Apply approved updates. For each file modified, report the specific changes made (old string → new string, line numbers).
+8.3 — Apply approved updates. For each file modified, report the specific changes made (old string -> new string, line numbers).
 
 8.4 — Write Phase 8 results to `[target-path]/migration-session-2-results.md`.
 
@@ -470,7 +474,7 @@ Before writing the file, verify the generated prompt contains all required eleme
 - Phase-prefixed step numbering (7.1, 7.2, etc.) with no gaps
 - Commands match the detected platform/shell
 
-**Proportional output:** Scale the generated prompt to the scope. Rough heuristic: ~20–30 lines per migrated folder for the migration table and search strings, plus ~100 lines of fixed structure (role, constraints, phases, definition of done). A 2-folder migration should not produce a 200-line prompt.
+**Proportional output:** Include everything the Session 2 prompt needs to execute correctly. Don't pad with explanatory prose, but don't truncate operational detail to hit a target length. A 2-folder migration needs the same structural completeness as a 10-folder migration — just a shorter migration table.
 
 If any element is missing or inconsistent, fix it before saving.
 
@@ -490,7 +494,7 @@ Present the following to the user:
 3. Navigate to the new working directory: `cd "[new active working directory path]"`
 4. Launch Claude Code: `claude`
 5. Paste the contents of `[target-path]/session-2-prompt.md` as the first message.
-6. Follow the confirmation gates through Phases 7–9.
+6. Follow the confirmation gates through Phases 7-9.
 
 **After Session 2 completes:**
 - Resume cloud sync
@@ -516,18 +520,20 @@ This session is complete when:
 - **Never delete anything.** Not source folders, not partial copies, not old path-hash directories. Never.
 - **Never assume paths.** Auto-detect first. If detection fails, ask. If both fail, stop.
 - **Platform-correct commands everywhere.** Every command in this session and in the generated Session 2 prompt must match the detected OS. Verify before executing.
-- **Proportional artifacts.** Scale output to scope. Don't generate a 200-line continuation prompt for a 2-folder migration.
+- **Proportional artifacts.** Scale output to scope — same structural completeness regardless of folder count, but don't pad a 2-folder migration with unnecessary bulk.
 - **The methodology is non-negotiable.** Phased approach, constraint architecture, verification steps, confirmation gates, and no-delete policy apply regardless of migration size. These protect the user's data.
 - **Handle known edge cases:**
   - **Files On-Demand / Smart Sync placeholders** (cloud-only stubs that copy as empty files) — the pre-flight checklist addresses this, but if file counts are suspiciously low after copy, flag it
   - **Dubious ownership warnings** from git (`safe.directory` in gitconfig) — detect and defer to Session 2
   - **Path-hash directory timing** (new directories created on first launch from new path) — this is why Session 2 exists; Phase 7 creates missing directories explicitly
   - **Locked files during copy** — retry behavior is built into robocopy/rsync flags
-  - **Symlinks and junctions** — report presence, exclude junctions on Windows (`/XJ`), preserve symlinks on macOS/Linux. Do not follow or resolve them
+  - **Symlinks and junctions** — report presence, exclude junctions on Windows (`/XJ`), preserve symlinks on macOS/Linux. Flag macOS/Linux symlinks with absolute targets pointing to old cloud-sync paths — they survive copy but point to the wrong location
   - **Multiple source roots** within the same cloud service — projects may be scattered across different subdirectories (Documents, Desktop, shared folders). Inventory all of them
   - **Subdirectory launches** — path-hash directories may point to a subdirectory of a project folder, not the root. Map the parent-child relationship
   - **Stale/orphan path-hash directories** — entries that decode to unrecognizable paths, old project names, or aborted prior migrations. Report them, don't migrate them, don't delete them
   - **Pre-existing target folders** — check before copying, never merge silently
   - **Git submodules** — flag and advise verification after copy
   - **.planning/ directories** — contain historical records with old paths. Default: preserve as-is, report for user decision
+  - **iCloud extended attributes (macOS)** — iCloud-specific xattrs on migrated files could trigger unexpected behavior. Flag for iCloud migrations
+  - **CLI version changes between sessions** — if `~/.claude/projects/` structure doesn't match Session 1's record when Session 2 runs, stop and report
 - **If no cloud-synced project folders are found, exit gracefully.** Don't migrate what doesn't need migrating.

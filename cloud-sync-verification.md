@@ -487,10 +487,143 @@ Note: References found in `.planning/` directories should be flagged with a note
 
 ## Phase 5 — Report
 
-<!-- Phase 5 content: traffic light summary, findings by phase, consolidated action list -->
-<!-- Populated by Plan 03 -->
+Generate `verification-report.md` in CWD with the complete audit results. If `verification-report.md` already exists, overwrite it — the report is a point-in-time snapshot. The latest run supersedes the previous one.
 
-*[Phase content to be added]*
+### 5.1 — Traffic light summary
+
+The report opens with a header block and traffic light summary — one status per audit area:
+
+```markdown
+# Verification Report
+**Generated:** [ISO timestamp]
+**Shell:** [PowerShell / bash-on-Windows / native bash/zsh]
+**Projects audited:** [n]
+**Path-hash entries audited:** [n]
+
+## Summary
+
+| Audit Area | Status | Findings |
+|------------|--------|----------|
+| Project Health | [GREEN / YELLOW / RED] | [brief — e.g., "All 11 projects healthy" or "2 projects with git fsck errors"] |
+| Path-Hash Integrity | [GREEN / YELLOW / RED] | [brief — e.g., "All entries valid" or "3 stale, 1 orphan"] |
+| Stale References | [GREEN / YELLOW / RED] | [brief — e.g., "No cloud references found" or "5 references in 3 files"] |
+```
+
+**Traffic light criteria:**
+
+| Color | Project Health | Path-Hash Integrity | Stale References |
+|---|---|---|---|
+| **Green** | All projects pass git fsck, no projects on cloud storage | All entries valid | No cloud path references found |
+| **Yellow** | Git fsck warnings (not errors), uncommitted changes, symlinks found, unusually low file counts | Orphan or undecodable entries found (no stale) | References found only in `.planning/` or memory files |
+| **Red** | Git fsck errors, projects still running from cloud-synced storage | Stale entries found (cloud path with local equivalent) | References found in CLAUDE.md or settings files |
+
+If an audit area was skipped (e.g., no cloud services detected so Phase 4 was skipped, or no path-hash entries so Phase 3 was skipped), show the status as **GREEN** with the finding text noting the skip reason: "Skipped — no cloud services detected" or "Skipped — no path-hash entries found."
+
+### 5.2 — Findings by audit area
+
+Organize findings by audit phase as the primary structure, with findings grouped by project within each section.
+
+Each finding follows the three-part pattern:
+
+```markdown
+## Project Health
+
+### [Project Name]
+
+**Finding:** [What was detected — e.g., "Git fsck reported 2 errors in OB1"]
+**Explanation:** [Plain-language explanation, 1-2 sentences — e.g., "Git's internal consistency check found corrupted objects. This can happen during interrupted writes or incomplete copies."]
+**Recommendation:** [Concrete action — e.g., "Run `git fsck --full` in `C:\Users\rlasalle\Projects\OB1` to see the full error list, then consider re-cloning if objects are unrecoverable."]
+```
+
+For each finding, use the recommendation mapping below. Each recommendation names the toolkit prompt file and includes brief context explaining what it does for the specific finding:
+
+| Finding | Recommendation |
+|---|---|
+| Stale path-hash directories | "Use `cloud-sync-cleanup.md` to remove these stale entries — it will verify each deletion individually before proceeding." |
+| Cloud-synced path references in CLAUDE.md or settings | "Use `cloud-sync-cleanup.md` to clean up stale references, or manually update `[file]` line `[n]` to replace the cloud-synced path with the local equivalent." |
+| Cloud-synced path references in memory files | "Use `cloud-sync-cleanup.md` to address stale references. Memory file references are lower priority — Claude Code will update these naturally as you work from the new paths." |
+| Cloud-synced path references in `.planning/` files | "These are historical records of executed plans. Updating them is optional and may not be beneficial — the references document what was true at the time." |
+| Git fsck errors | "Run `git fsck --full` in `[folder path]` to investigate. If objects are unrecoverable, consider re-cloning from remote." |
+| Git fsck warnings | "Warnings are informational and typically non-critical. Run `git fsck --full` in `[folder path]` for details if concerned." |
+| Projects still on cloud-synced paths (no local copy) | "Use `claude-code-cloud-sync-migration.md` to migrate this project to local storage — it will copy files, verify integrity, and set up Claude Code settings at the new path." |
+| Projects still on cloud-synced paths (local copy exists) | "This project appears to have a local copy at `[local path]`. Use `cloud-sync-cleanup.md` when ready to remove the cloud-synced source folder." |
+| Orphan path-hash entries | "This entry points to a path that no longer exists. Delete manually or use `cloud-sync-cleanup.md` to remove it." |
+| Undecodable path-hash entries | "This entry cannot be decoded to a valid path. Inspect the contents at `~/.claude/projects/[entry]/` and delete manually if not needed, or use `cloud-sync-cleanup.md`." |
+| Symlinks found | "Symlinks can indicate incomplete copies or broken references. Verify each symlink target exists and is accessible." |
+| Unusually low file count (0 or 1 file) | "This project directory has very few files, which may indicate an incomplete copy or an empty project. Verify the project contents are correct." |
+
+For clean audit areas, show positive confirmation rather than silence:
+
+```markdown
+## Project Health
+
+All [n] projects passed health checks. No git fsck errors, no projects running from cloud-synced storage.
+```
+
+```markdown
+## Path-Hash Integrity
+
+All [n] path-hash entries are valid. No stale, orphan, or undecodable entries found.
+```
+
+```markdown
+## Stale References
+
+No cloud-synced path references found in any searched files.
+```
+
+### 5.3 — Consolidated action list
+
+At the bottom of the report, generate a deduplicated action list that groups related findings by recommended action and counts affected items. Priority order: migrate (highest impact) > cleanup stale > update references > git investigate > review orphans (lowest impact).
+
+```markdown
+## Recommended Actions
+
+1. **Migrate [n] project(s) off cloud storage** — Use `claude-code-cloud-sync-migration.md` to copy these projects to local paths:
+   - [project name] at [cloud path]
+
+2. **Clean up [n] stale path-hash entries** — Use `cloud-sync-cleanup.md` to remove old settings directories that now have local equivalents.
+
+3. **Update [n] stale reference(s)** — Use `cloud-sync-cleanup.md` or manually update these files:
+   - [file path], line [n]
+
+4. **Investigate [n] git integrity issue(s)** — Run `git fsck --full` in these projects:
+   - [project name] at [path]
+
+5. **Review [n] orphan/undecodable path-hash entries** — Delete manually or use `cloud-sync-cleanup.md`:
+   - [entry name]
+```
+
+The numbering and items shown are dynamic — only include categories that have findings. If a category has no findings, omit it entirely. Do not show empty categories.
+
+If no actions are needed across all audit areas:
+
+```markdown
+## Recommended Actions
+
+No actions recommended — your environment is clean.
+```
+
+### 5.4 — Present summary to user
+
+After writing `verification-report.md`, display the traffic light summary table and the consolidated action list in the terminal — the same content written to the report. Then:
+
+```
+Verification complete. Report saved to verification-report.md in [CWD path].
+```
+
+If actions were recommended:
+
+```
+Review the full report for detailed findings and explanations.
+Start with the highest-priority action listed above.
+```
+
+If no actions were needed:
+
+```
+Your environment is clean. No further action needed.
+```
 
 ---
 

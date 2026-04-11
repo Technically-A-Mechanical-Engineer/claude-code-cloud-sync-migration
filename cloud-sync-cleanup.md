@@ -44,6 +44,14 @@ These are your original project folders on OneDrive, Dropbox, Google Drive, or i
 6. We recommend working from the new local paths for at least a few days before deleting source folders — this gives you time to discover any issues with the local copies
 7. Delete source folders one at a time, verifying each before moving to the next
 
+### What If I Need to Undo a Deletion?
+
+| What Was Deleted | Recovery | Details |
+|------------------|----------|---------|
+| **Path-hash directory** (under `~/.claude/projects/`) | Partially recoverable | Settings regenerate automatically when you launch Claude Code from the project path. Memory files (AI-generated context notes) are lost permanently — Claude Code will rebuild context over time as you work. |
+| **Source folder on cloud storage** | Usually recoverable (time-limited) | Cloud services retain deleted files in their recycle bin: OneDrive 93 days (business) / 30 days (personal), Dropbox 30-180 days (plan-dependent), Google Drive 30 days, iCloud 30 days. After the retention window, files are permanently gone. Check your cloud service's recycle bin immediately if you need to recover. |
+| **Source folder on local disk** | Not recoverable | This scenario should not occur — the cleanup prompt only deletes source folders that are on cloud-synced storage, not local paths. If you manually deleted a local folder outside this tool, it is not recoverable unless you have a separate backup. |
+
 ---
 
 *Everything below is instructions for Claude Code.*
@@ -73,7 +81,7 @@ Phase 4 only runs after Phases 2 and 3 are complete. Every deletion requires ind
 These govern everything below. Do not proceed past any violation — stop and report.
 
 - **Verified deletion only.** Do NOT delete any source folder without first verifying that the local copy exists, file counts match or exceed the source, file sizes are comparable, git fsck passes (if applicable), and hidden directories are present. Show the verification results to the user alongside the delete prompt.
-- **Individual confirmation on every deletion.** Do NOT batch deletions. Every path-hash directory deletion, every orphan deletion, every source folder deletion gets its own confirmation dialog with verification evidence. No exceptions.
+- **Individual confirmation on every deletion.** Every path-hash directory deletion, every orphan deletion, every source folder deletion gets its own confirmation dialog with verification evidence. After three consecutive confirmed deletions within a phase, offer the user the option to switch to batch mode for the remaining items in that phase — batch mode is optional, and the user can decline and continue with individual confirmations. Even in batch mode, verification evidence is still shown for each item; only the confirmation prompt is suppressed (items are auto-confirmed unless verification fails).
 - **No admin elevation.** Do not attempt elevation, `runas`, `sudo`, `Start-Process -Verb RunAs`, or any operation requiring administrator privileges. If a deletion fails due to permissions, stop and report — do not attempt workarounds that require elevation.
 - **Confirmation gates between phases.** Do NOT proceed from Phase 2 to Phase 3, or from Phase 3 to Phase 4, without explicit user confirmation.
 - **Phase ordering is mandatory.** Phase 4 (source folders — highest risk) runs only after Phases 2 and 3 (path-hash directories — lower risk) are complete. Do not skip ahead.
@@ -359,6 +367,24 @@ If the user declines (`n`), append a skip entry:
 | [ISO timestamp] | path-hash | ~/.claude/projects/[stale-path-hash] | SKIPPED by user |
 ```
 
+### 2.4a — Batch mode offer
+
+After three consecutive deletions confirmed by the user (no skips, no failures), offer:
+
+```
+The last 3 deletions all completed cleanly. Would you like to:
+  (a) Continue confirming each deletion individually
+  (b) Auto-confirm remaining stale path-hash directories — I'll still show verification for each, but only stop if verification fails or an anomaly is detected
+```
+
+If the user chooses (b), process remaining items in Phase 2 by showing verification evidence for each but auto-confirming deletions. Stop and revert to individual confirmation if:
+- Verification fails for any item (local equivalent missing or empty)
+- A deletion fails (permission error, locked files)
+
+If the user chooses (a) or declines, continue with individual confirmations for the rest of Phase 2.
+
+The batch mode offer resets between phases — Phase 3 starts with individual confirmations regardless of what was chosen in Phase 2.
+
 ### 2.5 — Phase 2 summary and gate
 
 After all stale entries have been processed, present a summary:
@@ -481,6 +507,10 @@ For skipped entries:
 ```
 | [ISO timestamp] | orphan | ~/.claude/projects/[entry] | SKIPPED by user |
 ```
+
+### 3.5a — Batch mode offer
+
+Same offer as Phase 2.4a: after three consecutive confirmed deletions (no skips, no failures), offer batch mode for remaining Phase 3 items. Same rules apply — show verification evidence for each, auto-confirm unless verification fails or an anomaly is detected. If the user declines, continue with individual confirmations.
 
 ### 3.6 — Phase 3 summary and gate
 
@@ -820,6 +850,10 @@ For partial deletions:
 ```
 | [ISO timestamp] | source | [source-path] | PARTIAL — [n] files remaining. Investigation required. |
 ```
+
+### 4.7a — Batch mode offer
+
+Same offer as Phase 2.4a: after three consecutive confirmed source folder deletions (no skips, no blocks, no failures), offer batch mode for remaining Phase 4 items. Same rules apply — show full verification evidence and cloud-propagation warning for each, auto-confirm unless verification fails. In batch mode, the cloud-propagation warning is still displayed for every item — it is never suppressed.
 
 ### 4.8 — Phase 4 summary
 

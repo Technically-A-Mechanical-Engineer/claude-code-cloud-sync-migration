@@ -8,11 +8,11 @@ Three independent prompts, each a single markdown file:
 
 | Prompt | File | Version | Purpose |
 |--------|------|---------|---------|
-| Migration | `claude-code-cloud-sync-migration.md` | v1.2.0 | Copies projects from cloud-synced storage to local paths |
+| Migration | `cloud-sync-migration.md` | v1.2.0 | Copies projects from cloud-synced storage to local paths |
 | Cleanup | `cloud-sync-cleanup.md` | v1.0.0 | Removes stale path-hash dirs, orphan entries, source folders |
 | Verification | `cloud-sync-verification.md` | v1.0.0 | Read-only audit of environment health |
 
-All three passed NEC evaluation and manual testing (see `test-artifacts/` for test report and artifacts).
+All three passed NEC evaluation and manual testing (see `docs/test-artifacts/` for test report and artifacts).
 
 ## v2 Vision: Five-Prompt Toolkit
 
@@ -51,7 +51,7 @@ Two new prompts added. All five remain independent markdown files — one file, 
 1. **Seed verification** (if seeds were planted) — Did the markers survive the copy? Checksum match, git tag present, memory entry intact.
 2. **Health checks** (always runs) — Git integrity, memory connection, stale references, file system, operations test.
 
-**A working draft exists:** `post-migration-health-check.md` in the project root is a v0.1 draft of the health check portion. It was tested against all migrated projects on 2026-04-11 — all passed. This draft becomes the foundation for the sow prompt's health check section.
+**A working draft exists:** `docs/design/post-migration-health-check.md` is a v0.1 draft of the health check portion. It was tested against all migrated projects on 2026-04-11 — all passed. This draft becomes the foundation for the sow prompt's health check section.
 
 **Two operating modes:**
 - **With seeds:** Full fidelity check + health checks. High confidence. Can replace the soak-period recommendation for users willing to run both prompts.
@@ -75,7 +75,7 @@ Testing surfaced four findings against the existing prompts. These should be add
 | F-03 | Verification | Low | sed errors during Phase 3 path-hash decoding on bash-on-Windows — quoting issue, doesn't affect results but looks bad |
 | F-04 | Migration | Informational | Parallel tool calls can cancel each other under manual approval mode — consider noting in human-readable section |
 
-Full details in `test-artifacts/2026-04-11-01-test-report.md`.
+Full details in `docs/test-artifacts/2026-04-11-01-test-report.md`.
 
 ## v2 Requirements from v1 REQUIREMENTS.md
 
@@ -94,11 +94,11 @@ These were identified during v1 but deferred:
 
 | File | What it contains |
 |------|-----------------|
-| `post-migration-health-check.md` | v0.1 draft of the sow prompt's health check section (tested, working) |
-| `test-artifacts/2026-04-11-01-test-report.md` | Full test report with findings F-01 through F-04 |
-| `test-artifacts/2026-04-11-01-migration-session-1-results.md` | Migration test output (6 folders, all passed) |
-| `test-artifacts/2026-04-11-01-session-2-prompt.md` | Generated Session 2 prompt from migration test |
-| `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Original design spec (requirements source for v1) |
+| `docs/design/post-migration-health-check.md` | v0.1 draft of the sow prompt's health check section (tested, working) |
+| `docs/test-artifacts/2026-04-11-01-test-report.md` | Full test report with findings F-01 through F-04 |
+| `docs/test-artifacts/2026-04-11-01-migration-session-1-results.md` | Migration test output (6 folders, all passed) |
+| `docs/test-artifacts/2026-04-11-01-session-2-prompt.md` | Generated Session 2 prompt from migration test |
+| `docs/design/2026-04-10-cloud-sync-toolkit-design.md` | Original design spec (requirements source for v1) |
 | `.planning/milestones/v1.2.0-REQUIREMENTS.md` | Archived v1 requirements with traceability |
 | `.planning/RETROSPECTIVE.md` | v1.2.0 retrospective with lessons learned |
 

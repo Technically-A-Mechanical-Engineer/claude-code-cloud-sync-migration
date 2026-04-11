@@ -6,7 +6,7 @@ A three-prompt toolkit that Claude Code users paste into CLI to migrate project 
 
 | Prompt | File | Purpose |
 |---|---|---|
-| Migration | `claude-code-cloud-sync-migration.md` | Copies projects from cloud-synced storage to local paths |
+| Migration | `cloud-sync-migration.md` | Copies projects from cloud-synced storage to local paths |
 | Cleanup | `cloud-sync-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries |
 | Verification | `cloud-sync-verification.md` | Audits current state, reports findings, recommends next steps |
 
@@ -21,23 +21,23 @@ Robert LaSalle
 - **Migration prompt:** v1.2.0 (shipped). Tagged migration-v1.2.0, merged to master.
 - **Cleanup prompt:** v1.0.0 (shipped). 946 lines, NEC evaluation passed with 4 minor findings (all fixed).
 - **Verification prompt:** v1.0.0 (shipped). 658 lines. NEC evaluation passed all eight frameworks, zero findings.
-- **Design spec:** `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the three-prompt expansion. This is the requirements source for all GSD planning.
-- **Evaluation:** All three prompts passed all applicable NEC prompt frameworks (details in `prompt-evaluation-migration.md`, `prompt-evaluation-cleanup.md`, and `prompt-evaluation-verification.md`)
+- **Design spec:** `docs/design/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the three-prompt expansion. This is the requirements source for all GSD planning.
+- **Evaluation:** All three prompts passed all applicable NEC prompt frameworks (details in `docs/evaluations/prompt-evaluation-migration.md`, `docs/evaluations/prompt-evaluation-cleanup.md`, and `docs/evaluations/prompt-evaluation-verification.md`)
 
 ## File Map
 
 | File | Purpose |
 |---|---|
-| `claude-code-cloud-sync-migration.md` | Migration prompt (current: v1.2.0). Prior versions in git history. |
+| `cloud-sync-migration.md` | Migration prompt (current: v1.2.0). Prior versions in git history. |
 | `cloud-sync-cleanup.md` | Cleanup prompt (current: v1.0.0). Built 2026-04-10/11. |
 | `cloud-sync-verification.md` | Verification prompt (current: v1.0.0). Built 2026-04-11. |
-| `dev-status-migration.md` | Migration prompt dev status — version history, test execution, findings, testing plan |
-| `dev-status-cleanup.md` | Cleanup prompt dev status — build summary, NEC evaluation, testing plan |
-| `dev-status-verification.md` | Verification prompt build summary, NEC evaluation, testing plan |
-| `prompt-evaluation-migration.md` | Migration prompt NEC framework evaluation (v1.1.1 and v1.2.0) |
-| `prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation (v1.0.0) |
-| `prompt-evaluation-verification.md` | Verification prompt NEC framework evaluation (v1.0.0) |
-| `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
+| `docs/dev-status/dev-status-migration.md` | Migration prompt dev status — version history, test execution, findings, testing plan |
+| `docs/dev-status/dev-status-cleanup.md` | Cleanup prompt dev status — build summary, NEC evaluation, testing plan |
+| `docs/dev-status/dev-status-verification.md` | Verification prompt build summary, NEC evaluation, testing plan |
+| `docs/evaluations/prompt-evaluation-migration.md` | Migration prompt NEC framework evaluation (v1.1.1 and v1.2.0) |
+| `docs/evaluations/prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation (v1.0.0) |
+| `docs/evaluations/prompt-evaluation-verification.md` | Verification prompt NEC framework evaluation (v1.0.0) |
+| `docs/design/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
 
 ## Architecture
 
@@ -84,14 +84,14 @@ The prompt's constraint architecture extends the standard four-quadrant pattern 
 ## Development Workflow
 
 - Development happens in this folder
-- Changes to the prompt update `claude-code-cloud-sync-migration.md` in place — git tracks version history
-- Dev status reports track findings, version history, and testing plans per prompt (`dev-status-migration.md`, `dev-status-cleanup.md`)
+- Changes to the prompt update `cloud-sync-migration.md` in place — git tracks version history
+- Dev status reports track findings, version history, and testing plans per prompt (`docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`)
 - Evaluation uses Nate's Executive Circle prompt frameworks — run the same eight-framework review on each new version
 - Testing uses the "fresh re-run, new target" approach documented in the dev status report
 
 ## Rules
 
-- New versions update `claude-code-cloud-sync-migration.md` in place — prior versions are preserved in git history
+- New versions update `cloud-sync-migration.md` in place — prior versions are preserved in git history
 - The dev status report is the single source of truth for what needs to change in the next version
 - When building a new version, start from the most recent prompt file as the base
 
@@ -128,7 +128,7 @@ A three-prompt toolkit that Claude Code CLI users paste into their terminal to m
 - None — This is a single-file prompt. No frameworks are installed or required.
 - Nate's Executive Circle prompt kits (State of Prompt Engineering Kit, Six Weeks Kit, Building Agents Is 80% Plumbing Kit, Skills Are Infrastructure Now Kit) — Used to evaluate the prompt against eight frameworks. Not runtime dependencies.
 - Manual testing via fresh re-run to a parallel target path — No automated test runner exists.
-- Not applicable — development is editing `claude-code-cloud-sync-migration.md` in place.
+- Not applicable — development is editing `cloud-sync-migration.md` in place.
 ## Key Dependencies
 - Claude Code CLI (user's installation) — The prompt is useless without it. Version matters: Phase 7.1 includes an escalation trigger if the `~/.claude/projects/` directory structure changes between sessions (CLI update risk).
 - robocopy (Windows built-in) — Copy tool for Windows migrations. Called from within the prompt's Phase 4 instructions.

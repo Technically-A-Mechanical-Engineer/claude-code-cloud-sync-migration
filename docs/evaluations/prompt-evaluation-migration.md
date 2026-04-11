@@ -1,7 +1,7 @@
 # Cloud-Sync Migration Prompt — v1.2.0 Evaluation
 **Evaluated:** 2026-04-10
 **Evaluator:** Claude (Claude Code CLI — GSD Phase 1 execution)
-**Document under review:** `claude-code-cloud-sync-migration.md` (v1.2.0)
+**Document under review:** `cloud-sync-migration.md` (v1.2.0)
 
 ---
 

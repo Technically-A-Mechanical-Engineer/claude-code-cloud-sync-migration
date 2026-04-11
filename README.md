@@ -10,7 +10,7 @@ Working in cloud-synced folders (OneDrive, Dropbox, Google Drive, iCloud) causes
 
 | Prompt | File | What It Does |
 |--------|------|-------------|
-| **Migration** | [`claude-code-cloud-sync-migration.md`](claude-code-cloud-sync-migration.md) | Copies project folders from cloud storage to local paths. Never deletes originals. Two-session design with generated continuation prompt. |
+| **Migration** | [`cloud-sync-migration.md`](cloud-sync-migration.md) | Copies project folders from cloud storage to local paths. Never deletes originals. Two-session design with generated continuation prompt. |
 | **Cleanup** | [`cloud-sync-cleanup.md`](cloud-sync-cleanup.md) | Removes stale path-hash directories, orphan entries, and source folders left behind after migration. Every deletion individually confirmed with verification evidence. |
 | **Verification** | [`cloud-sync-verification.md`](cloud-sync-verification.md) | Audits project health, path-hash integrity, and stale references. Reports findings with actionable recommendations. |
 
@@ -30,7 +30,7 @@ Claude Code users who launched their projects from a OneDrive, Dropbox, Google D
 
 ### Migration (start here if you haven't moved your projects yet)
 
-1. Download [`claude-code-cloud-sync-migration.md`](claude-code-cloud-sync-migration.md)
+1. Download [`cloud-sync-migration.md`](cloud-sync-migration.md)
 2. Open Claude Code CLI from your current (cloud-synced) project folder
 3. Copy the entire contents of the file and paste it as your first message
 4. Follow the prompts — Session 1 copies folders, Session 2 migrates settings
@@ -69,12 +69,12 @@ All three prompts use three-way shell detection to provide platform-correct comm
 
 | File | Purpose |
 |------|---------|
-| [`dev-status-migration.md`](dev-status-migration.md) | Migration prompt version history, test results, findings |
-| [`dev-status-cleanup.md`](dev-status-cleanup.md) | Cleanup prompt build summary, NEC evaluation, testing plan |
-| [`prompt-evaluation-migration.md`](prompt-evaluation-migration.md) | Migration prompt eight-framework NEC evaluation |
-| [`prompt-evaluation-cleanup.md`](prompt-evaluation-cleanup.md) | Cleanup prompt eight-framework NEC evaluation |
-| [`dev-status-verification.md`](dev-status-verification.md) | Verification prompt build summary, NEC evaluation, testing plan |
-| [`prompt-evaluation-verification.md`](prompt-evaluation-verification.md) | Verification prompt eight-framework NEC evaluation |
+| [`docs/dev-status/dev-status-migration.md`](docs/dev-status/dev-status-migration.md) | Migration prompt version history, test results, findings |
+| [`docs/dev-status/dev-status-cleanup.md`](docs/dev-status/dev-status-cleanup.md) | Cleanup prompt build summary, NEC evaluation, testing plan |
+| [`docs/evaluations/prompt-evaluation-migration.md`](docs/evaluations/prompt-evaluation-migration.md) | Migration prompt eight-framework NEC evaluation |
+| [`docs/evaluations/prompt-evaluation-cleanup.md`](docs/evaluations/prompt-evaluation-cleanup.md) | Cleanup prompt eight-framework NEC evaluation |
+| [`docs/dev-status/dev-status-verification.md`](docs/dev-status/dev-status-verification.md) | Verification prompt build summary, NEC evaluation, testing plan |
+| [`docs/evaluations/prompt-evaluation-verification.md`](docs/evaluations/prompt-evaluation-verification.md) | Verification prompt eight-framework NEC evaluation |
 
 ## Design Principles
 

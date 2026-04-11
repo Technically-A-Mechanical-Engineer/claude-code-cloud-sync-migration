@@ -5,7 +5,7 @@ After migrating your Claude Code projects off cloud-synced storage (OneDrive, Dr
 
 **Compatibility:** Requires Claude Code CLI (terminal or IDE extension). Does not work in claude.ai web, Claude desktop app, or Cowork mode. Tested with Claude Code CLI as of April 2026.
 
-**Works with or without migration artifacts.** If you previously ran `claude-code-cloud-sync-migration.md`, this prompt reads your migration results for high-confidence cleanup. If you migrated manually or just want to clean up stale Claude Code settings, it detects everything independently.
+**Works with or without migration artifacts.** If you previously ran `cloud-sync-migration.md`, this prompt reads your migration results for high-confidence cleanup. If you migrated manually or just want to clean up stale Claude Code settings, it detects everything independently.
 
 ## Manual Cleanup Checklist
 
@@ -714,7 +714,7 @@ If blocked, report:
   Git fsck:          [ERRORS FOUND — see details above]
   Hidden dirs:       [.git MISSING from local]
 
-Recommendation: Re-run the migration prompt (claude-code-cloud-sync-migration.md)
+Recommendation: Re-run the migration prompt (cloud-sync-migration.md)
 for this specific folder to ensure a complete copy before deleting the source.
 ```
 
@@ -900,7 +900,7 @@ Cleanup complete. Results saved to cleanup-results.md in [CWD path].
 
 Next steps:
 - If Phase 4 was deferred: Re-run this cleanup prompt when you're ready to delete source folders
-- If any source folders were blocked: Re-run the migration prompt (claude-code-cloud-sync-migration.md) for those specific folders, then re-run cleanup
+- If any source folders were blocked: Re-run the migration prompt (cloud-sync-migration.md) for those specific folders, then re-run cleanup
 - To verify overall project health: Paste cloud-sync-verification.md into Claude Code CLI
 - Resume cloud sync if it was paused during cleanup
 ```

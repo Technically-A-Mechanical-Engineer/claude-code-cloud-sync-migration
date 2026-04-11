@@ -1,6 +1,6 @@
 # Migration Prompt — Development Status
 **Updated:** 2026-04-11
-**Prompt file:** `claude-code-cloud-sync-migration.md`
+**Prompt file:** `cloud-sync-migration.md`
 **Current version:** v1.2.0 (shipped)
 **Project owner:** Robert LaSalle
 **Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
@@ -13,7 +13,7 @@ A single-file prompt that any Claude Code user can paste into CLI to migrate the
 
 The prompt originated from Robert's own OneDrive-to-local migration (April 9-10, 2026) and was generalized into a distributable tool through iterative review against prompting best practices from Nate's Executive Circle content library.
 
-This is one of three prompts in the Cloud-Sync Toolkit. See also: `dev-status-cleanup.md`, and (after Phase 3) `dev-status-verification.md`.
+This is one of three prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-cleanup.md`, and (after Phase 3) `docs/dev-status/dev-status-verification.md`.
 
 ---
 
@@ -39,7 +39,7 @@ v1.1.1 was evaluated against eight frameworks from Nate's Executive Circle:
 
 **Result: Pass on all eight frameworks.** No critical or moderate findings. One positive observation: the prompt's five-dimension constraint model (Must / Must-not / Prefer / Escalate / Recover) extends the standard four-quadrant Constraint Architecture pattern.
 
-Full evaluation in `prompt-evaluation-migration.md`.
+Full evaluation in `docs/evaluations/prompt-evaluation-migration.md`.
 
 ---
 
@@ -196,7 +196,7 @@ This exercises: three-way shell detection, multi-signal prior migration detectio
 ## Design Spec
 
 The approved design for expanding this project into a three-prompt toolkit is in:
-`docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md`
+`docs/design/2026-04-10-cloud-sync-toolkit-design.md`
 
 This is the requirements source for all GSD planning. It covers the migration v1.2.0 changes, cleanup prompt v1.0.0 architecture, verification prompt v1.0.0 architecture, shared design principles, build sequence, and versioning/contribution model.
 

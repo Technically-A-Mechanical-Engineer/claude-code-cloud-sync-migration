@@ -11,7 +11,7 @@ Expand the cloud-sync migration project from a single prompt file into a three-p
 
 | Prompt | File | Purpose | Deletes anything? |
 |---|---|---|---|
-| Migration | `claude-code-cloud-sync-migration.md` | Copies projects from cloud-synced storage to local paths | No |
+| Migration | `cloud-sync-migration.md` | Copies projects from cloud-synced storage to local paths | No |
 | Cleanup | `cloud-sync-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries | Yes (with confirmation) |
 | Verification | `cloud-sync-verification.md` | Audits current state, reports findings, recommends next steps | No |
 
@@ -21,17 +21,19 @@ Expand the cloud-sync migration project from a single prompt file into a three-p
 
 ```
 claude-code-cloud-sync-migration/
-  claude-code-cloud-sync-migration.md   (migration prompt, v1.2.0)
+  cloud-sync-migration.md               (migration prompt, v1.2.0)
   cloud-sync-cleanup.md                 (cleanup prompt, v1.0.0 - new)
   cloud-sync-verification.md            (verification prompt, v1.0.0 - new)
-  dev-status-migration.md              (migration prompt dev status)
-  dev-status-cleanup.md               (cleanup prompt dev status)
-  prompt-evaluation-migration.md        (migration prompt evaluation)
-  prompt-evaluation-cleanup.md          (cleanup prompt evaluation)
   CLAUDE.md                             (updated file map and project scope)
   README.md                             (updated to describe the toolkit)
   docs/
-    superpowers/
+    dev-status/
+      dev-status-migration.md           (migration prompt dev status)
+      dev-status-cleanup.md             (cleanup prompt dev status)
+    evaluations/
+      prompt-evaluation-migration.md    (migration prompt evaluation)
+      prompt-evaluation-cleanup.md      (cleanup prompt evaluation)
+    design/
       specs/
         2026-04-10-cloud-sync-toolkit-design.md  (this file)
 ```
@@ -193,7 +195,7 @@ Each finding maps to a concrete next step:
 | Cloud-synced path references in CLAUDE.md/memory | Use `cloud-sync-cleanup.md` or manually update [file] line [n] |
 | Git fsck errors | Run `git fsck --full` in [folder] to investigate |
 | Source folders still on cloud storage with verified local copies | Use `cloud-sync-cleanup.md` when ready |
-| Projects still running from cloud-synced paths (no local copy) | Use `claude-code-cloud-sync-migration.md` to migrate |
+| Projects still running from cloud-synced paths (no local copy) | Use `cloud-sync-migration.md` to migrate |
 | Orphan/undecodable path-hash entries | Delete manually or use `cloud-sync-cleanup.md` |
 
 ---

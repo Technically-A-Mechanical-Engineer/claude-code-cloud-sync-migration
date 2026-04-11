@@ -13,7 +13,7 @@ A single-file prompt that any Claude Code user can paste into CLI to safely remo
 
 Works in two modes: post-migration mode (reads migration artifacts for high-confidence cleanup) or standalone mode (auto-detects everything independently). Both modes follow the same safety methodology.
 
-This is one of three prompts in the Cloud-Sync Toolkit. See also: `dev-status-migration.md`, and (after Phase 3) `dev-status-verification.md`.
+This is one of three prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-migration.md`, and (after Phase 3) `docs/dev-status/dev-status-verification.md`.
 
 ---
 
@@ -75,7 +75,7 @@ Four minor findings identified during evaluation, all resolved before final verd
 
 **Observation (not a finding):** At 946 lines, cleanup prompt is 75% larger than migration (540 lines). Growth is from three-way platform command blocks for destructive operations. Right trade-off per design principles. Monitor CLI paste behavior.
 
-Full evaluation in `prompt-evaluation-cleanup.md`.
+Full evaluation in `docs/evaluations/prompt-evaluation-cleanup.md`.
 
 ---
 

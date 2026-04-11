@@ -13,7 +13,7 @@ A single-file prompt that any Claude Code user can paste into CLI to audit their
 
 The prompt never modifies, deletes, or creates anything except the verification report. It is safe to run at any time — before migration, after migration, after cleanup, or on a fresh environment.
 
-This is one of three prompts in the Cloud-Sync Toolkit. See also: `dev-status-migration.md` and `dev-status-cleanup.md`.
+This is one of three prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-migration.md` and `docs/dev-status/dev-status-cleanup.md`.
 
 ---
 
@@ -71,7 +71,7 @@ This is the cleanest evaluation result in the toolkit — the verification promp
 | Agent Architecture Audit | Pass | 0 |
 | Agent-Readiness Audit | Pass | 0 |
 
-Full evaluation in `prompt-evaluation-verification.md`.
+Full evaluation in `docs/evaluations/prompt-evaluation-verification.md`.
 
 ---
 

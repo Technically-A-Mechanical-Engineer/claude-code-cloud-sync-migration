@@ -545,7 +545,7 @@ For each finding, use the recommendation mapping below. Each recommendation name
 | Cloud-synced path references in `.planning/` files | "These are historical records of executed plans. Updating them is optional and may not be beneficial — the references document what was true at the time." |
 | Git fsck errors | "Run `git fsck --full` in `[folder path]` to investigate. If objects are unrecoverable, consider re-cloning from remote." |
 | Git fsck warnings | "Warnings are informational and typically non-critical. Run `git fsck --full` in `[folder path]` for details if concerned." |
-| Projects still on cloud-synced paths (no local copy) | "Use `claude-code-cloud-sync-migration.md` to migrate this project to local storage — it will copy files, verify integrity, and set up Claude Code settings at the new path." |
+| Projects still on cloud-synced paths (no local copy) | "Use `cloud-sync-migration.md` to migrate this project to local storage — it will copy files, verify integrity, and set up Claude Code settings at the new path." |
 | Projects still on cloud-synced paths (local copy exists) | "This project appears to have a local copy at `[local path]`. Use `cloud-sync-cleanup.md` when ready to remove the cloud-synced source folder." |
 | Orphan path-hash entries | "This entry points to a path that no longer exists. Delete manually or use `cloud-sync-cleanup.md` to remove it." |
 | Undecodable path-hash entries | "This entry cannot be decoded to a valid path. Inspect the contents at `~/.claude/projects/[entry]/` and delete manually if not needed, or use `cloud-sync-cleanup.md`." |
@@ -579,7 +579,7 @@ At the bottom of the report, generate a deduplicated action list that groups rel
 ```markdown
 ## Recommended Actions
 
-1. **Migrate [n] project(s) off cloud storage** — Use `claude-code-cloud-sync-migration.md` to copy these projects to local paths:
+1. **Migrate [n] project(s) off cloud storage** — Use `cloud-sync-migration.md` to copy these projects to local paths:
    - [project name] at [cloud path]
 
 2. **Clean up [n] stale path-hash entries** — Use `cloud-sync-cleanup.md` to remove old settings directories that now have local equivalents.

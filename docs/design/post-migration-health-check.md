@@ -86,7 +86,7 @@ Check whether `~/.claude/projects/[encoded-path]` exists.
 
 **If CWD is under cloud-synced storage:** Stop immediately. Present:
 
-> "This project is running from a cloud-synced path: [path]. It has not been migrated to local storage. Use `claude-code-cloud-sync-migration.md` to migrate before running this health check."
+> "This project is running from a cloud-synced path: [path]. It has not been migrated to local storage. Use `cloud-sync-migration.md` to migrate before running this health check."
 
 Do not proceed with remaining phases.
 
@@ -234,7 +234,7 @@ Based on results:
 For each WARN or FAIL result, provide:
 1. **What was found** — the specific finding
 2. **What to do** — the recommended action, referencing the appropriate toolkit prompt if applicable:
-   - Memory not connected → "Run Session 2 of `claude-code-cloud-sync-migration.md` or manually copy the memory directory from the old path-hash entry"
+   - Memory not connected → "Run Session 2 of `cloud-sync-migration.md` or manually copy the memory directory from the old path-hash entry"
    - Stale references → "Update the reference manually, or note it for the next time you edit this file"
    - Git issues → "Run `git fsck` manually and investigate errors"
    - Operations failure → "Check if cloud sync is still active on this directory. Verify file permissions."

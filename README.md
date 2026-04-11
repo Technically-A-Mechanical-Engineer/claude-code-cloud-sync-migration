@@ -20,6 +20,12 @@ Each prompt works independently. They reference each other by filename but don't
 
 Claude Code users who launched their projects from a OneDrive, Dropbox, Google Drive, or iCloud-synced folder and are hitting git or file system errors — or who have already migrated and want to clean up what's left behind.
 
+## Requirements
+
+- **Claude Code CLI** (terminal or IDE extension). This toolkit does not work in claude.ai web, Claude desktop app, or Cowork mode.
+- **Platform:** Windows (PowerShell or Git Bash), macOS (zsh/bash), or Linux (bash)
+- **git** installed and available in your shell
+
 ## How to Use
 
 ### Migration (start here if you haven't moved your projects yet)
@@ -67,7 +73,7 @@ All three prompts use three-way shell detection to provide platform-correct comm
 | [`dev-status-cleanup.md`](dev-status-cleanup.md) | Cleanup prompt build summary, NEC evaluation, testing plan |
 | [`prompt-evaluation-migration.md`](prompt-evaluation-migration.md) | Migration prompt eight-framework NEC evaluation |
 | [`prompt-evaluation-cleanup.md`](prompt-evaluation-cleanup.md) | Cleanup prompt eight-framework NEC evaluation |
-| `dev-status-verification.md` | Verification prompt dev status *(coming after testing)* |
+| [`dev-status-verification.md`](dev-status-verification.md) | Verification prompt build summary, NEC evaluation, testing plan |
 | [`prompt-evaluation-verification.md`](prompt-evaluation-verification.md) | Verification prompt eight-framework NEC evaluation |
 
 ## Design Principles

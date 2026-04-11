@@ -19,7 +19,7 @@ Robert LaSalle
 ## Current State
 
 - **Migration prompt:** v1.2.0 (shipped). Tagged migration-v1.2.0, merged to master.
-- **Cleanup prompt:** v1.0.0 (built). 946 lines, NEC evaluation passed with 4 minor findings (all fixed).
+- **Cleanup prompt:** v1.0.0 (shipped). 946 lines, NEC evaluation passed with 4 minor findings (all fixed).
 - **Verification prompt:** v1.0.0 (shipped). 658 lines. NEC evaluation passed all eight frameworks, zero findings.
 - **Design spec:** `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the three-prompt expansion. This is the requirements source for all GSD planning.
 - **Evaluation:** All three prompts passed all applicable NEC prompt frameworks (details in `prompt-evaluation-migration.md`, `prompt-evaluation-cleanup.md`, and `prompt-evaluation-verification.md`)
@@ -33,11 +33,25 @@ Robert LaSalle
 | `cloud-sync-verification.md` | Verification prompt (current: v1.0.0). Built 2026-04-11. |
 | `dev-status-migration.md` | Migration prompt dev status — version history, test execution, findings, testing plan |
 | `dev-status-cleanup.md` | Cleanup prompt dev status — build summary, NEC evaluation, testing plan |
+| `dev-status-verification.md` | Verification prompt build summary, NEC evaluation, testing plan |
 | `prompt-evaluation-migration.md` | Migration prompt NEC framework evaluation (v1.1.1 and v1.2.0) |
 | `prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation (v1.0.0) |
+| `prompt-evaluation-verification.md` | Verification prompt NEC framework evaluation (v1.0.0) |
 | `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
 
 ## Architecture
+
+### Toolkit Overview
+
+The toolkit has three independent prompts, each with a distinct execution model:
+
+| Prompt | Sessions | Safety Model | Key Output |
+|---|---|---|---|
+| Migration | Two sessions (Session 1: copy, Session 2: settings) | Never deletes. Every copy verified. | `migration-session-1-results.md`, `session-2-prompt.md` |
+| Cleanup | Single session | Deletes only with individual user confirmation and verified local copy. Cloud-propagation warning on every source deletion. | `cleanup-log.md` |
+| Verification | Single session | Read-only. Never modifies or deletes. Single permitted write: `verification-report.md`. | `verification-report.md` |
+
+All three prompts share: three-way shell detection, five-dimension constraint model (Must/Must-not/Prefer/Escalate/Recover), auto-detect-first design, and graceful cross-prompt state handling. Each prompt contains its own self-contained copy of shared detection logic (path-hash decoding, cloud service patterns, shell detection) — no runtime dependency between prompts.
 
 ### Two-Session Design
 

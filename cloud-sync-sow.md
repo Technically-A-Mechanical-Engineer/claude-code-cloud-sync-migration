@@ -595,3 +595,34 @@ If the user declined any cleanup, include a note with manual cleanup commands:
 - Manifest (optional): `rm .cloud-sync-seed-manifest.json` / `Remove-Item .cloud-sync-seed-manifest.json`
 
 ---
+
+## Definition of Done
+
+This sow session is complete when:
+- Environment detection identified the project, shell context, path-hash status, and operating mode
+- In seeded mode: each seed marker has been independently verified with PASS or FAIL
+- All six health checks have been run (or SKIP reported with reason for inapplicable checks)
+- Every check result has been reported with PASS, WARN, or FAIL and a one-line explanation
+- `sow-report.md` exists in CWD with traffic-light summary, results table, detail section for WARN/FAIL items, and consolidated action list
+- The user has been presented with the report summary in the terminal
+- In seeded mode with no FAIL results: the marker cleanup offer has been presented
+
+---
+
+## Guardrails
+
+- **Never modify existing project files.** The only filesystem writes permitted are the temporary test file (immediately cleaned up) and `sow-report.md`. Marker cleanup (Phase 5) deletes only seed-planted markers with individual user confirmation — never existing project files.
+- **Never assume paths.** Auto-detect first. If detection fails, report the failure and continue.
+- **Platform-correct commands everywhere.** Every command must match the detected shell context. Verify before executing.
+- **Proportional artifacts.** Scale output to scope — same structural completeness for a clean project as for one with findings, but do not pad a clean report with unnecessary bulk.
+- **The methodology is non-negotiable.** All phases run for every applicable check. No shortcuts, no skipped checks (except Phase 2 and Phase 5 in unseeded mode, and checks that report SKIP with reason).
+- **Handle known edge cases:**
+  - **Permission errors** — if a check command fails due to permissions, report the error as a FAIL finding and continue with remaining checks
+  - **Not a git repo** — report SKIP for git-related checks, continue with other checks
+  - **Missing path-hash directory** — report FAIL for memory connection, include fallback check for old cloud-synced path-hash
+  - **Seed manifest present but markers removed** — FAIL per missing marker. This is expected behavior if user previously ran cleanup but did not delete the manifest.
+  - **bash-on-Windows path formats** — use platform-correct paths for all commands. Do not use `sed` for path-hash name manipulation.
+  - **Large projects** — do not enumerate all files during file system check. Check for expected hidden directories and symlinks only.
+  - **SHA-256 case sensitivity** — compare checksums case-insensitively (PowerShell returns uppercase, bash tools return lowercase)
+- **Graceful cross-prompt state.** If a path-hash directory is missing and no old cloud-synced entry exists either, interpret this as a fresh project (Claude Code hasn't created settings yet), not corruption. Report the finding appropriately.
+- **If everything is clean, say so.** A healthy project gets positive confirmation — "All checks passed. No migration issues detected." — not silence.

@@ -104,10 +104,99 @@ Not applicable. This is a read-only audit with no destructive actions. If interr
 
 ## Phase 1 — Environment Detection
 
-<!-- Phase 1 content: OS/shell detection, cloud services, project inventory, present summary -->
-<!-- Populated by Plan 02 -->
+Detect the following automatically. Do not ask the user for information you can determine from the system.
 
-*[Phase content to be added]*
+### 1.1 — OS and shell
+
+Detect the operating system and active shell. Set the shell context for all subsequent commands using three-way detection:
+
+| Detection | Shell Context | Audit Tool | Utility Commands |
+|---|---|---|---|
+| PowerShell prompt detected (`$PSVersionTable` exists) | PowerShell | PowerShell cmdlets | PowerShell (Get-ChildItem, Test-Path, Select-String, Measure-Object, etc.) |
+| bash-on-Windows detected (`$OSTYPE` contains "msys", "mingw", or "cygwin", OR `uname -s` returns "MINGW*" or "MSYS*") | bash-on-Windows | bash utilities | bash (find, wc, du, stat, grep) |
+| bash/zsh on macOS or Linux (`uname -s` returns "Darwin" or "Linux") | native bash/zsh | bash utilities | bash (find, wc, du, stat, grep) |
+
+Do not mix shell syntaxes. Every command in this session must match the detected shell context.
+
+### 1.2 — User profile path
+
+Detect the current user's home directory:
+- **Windows:** `$env:USERPROFILE` (e.g., `C:\Users\username`)
+- **macOS/Linux:** `$HOME` (e.g., `/Users/username` or `/home/username`)
+
+### 1.3 — Cloud sync folders
+
+Scan for known cloud sync folder patterns under the user's home directory:
+- **OneDrive / OneDrive for Business:** `$env:USERPROFILE\OneDrive*\` (Windows), `~/Library/CloudStorage/OneDrive*` (macOS)
+- **Dropbox:** `$env:USERPROFILE\Dropbox\` or `~/Dropbox`
+- **Google Drive:** `$env:USERPROFILE\Google Drive\` or `~/Google Drive` or `~/Library/CloudStorage/GoogleDrive*`
+- **iCloud Drive:** `~/Library/Mobile Documents/com~apple~CloudDocs`
+
+Store detected cloud service root paths — these become the search patterns for Phase 4 (reference audit).
+
+If no cloud sync folders are detected, note this and continue. Phase 4 will be abbreviated (no cloud path patterns to search for), but the remaining audit phases still run.
+
+### 1.4 — Project directory discovery
+
+Identify project directories to audit. Check for projects in these locations:
+- Default target path: `~/Projects/` (or platform equivalent)
+- Any cloud-synced paths detected in 1.3 that contain project-like directories
+- CWD if it appears to be a projects parent directory
+
+For each discovered projects parent directory, list all immediate subdirectories. These become the audit targets for Phase 2.
+
+If no project directories are found, report this and skip to Phase 3 (path-hash audit). The path-hash audit and reference audit still run.
+
+### 1.5 — Claude Code project inventory
+
+Scan `~/.claude/projects/` (all platforms). If this directory does not exist or is empty, note that no Claude Code project settings exist yet and continue to Phase 2 — the project health audit still runs on project directories, but Phase 3 (path-hash audit) will be abbreviated.
+
+**Path-hash decoding algorithm (self-contained):**
+
+Claude Code encodes filesystem paths as directory names by replacing path separators (`\`, `/`), drive colons (`:`), spaces, commas, and other special characters each with a single hyphen (`-`). Consecutive hyphens are NOT collapsed — they indicate adjacent special characters in the original path.
+
+Examples:
+- `C:\Users\rlasalle\Projects\Claude-Home` -> `C--Users-rlasalle-Projects-Claude-Home`
+- `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\OB1` -> `C--Users-rlasalle-OneDrive---ThermoTek--Inc-Documents-Projects-OB1`
+
+**Decoding approach (reverse direction):**
+
+The encoding is lossy — multiple source characters all map to `-`. Decoding requires platform-aware heuristics:
+
+1. The directory name starts with a drive letter pattern on Windows (`C--` = `C:\`) or a leading hyphen on macOS/Linux (`-Users-` = `/Users/`)
+2. After the drive/root prefix, each `-` could be a path separator or an original hyphen in a folder name
+3. To resolve ambiguity: attempt to reconstruct the path segment by segment, checking each candidate against the actual filesystem to find the longest matching prefix
+4. If the fully reconstructed path exists on disk, decoding succeeds
+5. If no valid path can be reconstructed, classify as "undecodable"
+
+### 1.6 — Present summary
+
+Present the environment summary to the user for review before proceeding with the full audit.
+
+```
+Environment:
+  OS: [detected]
+  Shell: [PowerShell / bash-on-Windows / native bash/zsh]
+  User profile: [path]
+
+Cloud services detected:
+  [service]: [sync root path]
+  [If none: "No cloud sync folders detected."]
+
+Project directories to audit ([n] projects):
+  [parent path]:
+    1. [project name] ([path])
+    2. [project name] ([path])
+    ...
+
+Claude Code path-hash entries ([n] entries):
+  [list of directory names found under ~/.claude/projects/]
+  [If empty: "No path-hash entries found — Phase 3 will be abbreviated."]
+```
+
+Ask: "Does this look correct? Proceed with the full audit?"
+
+Wait for user confirmation, then proceed through Phases 2-5 without further confirmation gates.
 
 ---
 

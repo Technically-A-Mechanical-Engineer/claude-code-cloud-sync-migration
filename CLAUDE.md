@@ -33,8 +33,10 @@ Robert LaSalle
 | `cloud-sync-verification.md` | Verification prompt (current: v1.0.0). Built 2026-04-11. |
 | `dev-status-migration.md` | Migration prompt dev status — version history, test execution, findings, testing plan |
 | `dev-status-cleanup.md` | Cleanup prompt dev status — build summary, NEC evaluation, testing plan |
+| `dev-status-verification.md` | Verification prompt build summary, NEC evaluation, testing plan |
 | `prompt-evaluation-migration.md` | Migration prompt NEC framework evaluation (v1.1.1 and v1.2.0) |
 | `prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation (v1.0.0) |
+| `prompt-evaluation-verification.md` | Verification prompt NEC framework evaluation (v1.0.0) |
 | `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
 
 ## Architecture

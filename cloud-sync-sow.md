@@ -417,3 +417,121 @@ Scoring:
 Important: Clean up the temp file even if the write test fails. If `rm`/`Remove-Item` fails, report FAIL and note the temp file remains.
 
 ---
+
+## Phase 4 — Report
+
+Generate `sow-report.md` in CWD with the complete check results. If `sow-report.md` already exists, overwrite it — the report is a point-in-time snapshot.
+
+### 4.1 — Header block
+
+```markdown
+# Sow Report
+**Generated:** [ISO timestamp]
+**Shell:** [PowerShell / bash-on-Windows / native bash/zsh]
+**Project:** [project name]
+**Path:** [CWD]
+**Mode:** [Seeded / Unseeded]
+```
+
+### 4.2 — Traffic-light summary
+
+```markdown
+## Summary
+
+| Area | Status | Detail |
+|------|--------|--------|
+| [Seed Verification — seeded mode only] | [GREEN / RED] | [brief] |
+| Health Checks | [GREEN / YELLOW / RED] | [brief] |
+```
+
+Traffic-light criteria:
+- **Seed Verification:** GREEN = all markers PASS. RED = any marker FAIL. (No YELLOW — seeds are binary PASS/FAIL.)
+- **Health Checks:** GREEN = all checks PASS. YELLOW = WARN findings present, no FAIL. RED = any check FAIL.
+
+In unseeded mode, omit the Seed Verification row entirely — no SKIP row, no empty section.
+
+### 4.3 — Results table
+
+```markdown
+## Results
+
+| Check | Result | Detail |
+|-------|--------|--------|
+```
+
+In seeded mode, the table starts with seed marker rows:
+```
+| Seed: test file | PASS/FAIL | [detail — e.g., "SHA-256 match, size match" or "File missing"] |
+| Seed: git tag | PASS/FAIL | [detail — e.g., "Tag found, commit match" or "Tag not found"] |
+```
+
+Then health check rows (always present):
+```
+| Cloud location | PASS | [CWD path is local] |
+| Git integrity | PASS/WARN/FAIL/SKIP | [detail] |
+| Memory connection | PASS/WARN/FAIL | [detail] |
+| Stale references | PASS/WARN | [detail] |
+| File system | PASS/WARN/FAIL | [detail] |
+| Operations | PASS/FAIL | [detail] |
+```
+
+In unseeded mode, the seed rows are omitted entirely.
+
+### 4.4 — Detail section
+
+For each WARN or FAIL result, provide a detail entry:
+1. **What was found** — the specific finding
+2. **What to do** — the recommended action, referencing the appropriate toolkit prompt:
+
+Recommendation mapping:
+- Memory not connected → "Run Session 2 of `cloud-sync-migration.md` or manually copy the memory directory from the old path-hash entry"
+- Stale references → "Update the reference manually, or use `cloud-sync-cleanup.md` to address stale references"
+- Git fsck errors → "Run `git fsck --full` manually and investigate errors"
+- Git fsck warnings → "Informational — run `git fsck --full` for details if concerned"
+- Operations failure → "Check if cloud sync is still active on this directory. Verify file permissions."
+- File system issues → "Verify the copy was complete. Re-run the migration if needed using `cloud-sync-migration.md`"
+- Seed test file FAIL → "The test file planted by `cloud-sync-seed.md` was not found or has different content. The copy may have altered file contents."
+- Seed git tag FAIL → "The git tag planted by `cloud-sync-seed.md` was not found or points to a different commit. Git history may not have been fully preserved."
+
+For clean results (all PASS), show positive confirmation: "All checks passed. No migration issues detected."
+
+### 4.5 — Consolidated action list
+
+Priority order: seed findings first (if present), then health check actions by severity.
+
+```markdown
+## Recommended Actions
+
+1. **[action description]** — [detail]
+   - [affected item]
+```
+
+If no actions needed:
+
+```markdown
+## Recommended Actions
+
+No actions recommended — this project is healthy.
+```
+
+### 4.6 — Footer note (unseeded mode only)
+
+In unseeded mode, add at the bottom of the report:
+
+```markdown
+---
+*For future migrations, plant seed markers before migration using `cloud-sync-seed.md` to get full copy verification.*
+```
+
+In seeded mode, this footer is not included.
+
+### 4.7 — Present summary and write report
+
+Write `sow-report.md` to CWD. Then display the traffic-light summary and results table in the terminal.
+
+If actions were recommended: "Review the full report for detailed findings."
+If no actions: "This project is healthy. No further action needed."
+
+State: "Report saved to sow-report.md in [CWD path]."
+
+---

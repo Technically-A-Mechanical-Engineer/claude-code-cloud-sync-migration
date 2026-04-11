@@ -49,7 +49,7 @@ Claude Code users who launched their projects from a OneDrive, Dropbox, Google D
 |--------|---------|--------|
 | Migration | **v1.2.0** (2026-04-10) | Shipped. Passed all eight NEC evaluation frameworks. |
 | Cleanup | **v1.0.0** (2026-04-11) | Shipped. Passed all applicable NEC evaluation frameworks. |
-| Verification | **v1.0.0** (2026-04-11) | Built. NEC evaluation pending. |
+| Verification | **v1.0.0** (2026-04-11) | Shipped. Passed all eight NEC evaluation frameworks. |
 
 ## Platform Support
 
@@ -67,8 +67,8 @@ All three prompts use three-way shell detection to provide platform-correct comm
 | [`dev-status-cleanup.md`](dev-status-cleanup.md) | Cleanup prompt build summary, NEC evaluation, testing plan |
 | [`prompt-evaluation-migration.md`](prompt-evaluation-migration.md) | Migration prompt eight-framework NEC evaluation |
 | [`prompt-evaluation-cleanup.md`](prompt-evaluation-cleanup.md) | Cleanup prompt eight-framework NEC evaluation |
-| `dev-status-verification.md` | Verification prompt dev status *(after NEC evaluation)* |
-| `prompt-evaluation-verification.md` | Verification prompt NEC evaluation *(after evaluation)* |
+| `dev-status-verification.md` | Verification prompt dev status *(coming after testing)* |
+| [`prompt-evaluation-verification.md`](prompt-evaluation-verification.md) | Verification prompt eight-framework NEC evaluation |
 
 ## Design Principles
 

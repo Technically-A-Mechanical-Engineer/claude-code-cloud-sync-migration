@@ -194,3 +194,73 @@ Then proceed directly to the next phase — no confirmation gate needed (this is
 After mode detection: If seeded, proceed through Phases 1-5 in order. If unseeded, skip Phase 2 and Phase 5; proceed through Phases 1, 3, 4.
 
 ---
+
+## Phase 2 — Seed Verification (seeded mode only)
+
+This phase runs only in seeded mode. In unseeded mode, skip to Phase 3.
+
+### 2.1 — Read manifest
+
+The manifest was already read and parsed in Phase 1.5. Extract the `markers` object. The expected marker types are:
+
+- `test_file`: A file with known content and checksum planted by the seed prompt
+- `git_tag`: A lightweight git tag planted by the seed prompt
+
+If the manifest contains marker types not listed above, ignore them — verify only known types. This supports forward compatibility with future seed versions.
+
+### 2.2 — Verify test file marker
+
+If `markers.test_file` exists in the manifest:
+
+1. Check that the file exists at the path specified in `markers.test_file.path` (relative to CWD)
+2. Compute SHA-256 of the file using platform-specific commands:
+
+   **PowerShell:**
+   ```powershell
+   (Get-FileHash -Algorithm SHA256 "[path]").Hash.ToLower()
+   ```
+
+   **bash (Linux / bash-on-Windows):**
+   ```bash
+   sha256sum "[path]" | cut -d' ' -f1
+   ```
+
+   **bash (macOS):**
+   ```bash
+   shasum -a 256 "[path]" | cut -d' ' -f1
+   ```
+
+3. Compare computed SHA-256 against `markers.test_file.sha256` (case-insensitive comparison)
+4. Compare file size against `markers.test_file.size_bytes`
+
+Scoring:
+- **PASS:** File exists, SHA-256 matches, size matches
+- **FAIL:** File missing, SHA-256 mismatch, or size mismatch. Report which specific check failed.
+
+### 2.3 — Verify git tag marker
+
+If `markers.git_tag` exists in the manifest:
+
+1. Check that the tag exists locally:
+   ```bash
+   git tag -l "[markers.git_tag.name]"
+   ```
+   (Same command works in all shell contexts — `git` is a cross-platform binary.)
+
+2. If the tag exists, verify it points to the expected commit:
+   ```bash
+   git rev-parse "[markers.git_tag.name]"
+   ```
+   Compare the output against `markers.git_tag.commit`.
+
+Scoring:
+- **PASS:** Tag exists and points to the expected commit
+- **FAIL:** Tag not found, or tag points to a different commit. Report the specific discrepancy.
+
+Verify locally only (`git tag -l`). Do not check remotes — the tag may not have been pushed.
+
+### 2.4 — Compile seed verification results
+
+Collect per-marker results. Do not compute an aggregate seed verdict — each marker stands on its own. Store results for Phase 4 report.
+
+---

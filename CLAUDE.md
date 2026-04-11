@@ -41,6 +41,18 @@ Robert LaSalle
 
 ## Architecture
 
+### Toolkit Overview
+
+The toolkit has three independent prompts, each with a distinct execution model:
+
+| Prompt | Sessions | Safety Model | Key Output |
+|---|---|---|---|
+| Migration | Two sessions (Session 1: copy, Session 2: settings) | Never deletes. Every copy verified. | `migration-session-1-results.md`, `session-2-prompt.md` |
+| Cleanup | Single session | Deletes only with individual user confirmation and verified local copy. Cloud-propagation warning on every source deletion. | `cleanup-log.md` |
+| Verification | Single session | Read-only. Never modifies or deletes. Single permitted write: `verification-report.md`. | `verification-report.md` |
+
+All three prompts share: three-way shell detection, five-dimension constraint model (Must/Must-not/Prefer/Escalate/Recover), auto-detect-first design, and graceful cross-prompt state handling. Each prompt contains its own self-contained copy of shared detection logic (path-hash decoding, cloud service patterns, shell detection) — no runtime dependency between prompts.
+
 ### Two-Session Design
 
 The migration runs across two Claude Code sessions because Claude Code must restart from the new path to create correct project settings directories.

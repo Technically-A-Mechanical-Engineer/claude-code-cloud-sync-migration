@@ -9,6 +9,8 @@ If you're seeing git errors, file lock failures, or sync conflicts when using Cl
 
 **Testing with a dry run:** To test this migration without risking your working environment, launch Claude Code from your cloud-synced folder. When the prompt detects your existing migration, select Option 2 (fresh re-run, new target) and provide a parallel target path (e.g., `~/Projects-Test/`). Evaluate the results, then delete the test target when satisfied.
 
+**Best results with auto-accept:** This toolkit works best when launched with `claude --dangerously-skip-permissions`. The migration involves many parallel file system operations, and manual permission approval can cause tool calls to cancel each other. If you prefer to approve each operation individually, the toolkit will still work — its error recovery handles cancelled operations — but the experience is smoother with permissions skipped.
+
 ---
 
 *Everything below is instructions for Claude Code.*
@@ -248,7 +250,7 @@ Cloud sync services use placeholder files (Files On-Demand, Smart Sync, Streamin
 
 ### 2.4 — Close editors and agents
 
-Close VS Code, any running Claude Code sessions, and any other editors or terminals with open handles on files in the source folders.
+Close VS Code, other Claude Code sessions, and any other editors or terminals with open handles on files in the source folders. **This session stays open — it's running the migration.**
 
 ### 2.5 — Verify target directory exists
 
@@ -336,11 +338,28 @@ Check for Smart Sync placeholders using `xattr`:
 find "<source>" -type f -exec xattr -l {} \; 2>/dev/null | grep "com.dropbox" | head -5
 ```
 
-**Reporting:** Report pass/fail per folder. For each folder:
-- **PASS:** "[FolderName] — READY (0% cloud-only stubs in sample)"
-- **FAIL:** "[FolderName] — NOT READY ([X]% of sampled files are cloud-only). Force-download files before continuing. See pre-flight step 2.3."
+**0-byte file detection:** After the placeholder check, scan each source folder for 0-byte files:
 
-If any folder fails, stop. Do not proceed to Phase 4 until all folders pass. The user must force-download the flagged files and re-run the placeholder check.
+**PowerShell:**
+```powershell
+$zeroByteCount = (Get-ChildItem -Recurse -File -Force "<source>" | Where-Object { $_.Length -eq 0 }).Count
+$totalCount = (Get-ChildItem -Recurse -File -Force "<source>").Count
+```
+
+**bash-on-Windows / macOS / Linux:**
+```bash
+zero_byte_count=$(find "<source>" -type f -empty | wc -l)
+total_count=$(find "<source>" -type f | wc -l)
+```
+
+If more than 5% of files are 0 bytes, flag it: "[FolderName] — WARNING: [n] of [total] files ([X]%) are 0-byte. This may indicate cloud-only placeholders that appear as empty files. Verify these files are intentionally empty or force-download them before continuing."
+
+**Reporting:** Report pass/fail per folder. For each folder:
+- **PASS:** "[FolderName] — READY (0% cloud-only stubs in sample, 0-byte files within threshold)"
+- **FAIL:** "[FolderName] — NOT READY ([X]% of sampled files are cloud-only). Force-download files before continuing. See pre-flight step 2.3."
+- **WARNING (0-byte):** "[FolderName] — [X]% 0-byte files detected. User must confirm these are expected before proceeding."
+
+If any folder fails, stop. Do not proceed to Phase 4 until all folders pass. The user must force-download the flagged files and re-run the placeholder check. 0-byte warnings require user acknowledgment but do not block proceeding.
 
 Wait for user confirmation that all folders show READY before proceeding to Phase 4.
 
@@ -371,9 +390,9 @@ robocopy "<source>" "<target>" /E /COPY:DAT /DCOPY:DAT /R:3 /W:5 /XJ
 
 **bash-on-Windows:**
 ```bash
-robocopy "<source>" "<target>" /E /COPY:DAT /DCOPY:DAT /R:3 /W:5 /XJ
+MSYS_NO_PATHCONV=1 robocopy "<source>" "<target>" /E /COPY:DAT /DCOPY:DAT /R:3 /W:5 /XJ
 ```
-robocopy is a Windows binary callable from Git Bash. The same flags apply as in PowerShell.
+robocopy is a Windows binary callable from Git Bash. The same flags apply as in PowerShell. `MSYS_NO_PATHCONV=1` prevents Git Bash from converting Windows-style paths to Unix-style paths. Without it, robocopy receives mangled paths and fails.
 
 **macOS/Linux:**
 ```bash
@@ -421,7 +440,7 @@ If any are found, report them: "The source folder contains [n] symlinks/junction
 
 Do not attempt to resolve or follow symlinks/junctions.
 
-### 4.4 — Verify file counts
+### 4.4 — Verify file counts and sizes
 
 Compare source and target file counts including hidden files:
 
@@ -444,6 +463,22 @@ find "<target>" -type f | wc -l
 ```
 
 If the target count is significantly lower than the source (more than a few files difference), flag it: "Target has [n] fewer files than source. This may indicate Files On-Demand placeholders that weren't fully downloaded. Verify pre-flight step 2.3 was completed for this folder."
+
+**File size verification:** After verifying file counts, compare total size of source and target:
+
+**PowerShell:**
+```powershell
+(Get-ChildItem -Recurse -File -Force "<source>" | Measure-Object -Property Length -Sum).Sum
+(Get-ChildItem -Recurse -File -Force "<target>" | Measure-Object -Property Length -Sum).Sum
+```
+
+**bash-on-Windows / macOS / Linux:**
+```bash
+du -sb "<source>"
+du -sb "<target>"
+```
+
+If the target total size is more than 10% smaller than the source, flag it: "Target total size ([target size]) is more than 10% smaller than source ([source size]). This may indicate incomplete copies, placeholder files that copied as empty stubs, or files excluded during copy. Investigate before confirming this folder."
 
 ### 4.5 — Verify hidden directories
 
@@ -572,6 +607,7 @@ Phase 9 is informational — present this checklist to the user, do not execute 
 - Test git operations (status, commit, worktree) in one of the moved repos
 - Check external references: scripts, automation flows, Power Automate flows, integrations, CI/CD pipelines, bookmarks, terminal aliases
 - Soak period: use the new locations normally for several days before cleaning up
+- When you're ready to verify project health, paste `cloud-sync-sow.md` into Claude Code CLI. It runs six health checks (git integrity, memory connection, stale references, file system, operations test, cloud location gate) and reports PASS/WARN/FAIL per check. If you planted seed markers before migration, it also verifies those markers survived the copy.
 - When you're ready to clean up source folders and stale settings directories, paste `cloud-sync-cleanup.md` into Claude Code CLI. It will detect the migration artifacts and guide you through safe removal with verification at every step.
 
 **Definition of Done (Session 2):**

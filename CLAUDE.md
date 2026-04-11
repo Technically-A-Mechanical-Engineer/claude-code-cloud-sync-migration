@@ -1,4 +1,4 @@
-# Cloud-Sync Migration for Claude Code Projects
+# Cloud-Sync Toolkit for Claude Code Projects
 
 ## What This Is
 

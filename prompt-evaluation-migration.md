@@ -225,3 +225,5 @@ v1.2.0 passes all eight evaluation frameworks with no findings. The six new feat
 - **Graceful cross-prompt state** introduces a behavioral primitive for multi-prompt coexistence that was not needed when this was a single-prompt tool. As the toolkit expands to include cleanup and verification prompts, this pattern prevents prompts from misdiagnosing each other's side effects.
 
 The five-dimension constraint model (Must / Must-not / Prefer / Escalate / Recover) is now a fully intentional design element rather than an emergent pattern. The prompt is ready for distribution and serves as the architectural foundation for the cleanup and verification prompts that follow.
+
+---

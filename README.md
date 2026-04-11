@@ -34,7 +34,7 @@ Session 1 copies your folders and generates a Session 2 prompt file. You then re
 
 **v1.1.1** (2026-04-10) — Release candidate. Passed evaluation against eight prompt engineering frameworks.
 
-See [cloud-sync-migration-dev-status.md](cloud-sync-migration-dev-status.md) for version history, known findings, and the v1.2.0 roadmap.
+See [dev-status-migration.md](dev-status-migration.md) for version history, known findings, and testing plans.
 
 ## Platform Support
 

@@ -1,15 +1,19 @@
-# Cloud-Sync Migration Prompt — Development Status Report
-**Updated:** 2026-04-10
+# Migration Prompt — Development Status
+**Updated:** 2026-04-11
+**Prompt file:** `claude-code-cloud-sync-migration.md`
+**Current version:** v1.2.0 (shipped)
 **Project owner:** Robert LaSalle
 **Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
 
 ---
 
-## What This Project Is
+## What This Prompt Does
 
 A single-file prompt that any Claude Code user can paste into CLI to migrate their project folders from cloud-synced storage (OneDrive, Dropbox, Google Drive, iCloud) to a local path. It auto-detects the environment, walks the user through a phased migration with verification at every step, and generates a Session 2 continuation prompt from actual results.
 
-The prompt originated from Robert's own OneDrive-to-local migration (April 9–10, 2026) and was generalized into a distributable tool through iterative review against prompting best practices from Nate's Executive Circle content library.
+The prompt originated from Robert's own OneDrive-to-local migration (April 9-10, 2026) and was generalized into a distributable tool through iterative review against prompting best practices from Nate's Executive Circle content library.
+
+This is one of three prompts in the Cloud-Sync Toolkit. See also: `dev-status-cleanup.md`, and (after Phase 3) `dev-status-verification.md`.
 
 ---
 
@@ -35,7 +39,7 @@ v1.1.1 was evaluated against eight frameworks from Nate's Executive Circle:
 
 **Result: Pass on all eight frameworks.** No critical or moderate findings. One positive observation: the prompt's five-dimension constraint model (Must / Must-not / Prefer / Escalate / Recover) extends the standard four-quadrant Constraint Architecture pattern.
 
-Full evaluation in `prompt-evaluation.md`.
+Full evaluation in `prompt-evaluation-migration.md`.
 
 ---
 
@@ -198,12 +202,9 @@ This is the requirements source for all GSD planning. It covers the migration v1
 
 ## Next Steps
 
-1. **v1.2.0 migration prompt — BUILT.** Evaluate against eight NEC frameworks (DOC-07).
-2. **Build cleanup prompt v1.0.0** — New file `cloud-sync-cleanup.md`. Requirements in design spec.
-3. **Build verification prompt v1.0.0** — New file `cloud-sync-verification.md`. Requirements in design spec.
-4. **Peer review all three prompts** — Eight Nate's Executive Circle frameworks per prompt.
-5. **Test all three prompts** — Migration: "fresh re-run, new target" plan above. Cleanup: test against Robert's stale path-hash dirs and source folders. Verification: test against post-cleanup state.
-6. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud-sync-migration. Push after testing passes. Tag releases per prompt.
+1. **v1.2.0 is shipped.** NEC evaluation passed all eight frameworks. See `prompt-evaluation-migration.md`.
+2. **Test v1.2.0** — "Fresh re-run, new target" plan above. Not yet executed.
+3. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud-sync-migration. Push after testing passes. Tag `migration-v1.2.0` release.
 
 ---
 

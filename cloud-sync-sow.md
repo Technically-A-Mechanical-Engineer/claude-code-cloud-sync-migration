@@ -264,3 +264,156 @@ Verify locally only (`git tag -l`). Do not check remotes — the tag may not hav
 Collect per-marker results. Do not compute an aggregate seed verdict — each marker stands on its own. Store results for Phase 4 report.
 
 ---
+
+## Phase 3 — Health Checks
+
+Run all applicable checks against the current working directory. Collect results into a structured list — do not present them one at a time.
+
+### 3.1 — Git integrity (SKIP if not a git repo)
+
+If CWD is not a git repository, report SKIP for all three sub-checks with reason "Not a git repository."
+
+**git fsck:**
+```bash
+git fsck --no-dangling 2>&1
+```
+- **PASS:** Exit code 0, no error lines
+- **WARN:** Exit code 0 but warnings present
+- **FAIL:** Non-zero exit code or error lines present
+
+**git status:**
+```bash
+git status --short
+```
+- **PASS:** Clean working tree (no output)
+- **WARN:** Uncommitted changes present (report count of modified/untracked files — this is normal for active projects, not a migration issue)
+
+**git branch:**
+```bash
+git branch -l
+```
+- **PASS:** At least one branch exists
+- **FAIL:** No branches (corrupted repo)
+
+### 3.2 — Memory connection
+
+Use the path-hash directory found (or not found) in Phase 1.4.
+
+Check `~/.claude/projects/[encoded-CWD-path]/`:
+- Does the directory exist?
+- Does it contain a `memory/` subdirectory?
+- How many files are in `memory/`?
+- Does it contain `MEMORY.md`?
+
+**PowerShell:**
+```powershell
+Test-Path "~/.claude/projects/[encoded-path]"
+Test-Path "~/.claude/projects/[encoded-path]/memory"
+(Get-ChildItem "~/.claude/projects/[encoded-path]/memory" -File -ErrorAction SilentlyContinue).Count
+Test-Path "~/.claude/projects/[encoded-path]/memory/MEMORY.md"
+```
+
+**bash:**
+```bash
+test -d ~/.claude/projects/[encoded-path]
+test -d ~/.claude/projects/[encoded-path]/memory
+ls ~/.claude/projects/[encoded-path]/memory/ 2>/dev/null | wc -l
+test -f ~/.claude/projects/[encoded-path]/memory/MEMORY.md
+```
+
+Scoring:
+- **PASS:** Directory exists with memory files
+- **WARN:** Directory exists but empty (new project or memory not yet created)
+- **FAIL:** Directory does not exist
+
+If FAIL: Also scan `~/.claude/projects/` for entries containing the project folder name under common cloud prefixes. If found, report: "Memory exists at old cloud-synced path-hash [name] but not at the current local path. Run Session 2 of `cloud-sync-migration.md` or manually copy the memory directory."
+
+### 3.3 — Stale references
+
+Search these files for cloud-sync path patterns:
+
+**In CWD:**
+- `CLAUDE.md` (if exists)
+- Any `.md` files in the project root (non-recursive — root level only)
+
+**In the path-hash directory (if it exists):**
+- `memory/*.md` files
+- `settings.json` (if exists)
+
+Patterns to search for:
+- `OneDrive`
+- `Dropbox`
+- `Google Drive`
+- `iCloud`
+- `CloudStorage`
+- `Mobile Documents/com~apple~CloudDocs`
+
+**PowerShell:**
+```powershell
+Select-String -Path "[file]" -Pattern "OneDrive|Dropbox|Google Drive|iCloud|CloudStorage|Mobile Documents/com~apple~CloudDocs" -ErrorAction SilentlyContinue
+```
+
+**bash:**
+```bash
+grep -n "OneDrive\|Dropbox\|Google Drive\|iCloud\|CloudStorage\|Mobile Documents/com~apple~CloudDocs" "[file]" 2>/dev/null
+```
+
+Scoring:
+- **PASS:** No cloud-sync path strings found
+- **WARN:** Cloud-sync path strings found — report each occurrence with file name, line number, and matched string. Note: some references may be intentional.
+
+### 3.4 — File system integrity
+
+**Hidden directories:** Check for expected hidden directories in CWD:
+- `.git` (if this is a git repo)
+- `.claude`
+- `.planning` (optional — only present in GSD-managed projects)
+
+Scoring:
+- **PASS:** All expected hidden directories present
+- **WARN:** `.claude` directory missing (normal for newly migrated projects before first session)
+- **FAIL:** `.git` expected but missing (git repo detection said yes, but directory not found — copy may be incomplete)
+
+**Symlinks:**
+
+**PowerShell:**
+```powershell
+Get-ChildItem -Recurse -Depth 2 -Force | Where-Object { $_.Attributes -match 'ReparsePoint' }
+```
+
+**bash:**
+```bash
+find . -maxdepth 2 -type l 2>/dev/null | head -5
+```
+
+Scoring:
+- **PASS:** No unexpected symlinks found
+- **WARN:** Unexpected symlinks found — report paths
+
+### 3.5 — Operations check
+
+Use a toolkit-specific temp file name: `.cloud-sync-sow-test-temp`
+
+**PowerShell:**
+```powershell
+Set-Content -Path ".cloud-sync-sow-test-temp" -Value "sow-operations-test"
+Test-Path ".cloud-sync-sow-test-temp"
+Remove-Item ".cloud-sync-sow-test-temp" -ErrorAction SilentlyContinue
+-not (Test-Path ".cloud-sync-sow-test-temp")
+```
+
+**bash:**
+```bash
+echo "sow-operations-test" > .cloud-sync-sow-test-temp
+[ -f .cloud-sync-sow-test-temp ] && echo "WRITE_OK" || echo "WRITE_FAIL"
+rm -f .cloud-sync-sow-test-temp
+[ ! -f .cloud-sync-sow-test-temp ] && echo "DELETE_OK" || echo "DELETE_FAIL"
+```
+
+Scoring:
+- **PASS:** Write and delete both succeed
+- **FAIL:** Write or delete fails (permission issue or file lock)
+
+Important: Clean up the temp file even if the write test fails. If `rm`/`Remove-Item` fails, report FAIL and note the temp file remains.
+
+---

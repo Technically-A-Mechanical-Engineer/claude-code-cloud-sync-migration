@@ -12,7 +12,7 @@ Working in cloud-synced folders (OneDrive, Dropbox, Google Drive, iCloud) causes
 |--------|------|-------------|
 | **Migration** | [`claude-code-cloud-sync-migration.md`](claude-code-cloud-sync-migration.md) | Copies project folders from cloud storage to local paths. Never deletes originals. Two-session design with generated continuation prompt. |
 | **Cleanup** | [`cloud-sync-cleanup.md`](cloud-sync-cleanup.md) | Removes stale path-hash directories, orphan entries, and source folders left behind after migration. Every deletion individually confirmed with verification evidence. |
-| **Verification** | `cloud-sync-verification.md` | Audits project health, path-hash integrity, and stale references. Reports findings with actionable recommendations. *(Coming soon)* |
+| **Verification** | [`cloud-sync-verification.md`](cloud-sync-verification.md) | Audits project health, path-hash integrity, and stale references. Reports findings with actionable recommendations. |
 
 Each prompt works independently. They reference each other by filename but don't depend on each other to function.
 
@@ -38,7 +38,10 @@ Claude Code users who launched their projects from a OneDrive, Dropbox, Google D
 
 ### Verification (audit your environment at any time)
 
-*Coming soon — the verification prompt will be available after Phase 3 is complete.*
+1. Download [`cloud-sync-verification.md`](cloud-sync-verification.md)
+2. Open Claude Code CLI from your local project folder
+3. Paste the entire contents as your first message
+4. Review the traffic light summary and findings — each finding includes a plain-language explanation and recommended next step
 
 ## Current Versions
 
@@ -46,7 +49,7 @@ Claude Code users who launched their projects from a OneDrive, Dropbox, Google D
 |--------|---------|--------|
 | Migration | **v1.2.0** (2026-04-10) | Shipped. Passed all eight NEC evaluation frameworks. |
 | Cleanup | **v1.0.0** (2026-04-11) | Shipped. Passed all applicable NEC evaluation frameworks. |
-| Verification | — | In development. |
+| Verification | **v1.0.0** (2026-04-11) | Built. NEC evaluation pending. |
 
 ## Platform Support
 
@@ -64,6 +67,8 @@ All three prompts use three-way shell detection to provide platform-correct comm
 | [`dev-status-cleanup.md`](dev-status-cleanup.md) | Cleanup prompt build summary, NEC evaluation, testing plan |
 | [`prompt-evaluation-migration.md`](prompt-evaluation-migration.md) | Migration prompt eight-framework NEC evaluation |
 | [`prompt-evaluation-cleanup.md`](prompt-evaluation-cleanup.md) | Cleanup prompt eight-framework NEC evaluation |
+| `dev-status-verification.md` | Verification prompt dev status *(after NEC evaluation)* |
+| `prompt-evaluation-verification.md` | Verification prompt NEC evaluation *(after evaluation)* |
 
 ## Design Principles
 

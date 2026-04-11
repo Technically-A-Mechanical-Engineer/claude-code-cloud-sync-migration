@@ -378,10 +378,110 @@ If all entries are valid, record: "All [n] path-hash entries are valid — no st
 
 ## Phase 4 — Reference Audit
 
-<!-- Phase 4 content: search CLAUDE.md, memory, settings for cloud-synced path strings -->
-<!-- Populated by Plan 02 -->
+Search project files for references to cloud-synced paths detected in Phase 1.3. This phase identifies configuration files, memory files, and settings that still point to old cloud-synced locations.
 
-*[Phase content to be added]*
+If no cloud services were detected in Phase 1.3, report: "No cloud services detected — Phase 4 skipped (no cloud path patterns to search for)." and proceed to Phase 5.
+
+### 4.1 — Build search patterns
+
+From the cloud services detected in Phase 1.3, build a list of path string patterns to search for. Each cloud service root path becomes a search pattern. Examples:
+- `C:\Users\rlasalle\OneDrive - ThermoTek, Inc` (or the platform-specific equivalent)
+- `C:\Users\rlasalle\Dropbox`
+- `/Users/username/Library/CloudStorage/OneDrive-Personal`
+- `/Users/username/Dropbox`
+
+Also build platform-appropriate escaped variants for patterns containing special characters (spaces, commas, hyphens that might be escaped differently in different file formats).
+
+### 4.2 — Define search scope
+
+Search these file types for cloud-synced path references:
+
+| File Type | Location | Why |
+|---|---|---|
+| `CLAUDE.md` | Project root directories (from Phase 1.4) | Project instructions may reference cloud-synced paths |
+| `CLAUDE.md` | `~/.claude/CLAUDE.md` (global) | Global instructions may reference cloud-synced paths |
+| Memory files | `~/.claude/projects/*/memory/*.md` | Claude Code memory may reference cloud-synced paths |
+| Settings files | `~/.claude/projects/*/settings.json` | Project settings may contain cloud-synced paths |
+| `.claude/settings.json` | Project root directories | Local project settings |
+
+**Explicit exclusions:** Do not search inside `.git/` directories, binary files (images, compiled output, archives), or `node_modules/` directories. These produce false positives and have no user value.
+
+### 4.3 — Execute search with progress updates
+
+For each project directory discovered in Phase 1.4, print a progress update before scanning:
+
+```
+Scanning [project name] ([n] of [total] projects)...
+```
+
+This is a status signal, not a confirmation gate.
+
+**PowerShell search:**
+```powershell
+# Search CLAUDE.md in project root
+Select-String -Path "[project-path]\CLAUDE.md" -Pattern "[cloud-pattern]" -ErrorAction SilentlyContinue
+
+# Search memory files for a specific path-hash entry
+Get-ChildItem -Path "~/.claude/projects/[entry]/memory" -Filter "*.md" -ErrorAction SilentlyContinue | Select-String -Pattern "[cloud-pattern]"
+
+# Search settings files
+Select-String -Path "~/.claude/projects/[entry]/settings.json" -Pattern "[cloud-pattern]" -ErrorAction SilentlyContinue
+
+# Search local project settings
+Select-String -Path "[project-path]\.claude\settings.json" -Pattern "[cloud-pattern]" -ErrorAction SilentlyContinue
+```
+
+**bash search:**
+```bash
+# Search CLAUDE.md in project root
+grep -n "[cloud-pattern]" "[project-path]/CLAUDE.md" 2>/dev/null
+
+# Search memory files for a specific path-hash entry
+grep -rn "[cloud-pattern]" ~/.claude/projects/[entry]/memory/ 2>/dev/null
+
+# Search settings files
+grep -n "[cloud-pattern]" ~/.claude/projects/[entry]/settings.json 2>/dev/null
+
+# Search local project settings
+grep -n "[cloud-pattern]" "[project-path]/.claude/settings.json" 2>/dev/null
+```
+
+Also search the global Claude configuration:
+
+**PowerShell:**
+```powershell
+Select-String -Path "~/.claude/CLAUDE.md" -Pattern "[cloud-pattern]" -ErrorAction SilentlyContinue
+```
+
+**bash:**
+```bash
+grep -n "[cloud-pattern]" ~/.claude/CLAUDE.md 2>/dev/null
+```
+
+### 4.4 — Record reference findings
+
+For each match found, record:
+- File path where the reference was found
+- Line number(s) containing the cloud-synced path
+- The matched cloud-synced path string
+- Which cloud service it belongs to
+
+Compile findings for the Phase 5 report:
+
+```
+Reference audit ([n] files searched, [m] references found):
+
+  [project name]:
+    [file path], line [n]: "[matched cloud path string]"
+    [file path], line [n]: "[matched cloud path string]"
+
+  Global configuration:
+    ~/.claude/CLAUDE.md, line [n]: "[matched cloud path string]"
+
+[If no references found:] "No cloud-synced path references found in any searched files."
+```
+
+Note: References found in `.planning/` directories should be flagged with a note: "This reference is in a planning/history file. These are historical records — updating them is optional and may not be beneficial." This aligns with the migration prompt's preference to preserve `.planning/` history.
 
 ---
 

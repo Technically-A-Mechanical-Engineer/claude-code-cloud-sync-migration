@@ -19,7 +19,7 @@ Robert LaSalle
 ## Current State
 
 - **Migration prompt:** v1.2.0 (shipped). Tagged migration-v1.2.0, merged to master.
-- **Cleanup prompt:** v1.0.0 (built). 946 lines, NEC evaluation passed with 4 minor findings (all fixed).
+- **Cleanup prompt:** v1.0.0 (shipped). 946 lines, NEC evaluation passed with 4 minor findings (all fixed).
 - **Verification prompt:** v1.0.0 (shipped). 658 lines. NEC evaluation passed all eight frameworks, zero findings.
 - **Design spec:** `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the three-prompt expansion. This is the requirements source for all GSD planning.
 - **Evaluation:** All three prompts passed all applicable NEC prompt frameworks (details in `prompt-evaluation-migration.md`, `prompt-evaluation-cleanup.md`, and `prompt-evaluation-verification.md`)

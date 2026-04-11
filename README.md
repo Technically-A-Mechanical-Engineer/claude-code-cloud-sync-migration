@@ -20,6 +20,12 @@ Each prompt works independently. They reference each other by filename but don't
 
 Claude Code users who launched their projects from a OneDrive, Dropbox, Google Drive, or iCloud-synced folder and are hitting git or file system errors — or who have already migrated and want to clean up what's left behind.
 
+## Requirements
+
+- **Claude Code CLI** (terminal or IDE extension). This toolkit does not work in claude.ai web, Claude desktop app, or Cowork mode.
+- **Platform:** Windows (PowerShell or Git Bash), macOS (zsh/bash), or Linux (bash)
+- **git** installed and available in your shell
+
 ## How to Use
 
 ### Migration (start here if you haven't moved your projects yet)

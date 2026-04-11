@@ -73,7 +73,7 @@ All three prompts use three-way shell detection to provide platform-correct comm
 | [`dev-status-cleanup.md`](dev-status-cleanup.md) | Cleanup prompt build summary, NEC evaluation, testing plan |
 | [`prompt-evaluation-migration.md`](prompt-evaluation-migration.md) | Migration prompt eight-framework NEC evaluation |
 | [`prompt-evaluation-cleanup.md`](prompt-evaluation-cleanup.md) | Cleanup prompt eight-framework NEC evaluation |
-| `dev-status-verification.md` | Verification prompt dev status *(coming after testing)* |
+| [`dev-status-verification.md`](dev-status-verification.md) | Verification prompt build summary, NEC evaluation, testing plan |
 | [`prompt-evaluation-verification.md`](prompt-evaluation-verification.md) | Verification prompt eight-framework NEC evaluation |
 
 ## Design Principles

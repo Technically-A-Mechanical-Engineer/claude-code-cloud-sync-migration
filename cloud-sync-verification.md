@@ -202,10 +202,97 @@ Wait for user confirmation, then proceed through Phases 2-5 without further conf
 
 ## Phase 2 — Project Health Audit
 
-<!-- Phase 2 content: git fsck, git status, hidden dirs, file counts, symlinks per project -->
-<!-- Populated by Plan 02 -->
+For each project directory discovered in Phase 1.4, run the following health checks. Record all findings for the Phase 5 report.
 
-*[Phase content to be added]*
+### 2.1 — Git integrity (if applicable)
+
+If the project contains a `.git` directory:
+
+```
+git -C "[project-path]" fsck --no-dangling
+```
+
+Record: PASS (no errors, no warnings), WARNINGS (warnings but no errors), ERRORS (errors found), or N/A (not a git repo).
+
+Git fsck warnings are recorded but are not errors. Git fsck errors are findings that require action.
+
+### 2.2 — Git status (if applicable)
+
+If the project is a git repo:
+
+```
+git -C "[project-path]" status --short
+```
+
+Record: Clean (no output), or list of uncommitted changes / untracked files. This is informational — uncommitted changes are not errors for a verification audit.
+
+### 2.3 — Hidden directory inventory
+
+List hidden directories in each project root.
+
+**PowerShell:**
+```powershell
+Get-ChildItem -Force -Directory "[project-path]" | Where-Object { $_.Name -match '^\.' } | Select-Object Name
+```
+
+**bash:**
+```bash
+ls -d "[project-path]"/.[^.]* 2>/dev/null | xargs -I {} basename {}
+```
+
+Record which of the common hidden directories are present: `.git`, `.planning`, `.vscode`, `.claude`, `.github`. Report any unexpected hidden directories as informational findings.
+
+### 2.4 — File count
+
+Count total files in each project directory.
+
+**PowerShell:**
+```powershell
+(Get-ChildItem -Recurse -File -Force "[project-path]").Count
+```
+
+**bash:**
+```bash
+find "[project-path]" -type f | wc -l
+```
+
+Record the count. This is informational — there is no source to compare against in a verification audit. Unusually low counts (0 or 1 file) are flagged as a warning.
+
+### 2.5 — Symlink check
+
+Check for symbolic links in each project directory.
+
+**PowerShell:**
+```powershell
+Get-ChildItem -Recurse -Force "[project-path]" | Where-Object { $_.Attributes -match 'ReparsePoint' }
+```
+
+**bash:**
+```bash
+find "[project-path]" -type l
+```
+
+Record: count of symlinks found. If symlinks are present, list them. Symlinks are a finding (they can indicate incomplete copies or broken references) but not necessarily an error.
+
+### 2.6 — Cloud path check
+
+For each project directory, check whether its path falls under any cloud-synced storage root detected in Phase 1.3.
+
+Record: "Local" (not under any cloud service root) or "[service name]" (under a specific cloud service). Projects still running from cloud-synced paths are a finding that recommends the migration prompt.
+
+### 2.7 — Per-project summary
+
+After all checks complete for a project, compile the results into a per-project health record for Phase 5:
+
+```
+[project name]:
+  Location: [path] ([Local / cloud service])
+  Git integrity: [PASS / WARNINGS / ERRORS / N/A]
+  Git status: [Clean / n uncommitted changes]
+  Hidden dirs: [.git, .planning, .vscode, ...]
+  File count: [n]
+  Symlinks: [none / n found]
+```
 
 ---
 

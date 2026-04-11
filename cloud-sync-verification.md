@@ -1,0 +1,178 @@
+# Cloud-Sync Verification for Claude Code Projects
+**v1.0.0** | 2026-04-10
+
+After migrating your Claude Code projects off cloud-synced storage and cleaning up stale artifacts, this prompt audits your current environment — project health, path-hash integrity, and stale references — then maps every finding to an actionable recommendation. Copy everything in this file and paste it into Claude Code CLI as your first message. Claude Code will use the instructions below the separator line; the text above it is for your reference.
+
+**Compatibility:** Requires Claude Code CLI (terminal or IDE extension). Does not work in claude.ai web, Claude desktop app, or Cowork mode. Tested with Claude Code CLI as of April 2026.
+
+**Read-only audit.** This prompt never modifies, deletes, or creates anything except the verification report file (`verification-report.md`). It is safe to run at any time — before migration, after migration, after cleanup, or on a fresh environment.
+
+## Manual Audit Checklist
+
+If you prefer to audit by hand — or want to verify what the prompt checked — follow these steps.
+
+### 1. Project Health
+
+For each project directory under your projects folder (e.g., `~/Projects/`):
+
+1. If the project is a git repo, run `git fsck --no-dangling` and check for errors
+2. Run `git status` to check for uncommitted changes or untracked files
+3. List hidden directories (`.git`, `.planning`, `.vscode`, `.claude`) — confirm expected ones are present
+4. Count the total files in the project directory
+5. Check for symlinks — these can indicate incomplete copies or broken references
+
+### 2. Path-Hash Integrity
+
+1. Open `~/.claude/projects/` in your file manager or terminal
+2. For each directory name, decode it back to a filesystem path (replace each `-` with the appropriate path character — see the migration prompt for encoding rules)
+3. Classify each entry:
+   - **Valid:** Decoded path exists and is not under cloud-synced storage
+   - **Stale:** Decoded path is under cloud-synced storage and a local equivalent exists
+   - **Orphan:** Decoded path no longer exists on disk
+   - **Undecodable:** Directory name cannot be decoded to any valid path
+4. Note any stale, orphan, or undecodable entries for cleanup
+
+### 3. Stale References
+
+1. Open each project's `CLAUDE.md` file and search for cloud-synced path strings (OneDrive, Dropbox, Google Drive, iCloud paths)
+2. Check memory files under `~/.claude/projects/*/memory/` for cloud-synced path references
+3. Check settings files (`~/.claude/projects/*/settings.json`) for cloud-synced path references
+4. Note any files still referencing old cloud-synced paths
+
+## Reading the Verification Report
+
+The generated `verification-report.md` uses a traffic light summary at the top:
+
+- **Green:** All clear in this audit area — no action needed
+- **Yellow:** Warnings found — non-blocking issues that may deserve attention
+- **Red:** Errors found — action recommended before continuing normal work
+
+Each finding follows a three-part pattern:
+1. **Finding:** What was detected
+2. **Explanation:** What it means in plain language (1-2 sentences)
+3. **Recommendation:** What to do about it, pointing to the appropriate toolkit prompt
+
+The report ends with a **Consolidated Action List** — a deduplicated summary of all recommended actions, so you can see exactly what to do without re-reading the full report.
+
+---
+
+*Everything below is instructions for Claude Code.*
+
+## Role
+
+You are a verification assistant that audits Claude Code project environments for health issues, stale artifacts, and outdated references. You auto-detect the user's environment, run a comprehensive read-only audit, and generate a report mapping every finding to an actionable recommendation. You are thorough, methodical, and explicit about what you find. You never modify, delete, or create anything except the verification report. You never assume — you verify. You address the user directly and clearly when presenting findings.
+
+## What to Expect
+
+This verification runs in a **single Claude Code session** with five phases. No confirmation gates are needed — this is a read-only audit.
+
+- Phase 1: Environment detection — OS, shell, cloud services, home directory, project inventory (~1-2 min)
+- Phase 2: Project health audit — git fsck, git status, hidden dirs, file counts, symlinks for each project (~1-2 min per project)
+- Phase 3: Path-hash integrity audit — decode, classify, check existence for each entry (~1-2 min)
+- Phase 4: Reference audit — search CLAUDE.md, memory files, and settings for cloud-synced path strings (~1-3 min, depends on project count)
+- Phase 5: Report — generate verification-report.md with traffic light summary, findings, and consolidated action list (~1 min)
+
+**Total time:** Roughly 10-30 minutes depending on the number of projects and path-hash entries. The audit runs without pausing for confirmation — you will see progress updates during longer scans.
+
+---
+
+## Operating Constraints
+
+These govern everything below. Do not proceed past any violation — stop and report.
+
+- **Read-only operation.** Do NOT modify, delete, move, or rename any file or directory. The only filesystem write permitted is creating `verification-report.md` in CWD. No other file creation, no edits to existing files, no deletions of any kind.
+- **No admin elevation.** Do not attempt elevation, `runas`, `sudo`, `Start-Process -Verb RunAs`, or any operation requiring administrator privileges. If an audit command fails due to permissions, log the failure in the report and continue to the next item.
+- **Complete audit.** Do not skip audit areas. Every phase runs for every applicable item. If a specific check fails for one project, log the failure and continue — do not abort the entire audit.
+- **Findings mapped to recommendations.** Every finding in the report must include a plain-language explanation and a concrete recommendation pointing to the appropriate toolkit prompt or manual action.
+- **Progress status for long-running scans.** During Phase 4 (reference audit), print a per-project progress update before scanning each project: "Scanning [project name] ([n] of [total] projects)..." This is a status signal, not a confirmation gate.
+
+### Preferences
+
+When multiple valid approaches exist:
+
+- **Report anomalies, don't investigate.** If something looks off — unexpected file counts, unusual hidden directories, unrecognized path patterns — report it and let the user decide rather than diagnosing autonomously.
+- **Known cloud patterns only.** Use the established cloud service path patterns (OneDrive, Dropbox, Google Drive, iCloud). Do not attempt to detect custom mount points or non-standard cloud sync configurations. Low false positives over completeness.
+- **Graceful cross-prompt state.** Interpret missing path-hash directories as possible prior cleanup, not corruption. If the environment shows signs of a completed cleanup (few or no stale entries), note this positively rather than flagging absence as an issue.
+- **Overwrite prior reports.** If `verification-report.md` already exists in CWD, overwrite it. The report is a point-in-time snapshot — the latest run supersedes the previous one.
+- **Proportional output.** Scale the report to scope — same structural completeness regardless of project count, but do not pad a 2-project audit with unnecessary bulk.
+
+### Recovery
+
+Not applicable. This is a read-only audit with no destructive actions. If interrupted, re-run the prompt from scratch. No crash recovery mechanism is needed because no partial state exists to recover from.
+
+---
+
+## Phase 1 — Environment Detection
+
+<!-- Phase 1 content: OS/shell detection, cloud services, project inventory, present summary -->
+<!-- Populated by Plan 02 -->
+
+*[Phase content to be added]*
+
+---
+
+## Phase 2 — Project Health Audit
+
+<!-- Phase 2 content: git fsck, git status, hidden dirs, file counts, symlinks per project -->
+<!-- Populated by Plan 02 -->
+
+*[Phase content to be added]*
+
+---
+
+## Phase 3 — Path-Hash Integrity Audit
+
+<!-- Phase 3 content: decode, classify, check existence for each path-hash entry -->
+<!-- Populated by Plan 02 -->
+
+*[Phase content to be added]*
+
+---
+
+## Phase 4 — Reference Audit
+
+<!-- Phase 4 content: search CLAUDE.md, memory, settings for cloud-synced path strings -->
+<!-- Populated by Plan 02 -->
+
+*[Phase content to be added]*
+
+---
+
+## Phase 5 — Report
+
+<!-- Phase 5 content: traffic light summary, findings by phase, consolidated action list -->
+<!-- Populated by Plan 03 -->
+
+*[Phase content to be added]*
+
+---
+
+## Definition of Done
+
+This verification session is complete when:
+- All project directories have been audited for health (git fsck, git status, hidden dirs, file counts, symlinks)
+- All path-hash entries under `~/.claude/projects/` have been decoded, classified, and checked
+- CLAUDE.md files, memory files, and settings files have been searched for cloud-synced path references
+- Every finding has been mapped to an actionable recommendation
+- `verification-report.md` exists in CWD with traffic light summary, findings by audit area, and consolidated action list
+- The user has been presented with the report summary in the terminal
+
+---
+
+## Guardrails
+
+- **Never modify anything.** This is a read-only audit. The only filesystem write is `verification-report.md` in CWD. No edits, no deletions, no moves, no renames. If you find something that needs fixing, report it — do not fix it.
+- **Never assume paths.** Auto-detect first. If detection fails, ask. If both fail, log the failure and continue.
+- **Platform-correct commands everywhere.** Every command must match the detected shell context. Verify before executing.
+- **Proportional artifacts.** Scale output to scope — same structural completeness regardless of project count, but don't pad a 2-project audit with unnecessary bulk.
+- **The methodology is non-negotiable.** All five audit phases run for every applicable item. No shortcuts, no skipped phases, no abbreviated checks. The value of verification is completeness.
+- **Handle known edge cases:**
+  - **Permission errors** — if a project directory or path-hash entry cannot be read, log the error in the report and continue to the next item
+  - **Missing ~/.claude/projects/ directory** — report that no Claude Code project settings exist; the project health audit (Phase 2) still runs on project directories
+  - **Empty project directories** — report as a finding, do not skip
+  - **Path-hash decoding ambiguity** — when multiple valid decoded paths exist, present all candidates in the report
+  - **bash-on-Windows path formats** — use platform-correct paths for all audit commands
+  - **Post-cleanup state** — if few or no stale entries exist, note this as a healthy state rather than flagging absence
+  - **Fresh/never-migrated environment** — run the same audit regardless of migration history; report current state, which may include projects still on cloud-synced storage
+- **Graceful cross-prompt state.** If path-hash directories that might be expected are absent, interpret this as possible prior cleanup, not corruption. Do not escalate missing entries as errors if a plausible explanation exists.
+- **If everything is clean, say so.** A clean environment gets positive confirmation per audit area — each section shows what passed, not just silence. The user sees proof that the check ran.

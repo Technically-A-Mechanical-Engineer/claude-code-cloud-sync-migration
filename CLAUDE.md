@@ -22,7 +22,7 @@ Robert LaSalle
 - **Cleanup prompt:** v1.0.0 (built). 946 lines, NEC evaluation passed with 4 minor findings (all fixed).
 - **Verification prompt:** Not yet built. v1.0.0 spec in design doc.
 - **Design spec:** `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the three-prompt expansion. This is the requirements source for all GSD planning.
-- **Evaluation:** v1.2.0 migration and v1.0.0 cleanup both passed all applicable NEC prompt frameworks (details in `prompt-evaluation.md`)
+- **Evaluation:** v1.2.0 migration and v1.0.0 cleanup both passed all applicable NEC prompt frameworks (details in `prompt-evaluation-migration.md` and `prompt-evaluation-cleanup.md`)
 
 ## File Map
 
@@ -32,7 +32,8 @@ Robert LaSalle
 | `cloud-sync-cleanup.md` | Cleanup prompt (current: v1.0.0). Built 2026-04-10/11. |
 | `cloud-sync-verification.md` | Verification prompt (not yet built, v1.0.0 spec in design doc) |
 | `cloud-sync-migration-dev-status.md` | Development status report, version history, requirements, and testing plans |
-| `prompt-evaluation.md` | Framework evaluation against eight prompt engineering frameworks |
+| `prompt-evaluation-migration.md` | Migration prompt NEC framework evaluation (v1.1.1 and v1.2.0) |
+| `prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation (v1.0.0) |
 | `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
 
 ## Architecture

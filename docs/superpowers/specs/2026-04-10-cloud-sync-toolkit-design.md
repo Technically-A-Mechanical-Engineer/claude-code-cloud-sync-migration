@@ -25,7 +25,8 @@ claude-code-cloud-sync-migration/
   cloud-sync-cleanup.md                 (cleanup prompt, v1.0.0 - new)
   cloud-sync-verification.md            (verification prompt, v1.0.0 - new)
   cloud-sync-migration-dev-status.md    (dev status - expanded to cover all three)
-  prompt-evaluation.md                  (evaluation - expanded for all three)
+  prompt-evaluation-migration.md        (migration prompt evaluation)
+  prompt-evaluation-cleanup.md          (cleanup prompt evaluation)
   CLAUDE.md                             (updated file map and project scope)
   README.md                             (updated to describe the toolkit)
   docs/

@@ -35,7 +35,7 @@ v1.1.1 was evaluated against eight frameworks from Nate's Executive Circle:
 
 **Result: Pass on all eight frameworks.** No critical or moderate findings. One positive observation: the prompt's five-dimension constraint model (Must / Must-not / Prefer / Escalate / Recover) extends the standard four-quadrant Constraint Architecture pattern.
 
-Full evaluation in `prompt-evaluation.md`.
+Full evaluation in `prompt-evaluation-migration.md`.
 
 ---
 
@@ -242,7 +242,7 @@ Evaluated against all applicable NEC prompt frameworks. Result: **Pass** with 4 
 
 Fixes applied in commits `75f0bdd` and `ee3246a`.
 
-Full evaluation in `prompt-evaluation.md`.
+Full evaluation in `prompt-evaluation-cleanup.md`.
 
 ---
 

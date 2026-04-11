@@ -548,6 +548,8 @@ if [ -f "migration-session-1-results.md" ]; then
 fi
 ```
 
+**bash-on-Windows:** Use the Linux commands above (Git Bash provides GNU coreutils).
+
 **bash (macOS):**
 ```bash
 if [ -f "migration-session-1-results.md" ]; then
@@ -569,6 +571,8 @@ $daysSince = ((Get-Date) - $newest).Days
 newestEpoch=$(find "[local-path]" -type f -printf '%T@\n' 2>/dev/null | sort -rn | head -1)
 daysSince=$(( ($(date +%s) - ${newestEpoch%.*}) / 86400 ))
 ```
+
+**bash-on-Windows:** Use the Linux commands above (Git Bash provides GNU coreutils).
 
 **bash (macOS):**
 ```bash
@@ -644,6 +648,8 @@ $localSize = (Get-ChildItem -Recurse -Force -File "[local-path]" | Measure-Objec
 sourceSize=$(du -sb "[source-path]" | cut -f1)
 localSize=$(du -sb "[local-path]" | cut -f1)
 ```
+
+**bash-on-Windows:** Use the Linux commands above (Git Bash provides GNU coreutils).
 
 **bash (macOS):**
 ```bash
@@ -777,7 +783,7 @@ Do not proceed to the next folder until this is resolved or skipped.
 Retry or skip? [r/s]
 ```
 
-If retry (`r`): re-attempt the deletion command.
+If retry (`r`): re-attempt the deletion command. Track retries per folder — after 3 failed retries for the same folder, recommend skipping: "This folder has failed 3 retry attempts. Recommend skipping and investigating manually outside Claude Code (check for locked files, active sync agents, or open editors)." Present the skip option only at that point — do not allow further retries.
 
 If skip (`s`): log as skipped and proceed to the next folder.
 

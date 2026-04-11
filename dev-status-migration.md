@@ -1,15 +1,19 @@
-# Cloud-Sync Migration Prompt — Development Status Report
-**Updated:** 2026-04-10
+# Migration Prompt — Development Status
+**Updated:** 2026-04-11
+**Prompt file:** `claude-code-cloud-sync-migration.md`
+**Current version:** v1.2.0 (shipped)
 **Project owner:** Robert LaSalle
 **Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
 
 ---
 
-## What This Project Is
+## What This Prompt Does
 
 A single-file prompt that any Claude Code user can paste into CLI to migrate their project folders from cloud-synced storage (OneDrive, Dropbox, Google Drive, iCloud) to a local path. It auto-detects the environment, walks the user through a phased migration with verification at every step, and generates a Session 2 continuation prompt from actual results.
 
-The prompt originated from Robert's own OneDrive-to-local migration (April 9–10, 2026) and was generalized into a distributable tool through iterative review against prompting best practices from Nate's Executive Circle content library.
+The prompt originated from Robert's own OneDrive-to-local migration (April 9-10, 2026) and was generalized into a distributable tool through iterative review against prompting best practices from Nate's Executive Circle content library.
+
+This is one of three prompts in the Cloud-Sync Toolkit. See also: `dev-status-cleanup.md`, and (after Phase 3) `dev-status-verification.md`.
 
 ---
 
@@ -198,51 +202,9 @@ This is the requirements source for all GSD planning. It covers the migration v1
 
 ## Next Steps
 
-1. **v1.2.0 migration prompt — BUILT.** Evaluate against eight NEC frameworks (DOC-07).
-2. **Build cleanup prompt v1.0.0** — New file `cloud-sync-cleanup.md`. Requirements in design spec.
-3. **Build verification prompt v1.0.0** — New file `cloud-sync-verification.md`. Requirements in design spec.
-4. **Peer review all three prompts** — Eight Nate's Executive Circle frameworks per prompt.
-5. **Test all three prompts** — Migration: "fresh re-run, new target" plan above. Cleanup: test against Robert's stale path-hash dirs and source folders. Verification: test against post-cleanup state.
-6. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud-sync-migration. Push after testing passes. Tag releases per prompt.
-
----
-
-## Cleanup Prompt v1.0.0 — Build Status
-
-**Built:** 2026-04-10/11
-**File:** `cloud-sync-cleanup.md`
-**Size:** 946 lines
-**Build method:** GSD Phase 2 — 4 plans across 3 waves
-
-### Requirements Coverage
-
-All 9 CLN requirements from the design spec addressed:
-
-| Req | Description | Status |
-|-----|-------------|--------|
-| CLN-01 | Path-hash inventory and classification | Addressed |
-| CLN-02 | Source folder identification and staleness check | Addressed |
-| CLN-03 | Orphan settings entry detection | Addressed |
-| CLN-04 | Individual confirmation before each deletion | Addressed |
-| CLN-05 | Three-way platform command blocks for destructive operations | Addressed |
-| CLN-06 | Standalone mode (no prior migration required) | Addressed |
-| CLN-07 | Dry-run summary before any deletions | Addressed |
-| CLN-08 | Manual cleanup checklist for items outside scope | Addressed |
-| CLN-09 | Results log written incrementally | Addressed |
-
-### NEC Evaluation
-
-Evaluated against all applicable NEC prompt frameworks. Result: **Pass** with 4 minor findings, all resolved.
-
-- **Finding 1 (Minor, fixed):** `stat` syntax inconsistency — macOS uses `stat -f`, Linux uses `stat -c`, bash-on-Windows uses neither. Added platform notes.
-- **Finding 2 (Minor, fixed):** Phase 4.6 retry/skip dialog had no retry limit. Added 3-retry cap.
-- **Finding 3 (Minor, fixed):** Standalone mode Phase 4.1 couldn't find manually-migrated folders with no path-hash entries. Added manual path addition note.
-- **Finding 4 (Minor, fixed):** Manual cleanup checklist didn't mention soak-period recommendation. Added prominent callout.
-- **Observation (not a finding):** At 946 lines, cleanup prompt is 75% larger than migration (540 lines). Growth is from three-way platform command blocks for destructive operations. Right trade-off per design principles. Monitor CLI paste behavior.
-
-Fixes applied in commits `75f0bdd` and `ee3246a`.
-
-Full evaluation in `prompt-evaluation-cleanup.md`.
+1. **v1.2.0 is shipped.** NEC evaluation passed all eight frameworks. See `prompt-evaluation-migration.md`.
+2. **Test v1.2.0** — "Fresh re-run, new target" plan above. Not yet executed.
+3. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud-sync-migration. Push after testing passes. Tag `migration-v1.2.0` release.
 
 ---
 

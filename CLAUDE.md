@@ -31,7 +31,8 @@ Robert LaSalle
 | `claude-code-cloud-sync-migration.md` | Migration prompt (current: v1.2.0). Prior versions in git history. |
 | `cloud-sync-cleanup.md` | Cleanup prompt (current: v1.0.0). Built 2026-04-10/11. |
 | `cloud-sync-verification.md` | Verification prompt (not yet built, v1.0.0 spec in design doc) |
-| `cloud-sync-migration-dev-status.md` | Development status report, version history, requirements, and testing plans |
+| `dev-status-migration.md` | Migration prompt dev status — version history, test execution, findings, testing plan |
+| `dev-status-cleanup.md` | Cleanup prompt dev status — build summary, NEC evaluation, testing plan |
 | `prompt-evaluation-migration.md` | Migration prompt NEC framework evaluation (v1.1.1 and v1.2.0) |
 | `prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation (v1.0.0) |
 | `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
@@ -70,7 +71,7 @@ The prompt's constraint architecture extends the standard four-quadrant pattern 
 
 - Development happens in this folder
 - Changes to the prompt update `claude-code-cloud-sync-migration.md` in place — git tracks version history
-- The dev status report (`cloud-sync-migration-dev-status.md`) tracks findings, requirements, version history, and testing plans
+- Dev status reports track findings, version history, and testing plans per prompt (`dev-status-migration.md`, `dev-status-cleanup.md`)
 - Evaluation uses Nate's Executive Circle prompt frameworks — run the same eight-framework review on each new version
 - Testing uses the "fresh re-run, new target" approach documented in the dev status report
 

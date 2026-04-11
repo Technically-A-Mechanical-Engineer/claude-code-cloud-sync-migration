@@ -113,3 +113,84 @@ These govern everything below. Do not proceed past any violation — stop and re
 - If the seed manifest exists but markers are missing (user cleaned up markers but not manifest), report FAIL per missing marker — this is correct behavior, not a crash condition
 
 ---
+
+## Phase 1 — Environment Detection
+
+Gather context about the current project. Do not prompt the user — auto-detect everything.
+
+### 1.1 — Shell and platform
+
+Detect the operating system and active shell. Set the shell context for all subsequent commands using three-way detection:
+
+| Detection | Shell Context | Utility Commands |
+|---|---|---|
+| PowerShell prompt detected (`$PSVersionTable` exists) | PowerShell | PowerShell (Get-ChildItem, Get-FileHash, Test-Path, Select-String, etc.) |
+| bash-on-Windows detected (`$OSTYPE` contains "msys", "mingw", or "cygwin", OR `uname -s` returns "MINGW*" or "MSYS*") | bash-on-Windows | bash (find, sha256sum, grep, etc.) |
+| bash/zsh on macOS or Linux (`uname -s` returns "Darwin" or "Linux") | native bash/zsh | bash (find, shasum, grep, etc.) |
+
+Do not mix shell syntaxes. Every command in this session must match the detected shell context.
+
+### 1.2 — Project identity
+
+- CWD path
+- Project folder name (basename of CWD)
+- Whether CWD is a git repository (`git rev-parse --is-inside-work-tree`)
+
+### 1.3 — Cloud-location gate
+
+Check whether CWD is under a known cloud-sync path. Use these patterns:
+
+- **OneDrive / OneDrive for Business:** `$env:USERPROFILE\OneDrive*\` (Windows), `~/Library/CloudStorage/OneDrive*` (macOS)
+- **Dropbox:** `$env:USERPROFILE\Dropbox\` or `~/Dropbox`
+- **Google Drive:** `$env:USERPROFILE\Google Drive\` or `~/Google Drive` or `~/Library/CloudStorage/GoogleDrive*`
+- **iCloud Drive:** `~/Library/Mobile Documents/com~apple~CloudDocs`
+
+If CWD is under cloud-synced storage, stop immediately:
+
+> "This project is running from a cloud-synced path: [path]. It has not been migrated to local storage. Use `cloud-sync-migration.md` to migrate before running this health check."
+
+Do not proceed with remaining phases.
+
+### 1.4 — Path-hash lookup
+
+Encode the CWD path to a path-hash directory name using Claude Code's encoding rules:
+
+- Replace path separators (`\`, `/`), drive colons (`:`), spaces, commas, and other special characters each with a single hyphen (`-`)
+- Consecutive hyphens are NOT collapsed — they indicate adjacent special characters in the original path
+- Examples: `C:\Users\rlasalle\Projects\OB1` -> `C--Users-rlasalle-Projects-OB1`
+
+Check whether `~/.claude/projects/[encoded-path]` exists. Record result for the memory connection health check (Phase 3).
+
+**bash-on-Windows note:** Do not use `sed` for path-hash name manipulation on bash-on-Windows (MSYS/MINGW). Consecutive hyphens in directory names cause `sed` substitution errors. Use bash parameter expansion, `awk`, or a PowerShell call from bash instead.
+
+### 1.5 — Mode detection
+
+Check for `.cloud-sync-seed-manifest.json` in CWD:
+
+- **File exists → Seeded mode.** Read the manifest using Claude Code's Read tool. Parse the JSON content. Validate the `version` field:
+  - `version` is `"1.0"` → proceed normally
+  - `version` is unrecognized → WARN: "Seed manifest version [version] is newer than expected. Attempting to verify known marker types."
+  - JSON is malformed → FAIL seed verification immediately with parse error. Skip Phase 2, proceed to Phase 3.
+- **File does not exist → Unseeded mode**
+
+### 1.6 — Present summary and proceed
+
+Present the environment summary:
+
+```
+Environment:
+  OS: [detected]
+  Shell: [PowerShell / bash-on-Windows / native bash/zsh]
+  Project: [project name]
+  Path: [CWD]
+  Git repo: [yes/no]
+  Path-hash directory: [found / not found]
+  Mode: [Seeded / Unseeded]
+  [If seeded:] Manifest version: [version], created: [timestamp]
+```
+
+Then proceed directly to the next phase — no confirmation gate needed (this is a read-only diagnostic).
+
+After mode detection: If seeded, proceed through Phases 1-5 in order. If unseeded, skip Phase 2 and Phase 5; proceed through Phases 1, 3, 4.
+
+---

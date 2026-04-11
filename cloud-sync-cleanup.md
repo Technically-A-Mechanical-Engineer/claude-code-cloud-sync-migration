@@ -34,6 +34,8 @@ These are directories under `~/.claude/projects/` where the decoded path no long
 
 These are your original project folders on OneDrive, Dropbox, Google Drive, or iCloud. Only delete after confirming your local copies are complete and working.
 
+> **Wait before deleting.** Work from the new local paths for at least a few days before deleting source folders. This gives you time to discover missing files, broken git state, or missing configurations while the source folders still exist as a safety net.
+
 1. For each source folder, compare file counts between source and local copy
 2. Compare total folder sizes
 3. If the project is a git repo, run `git fsck --no-dangling` in the local copy to verify integrity
@@ -525,6 +527,8 @@ Source folders identified from stale path-hash entries:
 These are the source folders I identified from stale path-hash entries.
 Confirm, modify, or add folders before proceeding.
 ```
+
+Note: If you migrated folders manually (without the migration prompt), they may not have stale path-hash entries and won't appear in this list. Use the "add" option above to include them.
 
 Wait for user confirmation.
 

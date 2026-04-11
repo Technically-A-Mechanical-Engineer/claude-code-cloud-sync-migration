@@ -169,6 +169,8 @@ The encoding is lossy — multiple source characters all map to `-`. Decoding re
 4. If the fully reconstructed path exists on disk, decoding succeeds
 5. If no valid path can be reconstructed, classify as "undecodable"
 
+**bash-on-Windows note:** Do not use `sed` for path-hash name string manipulation on bash-on-Windows (MSYS/MINGW). Consecutive hyphens in directory names cause `sed` substitution errors. Use bash parameter expansion, `awk`, or a PowerShell call from bash instead. See Phase 3.1 for details and alternatives.
+
 ### 1.6 — Present summary
 
 Present the environment summary to the user for review before proceeding with the full audit.
@@ -309,6 +311,18 @@ Use the decoding algorithm from Phase 1.5 to reconstruct the filesystem path for
 3. To resolve ambiguity: attempt to reconstruct the path segment by segment, checking each candidate against the actual filesystem to find the longest matching prefix
 4. If the fully reconstructed path exists on disk, decoding succeeds
 5. If no valid path can be reconstructed, classify as "undecodable"
+
+**Implementation note — bash-on-Windows compatibility:**
+
+When implementing the decoding algorithm above, do NOT use `sed` for path-hash name manipulation on bash-on-Windows. The `sed` substitution command's delimiter interacts with consecutive hyphens in path-hash directory names (e.g., `OneDrive---ThermoTek--Inc`), producing `unterminated 's' command` errors under MSYS/MINGW.
+
+Instead, use one of these approaches on bash-on-Windows:
+
+- **bash parameter expansion:** `decoded="${entry//-//}"` as a starting point, then reconstruct segment-by-segment using filesystem checks
+- **awk:** `echo "$entry" | awk '{gsub(/-/,"/")}1'` — awk's gsub does not have the same delimiter conflicts
+- **PowerShell from bash:** `powershell.exe -Command "'$entry' -replace '-','\'"` for simple substitutions
+
+On native bash/zsh (macOS/Linux) and on PowerShell, `sed` works without issues — this restriction applies only to the bash-on-Windows shell context.
 
 ### 3.2 — Classify each entry
 

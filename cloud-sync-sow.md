@@ -535,3 +535,63 @@ If no actions: "This project is healthy. No further action needed."
 State: "Report saved to sow-report.md in [CWD path]."
 
 ---
+
+## Phase 5 — Marker Cleanup Offer (seeded mode only, no FAIL results)
+
+This phase runs only in seeded mode and only if no FAIL results were produced across Phases 2 and 3. If any check produced a FAIL, skip this phase — markers should remain for re-runs after fixing issues.
+
+### 5.1 — Present cleanup offer
+
+```
+All checks passed. The following seed markers can be cleaned up:
+
+1. Test file: [markers.test_file.path] ([size] bytes)
+   Remove this file? [y/n]
+
+2. Git tag: [markers.git_tag.name]
+   Remove this tag? [y/n]
+```
+
+Each marker gets its own individual confirmation. Do not batch — with only 2 markers, individual confirmation is appropriate.
+
+### 5.2 — Execute confirmed cleanups
+
+For each marker the user confirms:
+
+**Test file removal:**
+
+PowerShell:
+```powershell
+Remove-Item "[markers.test_file.path]"
+Test-Path "[markers.test_file.path]"  # Should return False
+```
+
+bash:
+```bash
+rm "[markers.test_file.path]"
+[ ! -f "[markers.test_file.path]" ] && echo "REMOVED" || echo "FAILED"
+```
+
+**Git tag removal:**
+```bash
+git tag -d "[markers.git_tag.name]"
+git tag -l "[markers.git_tag.name]"  # Should return empty
+```
+(Same command works in all shell contexts.)
+
+Verify each removal succeeded. If removal fails, report the error and continue.
+
+### 5.3 — Manifest note
+
+After cleanup, inform the user:
+
+"Seed markers have been removed. The manifest file (`.cloud-sync-seed-manifest.json`) remains — it is a record of what was planted. To run sow in unseeded mode in the future, delete the manifest: `rm .cloud-sync-seed-manifest.json` (bash) or `Remove-Item .cloud-sync-seed-manifest.json` (PowerShell)."
+
+If the user declined any cleanup, include a note with manual cleanup commands:
+
+"Seed markers remain in the project. To remove later:"
+- Test file: `rm [path]` / `Remove-Item [path]`
+- Git tag: `git tag -d [tag-name]`
+- Manifest (optional): `rm .cloud-sync-seed-manifest.json` / `Remove-Item .cloud-sync-seed-manifest.json`
+
+---

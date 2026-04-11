@@ -298,10 +298,81 @@ After all checks complete for a project, compile the results into a per-project 
 
 ## Phase 3 — Path-Hash Integrity Audit
 
-<!-- Phase 3 content: decode, classify, check existence for each path-hash entry -->
-<!-- Populated by Plan 02 -->
+For each directory under `~/.claude/projects/` discovered in Phase 1.5, decode the name, check filesystem state, and classify. If no path-hash entries were found in Phase 1.5, report: "No Claude Code path-hash entries found — Phase 3 skipped." and proceed to Phase 4.
 
-*[Phase content to be added]*
+### 3.1 — Decode each path-hash entry
+
+Use the decoding algorithm from Phase 1.5 to reconstruct the filesystem path for each entry. The decoding approach:
+
+1. The directory name starts with a drive letter pattern on Windows (`C--` = `C:\`) or a leading hyphen on macOS/Linux (`-Users-` = `/Users/`)
+2. After the drive/root prefix, each `-` could be a path separator or an original hyphen in a folder name
+3. To resolve ambiguity: attempt to reconstruct the path segment by segment, checking each candidate against the actual filesystem to find the longest matching prefix
+4. If the fully reconstructed path exists on disk, decoding succeeds
+5. If no valid path can be reconstructed, classify as "undecodable"
+
+### 3.2 — Classify each entry
+
+For each decoded entry, classify using this table:
+
+| Classification | Criteria | Report Color |
+|---|---|---|
+| **Valid** | Decoded path exists on disk and is NOT under cloud-synced storage | Green |
+| **Stale** | Decoded path is under a cloud-synced location AND a local equivalent path-hash directory exists (pointing to a non-cloud path for the same project) | Red |
+| **Orphan** | Decoded path does not exist on disk anywhere (folder was deleted, renamed, or moved) | Yellow |
+| **Undecodable** | Directory name cannot be decoded to any valid filesystem path | Yellow |
+
+"Local equivalent" means another entry under `~/.claude/projects/` that decodes to a non-cloud-synced path for the same project name (last segment of the decoded path matches).
+
+### 3.3 — Gather entry contents
+
+For each path-hash directory, record its contents:
+
+**PowerShell:**
+```powershell
+$dir = "~/.claude/projects/[entry]"
+$files = Get-ChildItem -Recurse -File -Force $dir
+$memoryFiles = Get-ChildItem -Path "$dir/memory" -File -ErrorAction SilentlyContinue
+$hasSettings = Test-Path "$dir/settings.json"
+$size = ($files | Measure-Object -Property Length -Sum).Sum
+```
+
+**bash:**
+```bash
+dir=~/.claude/projects/[entry]
+find "$dir" -type f | wc -l
+ls "$dir/memory/" 2>/dev/null | wc -l
+test -f "$dir/settings.json" && echo "yes" || echo "no"
+du -sh "$dir"
+```
+
+For undecodable entries: scan memory files and settings files inside the directory for project name references (fuzzy-match guess).
+
+### 3.4 — Compile path-hash findings
+
+Group entries by classification for the Phase 5 report:
+
+```
+Path-hash integrity ([total] entries):
+
+  Valid ([n]):
+    - [entry] -> [decoded local path] ([n] memory files, settings: [yes/no])
+
+  Stale ([n]):
+    - [entry] -> [decoded cloud path]
+      Local equivalent: [local entry] -> [decoded local path]
+      Contents: [n] memory files, settings: [yes/no], [size]
+
+  Orphan ([n]):
+    - [entry] -> [decoded path that no longer exists]
+      Contents: [n] memory files, settings: [yes/no], [size]
+
+  Undecodable ([n]):
+    - [entry]
+      Best guess: [fuzzy-match project name] (from memory file contents)
+      Contents: [n] memory files, settings: [yes/no], [size]
+```
+
+If all entries are valid, record: "All [n] path-hash entries are valid — no stale, orphan, or undecodable entries found."
 
 ---
 

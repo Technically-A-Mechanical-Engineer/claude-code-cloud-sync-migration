@@ -18,18 +18,18 @@ Robert LaSalle
 
 ## Current State
 
-- **Migration prompt:** v1.1.1 (release candidate). Next: v1.2.0 — six findings documented in dev status report.
-- **Cleanup prompt:** Not yet built. v1.0.0 spec in design doc.
+- **Migration prompt:** v1.2.0 (shipped). Tagged migration-v1.2.0, merged to master.
+- **Cleanup prompt:** v1.0.0 (built). 946 lines, NEC evaluation passed with 4 minor findings (all fixed).
 - **Verification prompt:** Not yet built. v1.0.0 spec in design doc.
 - **Design spec:** `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the three-prompt expansion. This is the requirements source for all GSD planning.
-- **Evaluation:** v1.1.1 passed all eight Nate's Executive Circle prompt frameworks (details in `prompt-evaluation.md`)
+- **Evaluation:** v1.2.0 migration and v1.0.0 cleanup both passed all applicable NEC prompt frameworks (details in `prompt-evaluation.md`)
 
 ## File Map
 
 | File | Purpose |
 |---|---|
-| `claude-code-cloud-sync-migration.md` | Migration prompt (current: v1.1.1, next: v1.2.0). Prior versions in git history. |
-| `cloud-sync-cleanup.md` | Cleanup prompt (not yet built, v1.0.0 spec in design doc) |
+| `claude-code-cloud-sync-migration.md` | Migration prompt (current: v1.2.0). Prior versions in git history. |
+| `cloud-sync-cleanup.md` | Cleanup prompt (current: v1.0.0). Built 2026-04-10/11. |
 | `cloud-sync-verification.md` | Verification prompt (not yet built, v1.0.0 spec in design doc) |
 | `cloud-sync-migration-dev-status.md` | Development status report, version history, requirements, and testing plans |
 | `prompt-evaluation.md` | Framework evaluation against eight prompt engineering frameworks |

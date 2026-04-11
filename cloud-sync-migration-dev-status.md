@@ -207,6 +207,45 @@ This is the requirements source for all GSD planning. It covers the migration v1
 
 ---
 
+## Cleanup Prompt v1.0.0 — Build Status
+
+**Built:** 2026-04-10/11
+**File:** `cloud-sync-cleanup.md`
+**Size:** 946 lines
+**Build method:** GSD Phase 2 — 4 plans across 3 waves
+
+### Requirements Coverage
+
+All 9 CLN requirements from the design spec addressed:
+
+| Req | Description | Status |
+|-----|-------------|--------|
+| CLN-01 | Path-hash inventory and classification | Addressed |
+| CLN-02 | Source folder identification and staleness check | Addressed |
+| CLN-03 | Orphan settings entry detection | Addressed |
+| CLN-04 | Individual confirmation before each deletion | Addressed |
+| CLN-05 | Three-way platform command blocks for destructive operations | Addressed |
+| CLN-06 | Standalone mode (no prior migration required) | Addressed |
+| CLN-07 | Dry-run summary before any deletions | Addressed |
+| CLN-08 | Manual cleanup checklist for items outside scope | Addressed |
+| CLN-09 | Results log written incrementally | Addressed |
+
+### NEC Evaluation
+
+Evaluated against all applicable NEC prompt frameworks. Result: **Pass** with 4 minor findings, all resolved.
+
+- **Finding 1 (Minor, fixed):** `stat` syntax inconsistency — macOS uses `stat -f`, Linux uses `stat -c`, bash-on-Windows uses neither. Added platform notes.
+- **Finding 2 (Minor, fixed):** Phase 4.6 retry/skip dialog had no retry limit. Added 3-retry cap.
+- **Finding 3 (Minor, fixed):** Standalone mode Phase 4.1 couldn't find manually-migrated folders with no path-hash entries. Added manual path addition note.
+- **Finding 4 (Minor, fixed):** Manual cleanup checklist didn't mention soak-period recommendation. Added prominent callout.
+- **Observation (not a finding):** At 946 lines, cleanup prompt is 75% larger than migration (540 lines). Growth is from three-way platform command blocks for destructive operations. Right trade-off per design principles. Monitor CLI paste behavior.
+
+Fixes applied in commits `75f0bdd` and `ee3246a`.
+
+Full evaluation in `prompt-evaluation.md`.
+
+---
+
 ## Design Principles (for reference during development)
 
 These were established during the initial development and review process:

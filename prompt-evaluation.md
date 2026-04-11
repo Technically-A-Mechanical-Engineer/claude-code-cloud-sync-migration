@@ -225,3 +225,91 @@ v1.2.0 passes all eight evaluation frameworks with no findings. The six new feat
 - **Graceful cross-prompt state** introduces a behavioral primitive for multi-prompt coexistence that was not needed when this was a single-prompt tool. As the toolkit expands to include cleanup and verification prompts, this pattern prevents prompts from misdiagnosing each other's side effects.
 
 The five-dimension constraint model (Must / Must-not / Prefer / Escalate / Recover) is now a fully intentional design element rather than an emergent pattern. The prompt is ready for distribution and serves as the architectural foundation for the cleanup and verification prompts that follow.
+
+---
+---
+
+# Cloud-Sync Cleanup Prompt — v1.0.0 Evaluation
+**Evaluated:** 2026-04-11
+**Evaluator:** Claude (Claude Code CLI — GSD Phase 2, quick task 260411-8t0)
+**Document under review:** `cloud-sync-cleanup.md` (v1.0.0)
+
+---
+
+## Evaluation Frameworks
+
+Same eight-framework evaluation used for the migration prompt. Frameworks not applicable to the cleanup prompt's single-session architecture are noted.
+
+| Framework | Source | Applicable? |
+|---|---|---|
+| Specification Engineer | State of Prompt Engineering Kit — Prompt 3 | Yes |
+| Constraint Architecture | State of Prompt Engineering Kit — Prompt 6 | Yes |
+| Self-Contained Problem Statement | State of Prompt Engineering Kit — Prompt Q2 | Yes |
+| First Agent Task | Six Weeks Kit — Prompt 1 | Yes |
+| Footgun Detector | Six Weeks Kit — Prompt 4 | Yes |
+| Loop Designer | Six Weeks Kit — Prompt 3 | Yes |
+| Agent Architecture Audit | Building Agents Is 80% Plumbing Kit | Yes |
+| Agent-Readiness Audit | Skills Are Infrastructure Now Kit — Prompt 3 | N/A — cleanup is single-session, does not generate a continuation prompt |
+
+---
+
+## Results Summary
+
+| Framework | Verdict | Findings |
+|---|---|---|
+| Specification Engineer | **Pass** | 0 findings |
+| Constraint Architecture | **Pass** | 0 findings |
+| Self-Contained Problem Statement | **Pass** | 0 findings |
+| First Agent Task | **Pass** | 0 findings |
+| Footgun Detector | **Pass** | 0 findings |
+| Loop Designer | **Pass** | 0 findings |
+| Agent Architecture Audit | **Pass** | 0 findings |
+| Agent-Readiness Audit | **N/A** | Single-session prompt — no generated continuation prompt to audit |
+
+**Overall: v1.0.0 passes all applicable frameworks. 4 minor findings identified during evaluation, all resolved before final verdict.**
+
+---
+
+## Findings (Pre-Resolution)
+
+Four minor findings were identified and fixed during the evaluation cycle. All fixes applied in commits `75f0bdd` and `ee3246a`.
+
+### Finding 1 (Minor — Fixed): stat syntax inconsistency
+
+**Problem:** The prompt uses `stat` to display file metadata during deletion confirmation, but `stat` syntax differs across platforms: macOS uses `stat -f "%Sm"`, Linux uses `stat -c "%y"`, and bash-on-Windows has no reliable `stat` equivalent for this purpose.
+
+**Fix:** Added platform-specific notes in the relevant phase to clarify which `stat` syntax applies per shell context.
+
+### Finding 2 (Minor — Fixed): No retry limit on Phase 4.6 retry/skip dialog
+
+**Problem:** When a deletion fails (permission error, file lock), the prompt offers retry or skip. With no retry limit, a user could loop indefinitely on a persistent failure.
+
+**Fix:** Added a 3-retry cap. After 3 failed attempts on the same item, the prompt skips it and logs the failure.
+
+### Finding 3 (Minor — Fixed): Standalone mode can't find manually-migrated folders
+
+**Problem:** In standalone mode (no prior migration results file), Phase 4.1 builds the local project inventory from path-hash entries. Manually-migrated folders with no corresponding path-hash entries would be invisible, preventing the cleanup prompt from verifying local copies exist before deleting source folders.
+
+**Fix:** Added a note in standalone mode's Phase 4.1 that users can manually add local paths for verification if path-hash entries don't exist for all migrated folders.
+
+### Finding 4 (Minor — Fixed): Manual cleanup checklist missing soak-period recommendation
+
+**Problem:** The manual cleanup checklist at the end of the prompt lists items the user should handle outside the prompt's scope, but didn't mention that users should wait a soak period (days/weeks) before performing irreversible manual cleanup to confirm everything works.
+
+**Fix:** Added a prominent callout recommending a soak period before manual cleanup actions.
+
+---
+
+## Observation (Not a Finding)
+
+At 946 lines, the cleanup prompt is 75% larger than the migration prompt (540 lines). The growth comes from three-way platform command blocks (PowerShell / bash-on-Windows / native bash) for every destructive operation — each deletion confirmation, execution, and verification needs all three variants.
+
+This is the right trade-off: destructive operations require platform-correct commands more than any other operation type. The design principles mandate platform-specific command selection, and cleanup is inherently destructive. The line count is proportional to the safety requirements.
+
+**Monitor:** CLI paste behavior with 946-line prompts. If users report truncation or paste failures, consider splitting the user guide from the instructions (two files instead of one) as a future optimization.
+
+---
+
+## Conclusion
+
+v1.0.0 cleanup prompt passes all applicable NEC evaluation frameworks. The four minor findings were all in the category of platform edge cases and UX guardrails — no architectural gaps, no safety issues, no constraint model failures. The cleanup prompt inherits the five-dimension constraint model from the migration prompt and extends it appropriately for destructive operations (individual confirmation gates, dry-run summary, 3-retry cap on failures).

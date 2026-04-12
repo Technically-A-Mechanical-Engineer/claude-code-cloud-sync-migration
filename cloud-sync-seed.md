@@ -145,9 +145,12 @@ Check for existing markers before acting. Detection order:
 |----------|-----------|---------|--------|
 | Missing | Missing | Missing | **Fresh seed** — proceed to Phase 2 to create all markers |
 | Missing | Exists | Exists | **Anomaly** — markers present without manifest. Escalate: ask user if they want to generate a manifest for existing markers or start fresh |
+| Missing | Exists | Missing | **Anomaly** — partial markers without manifest. Escalate: ask user if they want to generate a manifest for the existing test file or start fresh |
+| Missing | Missing | Exists | **Anomaly** — partial markers without manifest. Escalate: ask user if they want to generate a manifest for the existing tag or start fresh |
 | Present + valid | Matches | Matches | **Already seeded** — report "Project already seeded on [manifest.created]. All markers intact." Exit with summary, no further action. |
 | Present + valid | Missing | Matches | **Partial damage** — proceed to Phase 2, restore test file only, update manifest |
 | Present + valid | Matches | Missing | **Partial damage** — proceed to Phase 2, recreate git tag only (if git repo), update manifest |
+| Present + valid | Missing | Missing | **Full damage** — both markers lost. Proceed to Phase 2, recreate all markers, update manifest |
 | Present + valid | Mismatch | Matches | **Content changed** — Escalate: "Test file exists but content differs from manifest. Overwrite with seed content? [y/n]" |
 | Present + valid | Matches | Wrong commit | **History changed** — WARN: "Git tag points to a different commit than recorded in manifest. This could mean new commits were made after seeding (expected if you continued working). Offer to update tag and manifest to current HEAD? [y/n]" |
 | Present + malformed | Any | Any | **Corrupt manifest** — Escalate: "Manifest JSON is malformed. Regenerate manifest from current state? [y/n]" |

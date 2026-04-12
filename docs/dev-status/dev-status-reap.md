@@ -1,6 +1,6 @@
-# Sow Prompt — Development Status
+# Reap Prompt — Development Status
 **Updated:** 2026-04-11
-**Prompt file:** `cloud-sync-sow.md`
+**Prompt file:** `localground-reap.md`
 **Current version:** v1.0.0 (built, pending NEC evaluation)
 **Project owner:** Robert LaSalle
 **Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
@@ -9,11 +9,11 @@
 
 ## What This Prompt Does
 
-A single-file prompt that any Claude Code user can paste into CLI from a migrated project directory to verify project health after migration from cloud-synced storage. Two operating modes: seeded (verifies planted markers survived the copy, then runs health checks) and unseeded (health checks only). Produces a `sow-report.md` artifact with traffic-light summary, per-check results, detailed findings, and a consolidated action list.
+A single-file prompt that any Claude Code user can paste into CLI from a migrated project directory to verify project health after migration from cloud storage. Two operating modes: seeded (verifies planted markers survived the copy, then runs health checks) and unseeded (health checks only). Produces a `reap-report.md` artifact with traffic-light summary, per-check results, detailed findings, and a consolidated action list.
 
 The prompt creates one temporary test file during the operations check (immediately deleted) and writes a single report file. It never modifies existing project files. In seeded mode with all checks passing, it offers to clean up seed markers with individual user confirmation.
 
-This is one of five prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`, and `docs/dev-status/dev-status-seed.md` (to be created in Phase 9).
+This is one of five prompts in the LocalGround Toolkit. See also: `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`, and `docs/dev-status/dev-status-seed.md` (to be created in Phase 9).
 
 ---
 
@@ -33,7 +33,7 @@ This is one of five prompts in the Cloud-Sync Toolkit. See also: `docs/dev-statu
 
 ### Requirements Coverage
 
-All 8 SOW requirements from the v2.0.0 requirements addressed:
+All 8 SOW-xx requirements from the v2.0.0 requirements addressed:
 
 | Req | Description | Prompt Section |
 |-----|-------------|----------------|
@@ -41,14 +41,14 @@ All 8 SOW requirements from the v2.0.0 requirements addressed:
 | SOW-02 | Verify seed markers (test file checksum, git tag) | Phase 2 — seed verification |
 | SOW-03 | Six health checks (git, memory, stale refs, file system, operations, cloud location) | Phase 3 — health checks + Phase 1.3 cloud-location gate |
 | SOW-04 | PASS/WARN/FAIL per check with clear criteria | Phase 3 scoring + Phase 4 results table |
-| SOW-05 | Write `sow-report.md` artifact | Phase 4 — report generation |
+| SOW-05 | Write `reap-report.md` artifact | Phase 4 — report generation |
 | SOW-06 | Post-verification marker cleanup with individual confirmation | Phase 5 — marker cleanup offer |
 | SOW-07 | Three-way shell detection (self-contained) | Phase 1.1 — shell and platform |
 | SOW-08 | Five-dimension constraint model | Operating Constraints section |
 
 ### Manifest Contract
 
-This prompt defines the `.cloud-sync-seed-manifest.json` schema that the Seed prompt (Phase 9) must write to. The schema is:
+This prompt defines the `.localground-seed-manifest.json` schema that the Seed prompt (Phase 9) must write to. The schema is:
 
 ```json
 {
@@ -60,14 +60,14 @@ This prompt defines the `.cloud-sync-seed-manifest.json` schema that the Seed pr
   "markers": {
     "test_file": {
       "type": "file",
-      "path": ".cloud-sync-seed-test",
+      "path": ".localground-seed-test",
       "sha256": "hex string, lowercase",
       "size_bytes": integer,
       "content_description": "human-readable description"
     },
     "git_tag": {
       "type": "git_tag",
-      "name": "cloud-sync-toolkit/seed/<timestamp>",
+      "name": "localground/seed/<timestamp>",
       "commit": "full commit hash (40 chars, lowercase)",
       "tag_type": "lightweight"
     }
@@ -76,7 +76,7 @@ This prompt defines the `.cloud-sync-seed-manifest.json` schema that the Seed pr
 ```
 
 Contract rules:
-- Sow reads, Seed writes — Sow never modifies the manifest
+- Reap reads, Seed writes — Reap never modifies the manifest
 - Unknown marker types are ignored (forward compatibility)
 - Unrecognized `version` values produce WARN, not FAIL
 - Malformed JSON produces FAIL for seed verification
@@ -86,31 +86,31 @@ Contract rules:
 ## NEC Evaluation
 
 **Status:** Complete — 2026-04-12
-**Evaluation record:** `docs/evaluations/prompt-evaluation-sow.md`
+**Evaluation record:** `docs/evaluations/prompt-evaluation-reap.md`
 **Result:** All eight NEC prompt frameworks passed. 0 findings identified during evaluation.
 
 ---
 
 ## Testing Plan
 
-The sow prompt should be tested in two modes against Robert's actual migrated projects.
+The reap prompt should be tested in two modes against Robert's actual migrated projects.
 
 ### Unseeded Mode Test
 
 1. Launch Claude Code from a migrated project (e.g., `C:\Users\rlasalle\Projects\OB1`)
-2. Paste `cloud-sync-sow.md`
+2. Paste `localground-reap.md`
 3. Verify Phase 1 detects environment correctly, identifies unseeded mode (no manifest)
 4. Verify Phase 3 runs all six health checks with correct platform commands
-5. Verify Phase 4 generates `sow-report.md` with no seed section, correct footer note
+5. Verify Phase 4 generates `reap-report.md` with no seed section, correct footer note
 6. Verify the prompt did not modify existing project files
 
 ### Seeded Mode Test
 
 Requires the Seed prompt (Phase 9) to be built first:
-1. Run `cloud-sync-seed.md` in a project before migration
+1. Run `localground-seed.md` in a project before migration
 2. Run migration
 3. Launch Claude Code from the migrated project
-4. Paste `cloud-sync-sow.md`
+4. Paste `localground-reap.md`
 5. Verify Phase 1 detects seeded mode (manifest present)
 6. Verify Phase 2 verifies each marker independently
 7. Verify Phase 3 runs health checks
@@ -120,7 +120,7 @@ Requires the Seed prompt (Phase 9) to be built first:
 
 ### Edge Case Tests
 
-- Run from a cloud-synced path — verify cloud-location gate stops execution
+- Run from a cloud storage path — verify cloud-location gate stops execution
 - Run with a malformed manifest — verify FAIL with clear error
 - Run after marker cleanup (manifest present, markers gone) — verify FAIL per missing marker
 

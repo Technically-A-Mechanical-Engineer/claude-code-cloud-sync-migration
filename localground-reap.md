@@ -1,17 +1,16 @@
-# Cloud-Sync Sow for Claude Code Projects
-**v1.0.0** | 2026-04-11
+# LocalGround Toolkit v2.0.0 — Reap
 
-After migrating your Claude Code projects off cloud-synced storage, this prompt verifies that the project is healthy at its new location and — if you planted seed markers before migration — confirms that file content and git history survived the copy intact. Copy everything in this file and paste it into Claude Code CLI as your first message. Claude Code must be launched from the migrated project's directory.
+After migrating your Claude Code projects off cloud storage, this prompt verifies that the project is healthy at its new location and — if you planted seed markers before migration — confirms that file content and git history survived the copy intact. Copy everything in this file and paste it into Claude Code CLI as your first message. Claude Code must be launched from the migrated project's directory.
 
 **Compatibility:** Requires Claude Code CLI (terminal or IDE extension). Does not work in claude.ai web, Claude desktop app, or Cowork mode. Tested with Claude Code CLI as of April 2026.
 
-**Nearly read-only.** This prompt creates one temporary test file during the operations check (immediately deleted) and writes a single report file (`sow-report.md`). It never modifies existing project files.
+**Nearly read-only.** This prompt creates one temporary test file during the operations check (immediately deleted) and writes a single report file (`reap-report.md`). It never modifies existing project files.
 
 ## Two Operating Modes
 
-Sow runs in one of two modes, detected automatically:
+Reap runs in one of two modes, detected automatically:
 
-- **Seeded mode** (if you ran `cloud-sync-seed.md` before migration): Verifies that seed markers survived the copy — test file checksum match, git tag presence — then runs health checks. Full copy verification.
+- **Seeded mode** (if you ran `localground-seed.md` before migration): Verifies that seed markers survived the copy — test file checksum match, git tag presence — then runs health checks. Full copy verification.
 - **Unseeded mode** (no seed markers): Runs health checks only. Still useful for verifying project health after any migration.
 
 ## What It Checks
@@ -19,7 +18,7 @@ Sow runs in one of two modes, detected automatically:
 | Check | What it verifies | Why it matters |
 |-------|-----------------|----------------|
 | Seed markers (seeded mode only) | Test file checksum match, git tag presence | Proves file content and git history survived the copy intact |
-| Project location | CWD is not under cloud-synced storage | Cloud-synced paths cause git errors, file locks, and sync conflicts |
+| Project location | CWD is not under cloud storage | Cloud storage paths cause git errors, file locks, and sync conflicts |
 | Git integrity | fsck, status, branch listing | Corrupted git state means lost work |
 | Memory connection | Path-hash directory exists for current path with memory files | Disconnected memory means Claude Code loses project context between sessions |
 | Stale references | CLAUDE.md and memory files don't reference old cloud paths | Stale paths cause Claude Code to reference locations that no longer apply |
@@ -34,7 +33,7 @@ Each check produces **PASS**, **WARN**, or **FAIL**:
 - **WARN:** Non-blocking issue detected — project works but something deserves attention
 - **FAIL:** Blocking issue — this should be resolved before relying on this project
 
-The generated `sow-report.md` uses a traffic light summary at the top:
+The generated `reap-report.md` uses a traffic light summary at the top:
 
 - **Green:** All checks passed
 - **Yellow:** WARN findings present, no FAIL
@@ -46,7 +45,7 @@ The generated `sow-report.md` uses a traffic light summary at the top:
 
 ## Role
 
-You are a project health checker that verifies a single Claude Code project after migration from cloud-synced storage. In seeded mode, you verify that planted markers survived the copy, then run health checks. In unseeded mode, you run health checks only. You are concise and direct. You report what you find without editorializing. You never modify existing project files. You address the user directly.
+You are a project health checker that verifies a single Claude Code project after migration from cloud storage. In seeded mode, you verify that planted markers survived the copy, then run health checks. In unseeded mode, you run health checks only. You are concise and direct. You report what you find without editorializing. You never modify existing project files. You address the user directly.
 
 ## What to Expect
 
@@ -56,7 +55,7 @@ This check runs in a **single Claude Code session**. The phase count depends on 
 - Phase 1: Environment detection — shell, project identity, path-hash lookup, cloud-location gate, mode detection (~1 min)
 - Phase 2: Seed verification — read manifest, verify test file checksum, verify git tag (~1 min)
 - Phase 3: Health checks — five checks covering git, memory, references, file system, operations (~2-3 min). The sixth check (cloud location) runs in Phase 1.
-- Phase 4: Report — write sow-report.md, present summary (~1 min)
+- Phase 4: Report — write reap-report.md, present summary (~1 min)
 - Phase 5: Marker cleanup offer — only if no FAIL results (~1 min)
 
 **Unseeded mode** (no seed manifest):
@@ -76,7 +75,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 
 - Run all checks against the current working directory only — do not scan other projects or the broader environment
 - Report every check result with PASS, WARN, or FAIL and a one-line explanation
-- Write the report to `sow-report.md` in CWD — overwrite any existing report (point-in-time snapshot)
+- Write the report to `reap-report.md` in CWD — overwrite any existing report (point-in-time snapshot)
 - Clean up the temporary test file immediately after the operations check, even if the write test fails
 - In seeded mode, read the manifest with Claude Code's Read tool (not external JSON parsers) — parse the JSON from file content
 - Verify each seed marker independently — per-marker PASS/FAIL, no aggregate seed verdict
@@ -88,7 +87,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 - Never modify git history (no commits, no resets, no branch operations that change state)
 - Never read or modify files outside CWD and `~/.claude/projects/`
 - Never scan `.git/objects/` or binary files during reference checks
-- Never delete the seed manifest (`.cloud-sync-seed-manifest.json`) — it is read-only input
+- Never delete the seed manifest (`.localground-seed-manifest.json`) — it is read-only input
 - Never offer marker cleanup if any check produced a FAIL result
 
 ### Prefer
@@ -96,13 +95,13 @@ These govern everything below. Do not proceed past any violation — stop and re
 - Run checks in parallel where they have no dependencies
 - Report results as a single summary table after all checks complete, not one check at a time
 - If a check cannot run (e.g., not a git repo), report SKIP with reason rather than FAIL
-- Overwrite prior `sow-report.md` — latest run supersedes previous
+- Overwrite prior `reap-report.md` — latest run supersedes previous
 - If the user declines marker cleanup, include a note in the report with manual cleanup commands
 - Proportional output — same structural completeness regardless of check count, but do not pad a clean report with unnecessary bulk
 
 ### Escalate
 
-- If CWD is under cloud-synced storage, stop immediately — the project has not been migrated. Present the cloud-location gate message and recommend `cloud-sync-migration.md`
+- If CWD is under cloud storage, stop immediately — the project has not been migrated. Present the cloud-location gate message and recommend `localground-migration.md`
 - If the seed manifest is present but contains malformed JSON, FAIL seed verification with a clear parse error message, skip Phase 2, and proceed to Phase 3 — do not crash
 - If the seed manifest has an unrecognized `version` field value, WARN (not FAIL) and attempt to verify known marker types — graceful degradation
 - If the path-hash directory exists but has a different project's memory (name mismatch), stop and report — possible path-hash collision
@@ -138,16 +137,16 @@ Do not mix shell syntaxes. Every command in this session must match the detected
 
 ### 1.3 — Cloud-location gate
 
-Check whether CWD is under a known cloud-sync path. Use these patterns:
+Check whether CWD is under a known cloud storage path. Use these patterns:
 
 - **OneDrive / OneDrive for Business:** `$env:USERPROFILE\OneDrive*\` (Windows), `~/Library/CloudStorage/OneDrive*` (macOS)
 - **Dropbox:** `$env:USERPROFILE\Dropbox\` or `~/Dropbox`
 - **Google Drive:** `$env:USERPROFILE\Google Drive\` or `~/Google Drive` or `~/Library/CloudStorage/GoogleDrive*`
 - **iCloud Drive:** `~/Library/Mobile Documents/com~apple~CloudDocs`
 
-If CWD is under cloud-synced storage, stop immediately:
+If CWD is under cloud storage, stop immediately:
 
-> "This project is running from a cloud-synced path: [path]. It has not been migrated to local storage. Use `cloud-sync-migration.md` to migrate before running this health check."
+> "This project is running from a cloud storage path: [path]. It has not been migrated to local storage. Use `localground-migration.md` to migrate before running this health check."
 
 Do not proceed with remaining phases.
 
@@ -165,7 +164,7 @@ Check whether `~/.claude/projects/[encoded-path]` exists. Record result for the 
 
 ### 1.5 — Mode detection
 
-Check for `.cloud-sync-seed-manifest.json` in CWD:
+Check for `.localground-seed-manifest.json` in CWD:
 
 - **File exists → Seeded mode.** Read the manifest using Claude Code's Read tool. Parse the JSON content. Validate the `version` field:
   - `version` is `"1.0"` → proceed normally
@@ -326,11 +325,11 @@ Scoring:
 - **WARN:** Directory exists but empty (new project or memory not yet created)
 - **FAIL:** Directory does not exist
 
-If FAIL: Also scan `~/.claude/projects/` for entries containing the project folder name under common cloud prefixes. If found, report: "Memory exists at old cloud-synced path-hash [name] but not at the current local path. Run Session 2 of `cloud-sync-migration.md` or manually copy the memory directory."
+If FAIL: Also scan `~/.claude/projects/` for entries containing the project folder name under common cloud prefixes. If found, report: "Memory exists at old cloud storage path-hash [name] but not at the current local path. Run Session 2 of `localground-migration.md` or manually copy the memory directory."
 
 ### 3.3 — Stale references
 
-Search these files for cloud-sync path patterns:
+Search these files for cloud storage path patterns:
 
 **In CWD:**
 - `CLAUDE.md` (if exists)
@@ -359,8 +358,8 @@ grep -n "OneDrive\|Dropbox\|Google Drive\|iCloud\|CloudStorage\|Mobile Documents
 ```
 
 Scoring:
-- **PASS:** No cloud-sync path strings found
-- **WARN:** Cloud-sync path strings found — report each occurrence with file name, line number, and matched string. Note: some references may be intentional.
+- **PASS:** No cloud storage path strings found
+- **WARN:** Cloud storage path strings found — report each occurrence with file name, line number, and matched string. Note: some references may be intentional.
 
 ### 3.4 — File system integrity
 
@@ -392,22 +391,22 @@ Scoring:
 
 ### 3.5 — Operations check
 
-Use a toolkit-specific temp file name: `.cloud-sync-sow-test-temp`
+Use a toolkit-specific temp file name: `.localground-reap-test-temp`
 
 **PowerShell:**
 ```powershell
-Set-Content -Path ".cloud-sync-sow-test-temp" -Value "sow-operations-test"
-Test-Path ".cloud-sync-sow-test-temp"
-Remove-Item ".cloud-sync-sow-test-temp" -ErrorAction SilentlyContinue
--not (Test-Path ".cloud-sync-sow-test-temp")
+Set-Content -Path ".localground-reap-test-temp" -Value "reap-operations-test"
+Test-Path ".localground-reap-test-temp"
+Remove-Item ".localground-reap-test-temp" -ErrorAction SilentlyContinue
+-not (Test-Path ".localground-reap-test-temp")
 ```
 
 **bash:**
 ```bash
-echo "sow-operations-test" > .cloud-sync-sow-test-temp
-[ -f .cloud-sync-sow-test-temp ] && echo "WRITE_OK" || echo "WRITE_FAIL"
-rm -f .cloud-sync-sow-test-temp
-[ ! -f .cloud-sync-sow-test-temp ] && echo "DELETE_OK" || echo "DELETE_FAIL"
+echo "reap-operations-test" > .localground-reap-test-temp
+[ -f .localground-reap-test-temp ] && echo "WRITE_OK" || echo "WRITE_FAIL"
+rm -f .localground-reap-test-temp
+[ ! -f .localground-reap-test-temp ] && echo "DELETE_OK" || echo "DELETE_FAIL"
 ```
 
 Scoring:
@@ -420,12 +419,12 @@ Important: Clean up the temp file even if the write test fails. If `rm`/`Remove-
 
 ## Phase 4 — Report
 
-Generate `sow-report.md` in CWD with the complete check results. If `sow-report.md` already exists, overwrite it — the report is a point-in-time snapshot.
+Generate `reap-report.md` in CWD with the complete check results. If `reap-report.md` already exists, overwrite it — the report is a point-in-time snapshot.
 
 ### 4.1 — Header block
 
 ```markdown
-# Sow Report
+# Reap Report
 **Generated:** [ISO timestamp]
 **Shell:** [PowerShell / bash-on-Windows / native bash/zsh]
 **Project:** [project name]
@@ -484,14 +483,14 @@ For each WARN or FAIL result, provide a detail entry:
 2. **What to do** — the recommended action, referencing the appropriate toolkit prompt:
 
 Recommendation mapping:
-- Memory not connected → "Run Session 2 of `cloud-sync-migration.md` or manually copy the memory directory from the old path-hash entry"
-- Stale references → "Update the reference manually, or use `cloud-sync-cleanup.md` to address stale references"
+- Memory not connected → "Run Session 2 of `localground-migration.md` or manually copy the memory directory from the old path-hash entry"
+- Stale references → "Update the reference manually, or use `localground-cleanup.md` to address stale references"
 - Git fsck errors → "Run `git fsck --full` manually and investigate errors"
 - Git fsck warnings → "Informational — run `git fsck --full` for details if concerned"
 - Operations failure → "Check if cloud sync is still active on this directory. Verify file permissions."
-- File system issues → "Verify the copy was complete. Re-run the migration if needed using `cloud-sync-migration.md`"
-- Seed test file FAIL → "The test file planted by `cloud-sync-seed.md` was not found or has different content. The copy may have altered file contents."
-- Seed git tag FAIL → "The git tag planted by `cloud-sync-seed.md` was not found or points to a different commit. Git history may not have been fully preserved."
+- File system issues → "Verify the copy was complete. Re-run the migration if needed using `localground-migration.md`"
+- Seed test file FAIL → "The test file planted by `localground-seed.md` was not found or has different content. The copy may have altered file contents."
+- Seed git tag FAIL → "The git tag planted by `localground-seed.md` was not found or points to a different commit. Git history may not have been fully preserved."
 
 For clean results (all PASS), show positive confirmation: "All checks passed. No migration issues detected."
 
@@ -520,19 +519,19 @@ In unseeded mode, add at the bottom of the report:
 
 ```markdown
 ---
-*For future migrations, plant seed markers before migration using `cloud-sync-seed.md` to get full copy verification.*
+*For future migrations, plant seed markers before migration using `localground-seed.md` to get full copy verification.*
 ```
 
 In seeded mode, this footer is not included.
 
 ### 4.7 — Present summary and write report
 
-Write `sow-report.md` to CWD. Then display the traffic-light summary and results table in the terminal.
+Write `reap-report.md` to CWD. Then display the traffic-light summary and results table in the terminal.
 
 If actions were recommended: "Review the full report for detailed findings."
 If no actions: "This project is healthy. No further action needed."
 
-State: "Report saved to sow-report.md in [CWD path]."
+State: "Report saved to reap-report.md in [CWD path]."
 
 ---
 
@@ -585,25 +584,25 @@ Verify each removal succeeded. If removal fails, report the error and continue.
 
 After cleanup, inform the user:
 
-"Seed markers have been removed. The manifest file (`.cloud-sync-seed-manifest.json`) remains — it is a record of what was planted. To run sow in unseeded mode in the future, delete the manifest: `rm .cloud-sync-seed-manifest.json` (bash) or `Remove-Item .cloud-sync-seed-manifest.json` (PowerShell)."
+"Seed markers have been removed. The manifest file (`.localground-seed-manifest.json`) remains — it is a record of what was planted. To run reap in unseeded mode in the future, delete the manifest: `rm .localground-seed-manifest.json` (bash) or `Remove-Item .localground-seed-manifest.json` (PowerShell)."
 
 If the user declined any cleanup, include a note with manual cleanup commands:
 
 "Seed markers remain in the project. To remove later:"
 - Test file: `rm [path]` / `Remove-Item [path]`
 - Git tag: `git tag -d [tag-name]`
-- Manifest (optional): `rm .cloud-sync-seed-manifest.json` / `Remove-Item .cloud-sync-seed-manifest.json`
+- Manifest (optional): `rm .localground-seed-manifest.json` / `Remove-Item .localground-seed-manifest.json`
 
 ---
 
 ## Definition of Done
 
-This sow session is complete when:
+This reap session is complete when:
 - Environment detection identified the project, shell context, path-hash status, and operating mode
 - In seeded mode: each seed marker has been independently verified with PASS or FAIL
 - All six health checks have been run (or SKIP reported with reason for inapplicable checks)
 - Every check result has been reported with PASS, WARN, or FAIL and a one-line explanation
-- `sow-report.md` exists in CWD with traffic-light summary, results table, detail section for WARN/FAIL items, and consolidated action list
+- `reap-report.md` exists in CWD with traffic-light summary, results table, detail section for WARN/FAIL items, and consolidated action list
 - The user has been presented with the report summary in the terminal
 - In seeded mode with no FAIL results: the marker cleanup offer has been presented
 
@@ -611,7 +610,7 @@ This sow session is complete when:
 
 ## Guardrails
 
-- **Never modify existing project files.** The only filesystem writes permitted are the temporary test file (immediately cleaned up) and `sow-report.md`. Marker cleanup (Phase 5) deletes only seed-planted markers with individual user confirmation — never existing project files.
+- **Never modify existing project files.** The only filesystem writes permitted are the temporary test file (immediately cleaned up) and `reap-report.md`. Marker cleanup (Phase 5) deletes only seed-planted markers with individual user confirmation — never existing project files.
 - **Never assume paths.** Auto-detect first. If detection fails, report the failure and continue.
 - **Platform-correct commands everywhere.** Every command must match the detected shell context. Verify before executing.
 - **Proportional artifacts.** Scale output to scope — same structural completeness for a clean project as for one with findings, but do not pad a clean report with unnecessary bulk.
@@ -619,10 +618,10 @@ This sow session is complete when:
 - **Handle known edge cases:**
   - **Permission errors** — if a check command fails due to permissions, report the error as a FAIL finding and continue with remaining checks
   - **Not a git repo** — report SKIP for git-related checks, continue with other checks
-  - **Missing path-hash directory** — report FAIL for memory connection, include fallback check for old cloud-synced path-hash
+  - **Missing path-hash directory** — report FAIL for memory connection, include fallback check for old cloud storage path-hash
   - **Seed manifest present but markers removed** — FAIL per missing marker. This is expected behavior if user previously ran cleanup but did not delete the manifest.
   - **bash-on-Windows path formats** — use platform-correct paths for all commands. Do not use `sed` for path-hash name manipulation.
   - **Large projects** — do not enumerate all files during file system check. Check for expected hidden directories and symlinks only.
   - **SHA-256 case sensitivity** — compare checksums case-insensitively (PowerShell returns uppercase, bash tools return lowercase)
-- **Graceful cross-prompt state.** If a path-hash directory is missing and no old cloud-synced entry exists either, interpret this as a fresh project (Claude Code hasn't created settings yet), not corruption. Report the finding appropriately.
+- **Graceful cross-prompt state.** If a path-hash directory is missing and no old cloud storage entry exists either, interpret this as a fresh project (Claude Code hasn't created settings yet), not corruption. Report the finding appropriately.
 - **If everything is clean, say so.** A healthy project gets positive confirmation — "All checks passed. No migration issues detected." — not silence.

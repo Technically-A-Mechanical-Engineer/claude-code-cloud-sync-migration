@@ -1,7 +1,7 @@
-# Cloud-Sync Migration Prompt — v1.2.0 Evaluation
+# LocalGround Migration Prompt — v1.2.0 Evaluation
 **Evaluated:** 2026-04-10
 **Evaluator:** Claude (Claude Code CLI — GSD Phase 1 execution)
-**Document under review:** `cloud-sync-migration.md` (v1.2.0)
+**Document under review:** `localground-migration.md` (v1.2.0)
 
 ---
 
@@ -108,7 +108,7 @@ The v1.1.1 evaluation's "minor note" about the fifth dimension being informal is
 
 **Verdict: Pass.**
 
-- **Task summary:** Opening line — "move project folders off cloud-synced storage to local paths."
+- **Task summary:** Opening line — "move project folders off cloud storage to local paths."
 - **Success criteria:** Definition of Done sections for both sessions, plus per-folder verification reports. v1.2.0 adds the placeholder verification pass criterion to the Session 1 Definition of Done.
 - **Context for the agent:** Auto-detected environment, cloud sync service classification, path-hash inventory with three-state classification. v1.2.0 adds shell context (three-way detection) and prior migration state (four-signal cascade with confidence level).
 - **Verification commands now cover all three shell contexts.** Every verification step provides three command variants:
@@ -193,12 +193,12 @@ No option leaves the loop in an ambiguous state. Each produces a defined termina
 | Trigger description as routing table | N/A | Not a skill — pasted manually |
 | Output format completeness | Pass | Generated prompt spec requires Role section, Migration Summary table, phase-prefixed numbering, platform-specific commands, Definition of Done. Validation step cross-checks against results log. v1.2.0 adds the requirement that the Shell Environment section states the detected shell as literal values ("PowerShell" / "bash-on-Windows" / "native bash"), not "same as Session 1." This ensures the three-way shell context carries through to Session 2 correctly. |
 | Explicit edge case handling | Pass | Phase 7.3 handles pre-existing content in path-hash directories (overwrite/keep/skip). Phase 7.1 handles CLI version changes. Phase 8.2 categorizes matches by action type. v1.2.0 adds: subdirectory source paths are used for Phase 8 reference search instead of parent paths (when subdirectory-only scope was selected), ensuring reference updates target the correct path granularity. |
-| Composability | Pass | Session 2's prompt remains self-contained. Reads from `migration-session-1-results.md`, not from Session 1's context window. v1.2.0 adds the Phase 9 cleanup prompt reference ("paste `cloud-sync-cleanup.md` into Claude Code CLI") — this is a cross-prompt reference by filename, not a runtime dependency. The Session 2 prompt spec includes this reference in Phase 9's post-migration reminders, giving the generated prompt awareness of the broader toolkit without creating a dependency on it. |
+| Composability | Pass | Session 2's prompt remains self-contained. Reads from `migration-session-1-results.md`, not from Session 1's context window. v1.2.0 adds the Phase 9 cleanup prompt reference ("paste `localground-cleanup.md` into Claude Code CLI") — this is a cross-prompt reference by filename, not a runtime dependency. The Session 2 prompt spec includes this reference in Phase 9's post-migration reminders, giving the generated prompt awareness of the broader toolkit without creating a dependency on it. |
 
 **Session 2 prompt spec updates for v1.2.0 features:**
 - **Three-way shell commands:** The spec requires Shell Environment to use literal shell context values and all Phase 7/8 commands to match the detected shell. This is explicit in the "Validate before saving" section ("Commands match the detected platform/shell").
 - **Subdirectory paths in Phase 8:** When subdirectory-only scope was selected in Phase 3, the spec directs Phase 8 reference search to use the subdirectory path, not the parent. This prevents false positives from searching the full parent path.
-- **Cleanup prompt reference in Phase 9:** The Phase 9 spec includes the exact reference text: "paste `cloud-sync-cleanup.md` into Claude Code CLI." This ensures the generated Session 2 prompt connects users to the cleanup workflow without requiring Session 2 to know whether the cleanup prompt exists yet.
+- **Cleanup prompt reference in Phase 9:** The Phase 9 spec includes the exact reference text: "paste `localground-cleanup.md` into Claude Code CLI." This ensures the generated Session 2 prompt connects users to the cleanup workflow without requiring Session 2 to know whether the cleanup prompt exists yet.
 
 ---
 

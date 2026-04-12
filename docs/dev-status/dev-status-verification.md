@@ -1,19 +1,19 @@
 # Verification Prompt — Development Status
 **Updated:** 2026-04-11
-**Prompt file:** `cloud-sync-verification.md`
+**Prompt file:** `localground-verification.md`
 **Current version:** v1.0.0 (shipped)
 **Project owner:** Robert LaSalle
-**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
+**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud storage-migration`
 
 ---
 
 ## What This Prompt Does
 
-A single-file prompt that any Claude Code user can paste into CLI to audit their project environment for health issues, stale artifacts, and outdated references left from cloud-synced storage. It auto-detects the environment, runs a five-phase read-only audit (project health, path-hash integrity, stale references), and generates a report mapping every finding to an actionable recommendation pointing to the appropriate toolkit prompt.
+A single-file prompt that any Claude Code user can paste into CLI to audit their project environment for health issues, stale artifacts, and outdated references left from cloud storage. It auto-detects the environment, runs a five-phase read-only audit (project health, path-hash integrity, stale references), and generates a report mapping every finding to an actionable recommendation pointing to the appropriate toolkit prompt.
 
 The prompt never modifies, deletes, or creates anything except the verification report. It is safe to run at any time — before migration, after migration, after cleanup, or on a fresh environment.
 
-This is one of three prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-migration.md` and `docs/dev-status/dev-status-cleanup.md`.
+This is one of three prompts in the LocalGround Toolkit. See also: `docs/dev-status/dev-status-migration.md` and `docs/dev-status/dev-status-cleanup.md`.
 
 ---
 
@@ -87,11 +87,11 @@ The verification prompt should be tested against Robert's actual post-migration 
 
 ### Test Sequence
 
-1. Paste `cloud-sync-verification.md` into Claude Code CLI
+1. Paste `localground-verification.md` into Claude Code CLI
 2. Verify Phase 1 detects environment correctly (Windows, shell type, cloud services, project directories)
 3. Verify Phase 2 runs health checks on all discovered project directories (git fsck, git status, hidden dirs, file counts, symlinks)
 4. Verify Phase 3 decodes and classifies all path-hash entries under `~/.claude/projects/`
-5. Verify Phase 4 scans CLAUDE.md, memory files, and settings files for cloud-synced path references with progress updates
+5. Verify Phase 4 scans CLAUDE.md, memory files, and settings files for cloud-stored path references with progress updates
 6. Verify Phase 5 generates `verification-report.md` with traffic light summary, findings by audit area, and consolidated action list
 7. Review the report — confirm findings are accurate, recommendations point to correct toolkit prompts, consolidated action list is deduplicated and prioritized
 8. Verify the prompt did not modify, delete, or create anything other than `verification-report.md`

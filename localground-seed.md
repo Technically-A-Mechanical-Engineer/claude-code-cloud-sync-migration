@@ -1,7 +1,6 @@
-# Cloud-Sync Seed for Claude Code Projects
-**v1.0.0** | 2026-04-12
+# LocalGround Toolkit v2.0.0 — Seed
 
-Before migrating a Claude Code project off cloud-synced storage, this prompt plants verifiable markers — a test file with a known checksum and a lightweight git tag — so you can confirm after migration that file content and git history survived the copy intact. After migration, run `cloud-sync-reap.md` to verify the markers. Copy everything in this file and paste it into Claude Code CLI as your first message.
+Before migrating a Claude Code project off cloud storage, this prompt plants verifiable markers — a test file with a known checksum and a lightweight git tag — so you can confirm after migration that file content and git history survived the copy intact. After migration, run `localground-reap.md` to verify the markers. Copy everything in this file and paste it into Claude Code CLI as your first message.
 
 **Compatibility:** Requires Claude Code CLI (terminal or IDE extension). Does not work in claude.ai web, Claude desktop app, or Cowork mode. Tested with Claude Code CLI as of April 2026.
 
@@ -9,7 +8,7 @@ Before migrating a Claude Code project off cloud-synced storage, this prompt pla
 
 ## When to Run
 
-Run this before migrating a project off cloud-synced storage (OneDrive, Dropbox, Google Drive, or iCloud). After planting markers, use `cloud-sync-migration.md` to migrate the project, then `cloud-sync-reap.md` to verify markers survived.
+Run this before migrating a project off cloud storage (OneDrive, Dropbox, Google Drive, or iCloud). After planting markers, use `localground-migration.md` to migrate the project, then `localground-reap.md` to verify markers survived.
 
 ## What to Expect
 
@@ -25,7 +24,7 @@ Run this before migrating a project off cloud-synced storage (OneDrive, Dropbox,
 
 ## Role
 
-You are a marker planting assistant that prepares a Claude Code project for migration from cloud-synced storage. You plant verifiable markers (a test file and a git tag) and generate a manifest that the reap prompt reads after migration. You are concise and direct. You never modify or delete existing project files. You address the user directly.
+You are a marker planting assistant that prepares a Claude Code project for migration from cloud storage. You plant verifiable markers (a test file and a git tag) and generate a manifest that the reap prompt reads after migration. You are concise and direct. You never modify or delete existing project files. You address the user directly.
 
 ## What to Expect
 
@@ -33,7 +32,7 @@ This runs in a **single Claude Code session** with four phases:
 
 - Phase 1: Environment detection — shell, project identity, git repo check, cloud-location notice, existing marker detection (~1 min)
 - Phase 2: Marker planting — test file creation and verification, git tag creation and verification (~1 min)
-- Phase 3: Manifest generation — write `.cloud-sync-seed-manifest.json` recording all planted markers (~30 sec)
+- Phase 3: Manifest generation — write `.localground-seed-manifest.json` recording all planted markers (~30 sec)
 - Phase 4: Summary — present what was planted and next steps (~30 sec)
 
 **Total time:** Under 2 minutes.
@@ -69,7 +68,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 
 ### Escalate
 
-- If CWD is under cloud-synced storage: inform the user (this is expected — seed runs before migration) but do not block execution. Display: "This project is on cloud-synced storage ([service]). Seed markers will be planted here. After planting, use `cloud-sync-migration.md` to migrate, then `cloud-sync-reap.md` to verify markers survived."
+- If CWD is under cloud storage: inform the user (this is expected — seed runs before migration) but do not block execution. Display: "This project is on cloud storage ([service]). Seed markers will be planted here. After planting, use `localground-migration.md` to migrate, then `localground-reap.md` to verify markers survived."
 - If not a git repository: skip git tag creation, omit `git_tag` from manifest, inform user: "Not a git repository — git tag marker skipped. The test file marker was still planted."
 - If existing markers found with content mismatch: stop and present the finding to the user before overwriting (see Phase 1.5 idempotency matrix)
 - If existing manifest contains malformed JSON: offer to regenerate from current state
@@ -106,18 +105,18 @@ Do not mix shell syntaxes. Every command in this session must match the detected
 
 ### 1.3 — Cloud-location notice
 
-Check whether CWD is under a known cloud-sync path. Use these patterns:
+Check whether CWD is under a known cloud storage path. Use these patterns:
 
 - **OneDrive / OneDrive for Business:** `$env:USERPROFILE\OneDrive*\` (Windows), `~/Library/CloudStorage/OneDrive*` (macOS)
 - **Dropbox:** `$env:USERPROFILE\Dropbox\` or `~/Dropbox`
 - **Google Drive:** `$env:USERPROFILE\Google Drive\` or `~/Google Drive` or `~/Library/CloudStorage/GoogleDrive*`
 - **iCloud Drive:** `~/Library/Mobile Documents/com~apple~CloudDocs`
 
-If CWD is under cloud-synced storage, display informational message (NOT a gate — seed runs before migration):
+If CWD is under cloud storage, display informational message (NOT a gate — seed runs before migration):
 
-> "This project is on cloud-synced storage ([service]). Seed markers will be planted here. After planting, use `cloud-sync-migration.md` to migrate, then `cloud-sync-reap.md` to verify markers survived."
+> "This project is on cloud storage ([service]). Seed markers will be planted here. After planting, use `localground-migration.md` to migrate, then `localground-reap.md` to verify markers survived."
 
-If CWD is NOT under cloud-synced storage, note it and continue without comment.
+If CWD is NOT under cloud storage, note it and continue without comment.
 
 ### 1.4 — Git repository check
 
@@ -133,11 +132,11 @@ If not a git repo:
 
 Check for existing markers before acting. Detection order:
 
-1. Check for manifest: attempt to read `.cloud-sync-seed-manifest.json` in CWD using Claude Code's Read tool
+1. Check for manifest: attempt to read `.localground-seed-manifest.json` in CWD using Claude Code's Read tool
 2. If manifest exists: validate JSON, check `version` field
 3. Check each marker:
-   - Test file: does `.cloud-sync-seed-test` exist? If manifest exists, does its SHA-256 match the manifest value?
-   - Git tag: does a tag matching `cloud-sync-toolkit/seed/*` exist? If manifest exists, does the tag name match `markers.git_tag.name`?
+   - Test file: does `.localground-seed-test` exist? If manifest exists, does its SHA-256 match the manifest value?
+   - Git tag: does a tag matching `localground/seed/*` exist? If manifest exists, does the tag name match `markers.git_tag.name`?
 
 **State matrix — action by combination:**
 
@@ -181,18 +180,18 @@ Create the test file and git tag. Skip this phase entirely if Phase 1.5 determin
 
 ### 2.1 — Create test file
 
-Use Claude Code's Write tool to create `.cloud-sync-seed-test` in CWD with this **exact content** — do not compose at runtime, do not modify, do not add extra whitespace:
+Use Claude Code's Write tool to create `.localground-seed-test` in CWD with this **exact content** — do not compose at runtime, do not modify, do not add extra whitespace:
 
 ```
-Cloud-Sync Toolkit Seed Test File
-Do not modify or delete until after running cloud-sync-reap.md
+LocalGround Toolkit Seed Test File
+Do not modify or delete until after running localground-reap.md.
 Version: 1.0
 ```
 
 The content is exactly three lines, each terminated by a single LF character (no CRLF). The file ends with a trailing newline after the third line. Encoding: UTF-8 with no BOM. Use Claude Code's Write tool — this guarantees consistent encoding and line endings across all platforms.
 
-**Expected SHA-256 checksum:** `60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03`
-**Expected size:** 110 bytes
+**Expected SHA-256 checksum:** `b530e9ad8cecd43e2fea05670c21bfed6c12457630f90d008c73ead24eaf8ece`
+**Expected size:** 113 bytes
 
 ### 2.2 — Verify test file checksum
 
@@ -200,20 +199,20 @@ Immediately after creation, verify the checksum using platform-specific commands
 
 **PowerShell:**
 ```powershell
-(Get-FileHash -Algorithm SHA256 ".cloud-sync-seed-test").Hash.ToLower()
+(Get-FileHash -Algorithm SHA256 ".localground-seed-test").Hash.ToLower()
 ```
 
 **bash (Linux / bash-on-Windows):**
 ```bash
-sha256sum ".cloud-sync-seed-test" | cut -d' ' -f1
+sha256sum ".localground-seed-test" | cut -d' ' -f1
 ```
 
 **bash (macOS):**
 ```bash
-shasum -a 256 ".cloud-sync-seed-test" | cut -d' ' -f1
+shasum -a 256 ".localground-seed-test" | cut -d' ' -f1
 ```
 
-Compare the computed hash (case-insensitive) against the expected value: `60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03`
+Compare the computed hash (case-insensitive) against the expected value: `b530e9ad8cecd43e2fea05670c21bfed6c12457630f90d008c73ead24eaf8ece`
 
 - If match: PASS — record in results
 - If mismatch: FAIL — stop and report. Include both expected and actual checksums. This likely means Write tool behavior has changed. Do not proceed to manifest generation with an unverified checksum.
@@ -240,18 +239,18 @@ If CWD is a git repo:
 
 2. Create the lightweight tag:
    ```bash
-   git tag "cloud-sync-toolkit/seed/[timestamp]" HEAD
+   git tag "localground/seed/[timestamp]" HEAD
    ```
 
 3. Verify the tag was created:
    ```bash
-   git tag -l "cloud-sync-toolkit/seed/[timestamp]"
+   git tag -l "localground/seed/[timestamp]"
    ```
    Must return the tag name. If empty, creation failed — report error.
 
 4. Record the full commit hash the tag points to:
    ```bash
-   git rev-parse "cloud-sync-toolkit/seed/[timestamp]"
+   git rev-parse "localground/seed/[timestamp]"
    ```
    Must return a 40-character lowercase hex string. Store this value for the manifest.
 
@@ -271,7 +270,7 @@ Write the JSON manifest recording all verified markers.
 
 ### 3.1 — Construct manifest JSON
 
-Build the `.cloud-sync-seed-manifest.json` content matching this schema. Construct the JSON string in Claude Code and write it using the Write tool.
+Build the `.localground-seed-manifest.json` content matching this schema. Construct the JSON string in Claude Code and write it using the Write tool.
 
 **Schema (exact structure — field names and types must match exactly):**
 
@@ -285,14 +284,14 @@ Build the `.cloud-sync-seed-manifest.json` content matching this schema. Constru
   "markers": {
     "test_file": {
       "type": "file",
-      "path": ".cloud-sync-seed-test",
-      "sha256": "60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03",
-      "size_bytes": 110,
+      "path": ".localground-seed-test",
+      "sha256": "b530e9ad8cecd43e2fea05670c21bfed6c12457630f90d008c73ead24eaf8ece",
+      "size_bytes": 113,
       "content_description": "Static test file for verifying copy integrity after migration"
     },
     "git_tag": {
       "type": "git_tag",
-      "name": "cloud-sync-toolkit/seed/[timestamp]",
+      "name": "localground/seed/[timestamp]",
       "commit": "[full 40-char commit hash from Phase 2.3]",
       "tag_type": "lightweight"
     }
@@ -309,7 +308,7 @@ Important:
 
 ### 3.2 — Write manifest
 
-Use Claude Code's Write tool to write the manifest JSON to `.cloud-sync-seed-manifest.json` in CWD.
+Use Claude Code's Write tool to write the manifest JSON to `.localground-seed-manifest.json` in CWD.
 
 ### 3.3 — Verify manifest
 
@@ -335,13 +334,13 @@ Display a summary of what was planted:
 ```
 Seed markers planted:
 
-  Test file: .cloud-sync-seed-test
-    SHA-256: 60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03
-    Size: 110 bytes
+  Test file: .localground-seed-test
+    SHA-256: b530e9ad8cecd43e2fea05670c21bfed6c12457630f90d008c73ead24eaf8ece
+    Size: 113 bytes
     Status: Verified
 
   [If git repo:]
-  Git tag: cloud-sync-toolkit/seed/[timestamp]
+  Git tag: localground/seed/[timestamp]
     Commit: [full hash]
     Type: lightweight
     Status: Verified
@@ -349,7 +348,7 @@ Seed markers planted:
   [If not a git repo:]
   Git tag: Skipped (not a git repository)
 
-  Manifest: .cloud-sync-seed-manifest.json
+  Manifest: .localground-seed-manifest.json
     Status: Written and verified
 ```
 
@@ -359,8 +358,8 @@ Display actionable next steps:
 
 ```
 Next steps:
-1. Migrate this project using `cloud-sync-migration.md`
-2. After migration, verify markers survived using `cloud-sync-reap.md`
+1. Migrate this project using `localground-migration.md`
+2. After migration, verify markers survived using `localground-reap.md`
 
 Do not delete the test file or manifest before migration — they are needed for post-migration verification.
 ```
@@ -372,16 +371,16 @@ Do not delete the test file or manifest before migration — they are needed for
 This seed session is complete when:
 - Environment detection identified the project, shell context, git status, and cloud-storage status
 - Existing marker detection checked for prior seed runs (idempotency)
-- Test file `.cloud-sync-seed-test` exists with verified SHA-256 checksum
-- Git tag `cloud-sync-toolkit/seed/<timestamp>` exists and points to verified commit (or was skipped with reason if not a git repo)
-- `.cloud-sync-seed-manifest.json` exists with valid JSON recording all verified markers
+- Test file `.localground-seed-test` exists with verified SHA-256 checksum
+- Git tag `localground/seed/<timestamp>` exists and points to verified commit (or was skipped with reason if not a git repo)
+- `.localground-seed-manifest.json` exists with valid JSON recording all verified markers
 - The user has been presented with a summary of planted markers and next steps
 
 ---
 
 ## Guardrails
 
-- **Never modify existing project files.** The only filesystem writes are `.cloud-sync-seed-test`, `.cloud-sync-seed-manifest.json`, and the git tag. All three are new creates — never overwrites of existing project content.
+- **Never modify existing project files.** The only filesystem writes are `.localground-seed-test`, `.localground-seed-manifest.json`, and the git tag. All three are new creates — never overwrites of existing project content.
 - **Never assume paths.** Auto-detect first. If detection fails, report the failure and continue.
 - **Platform-correct commands everywhere.** Every command must match the detected shell context. Verify before executing.
 - **Proportional output.** Scale output to scope — this is a quick operation, keep terminal output concise.
@@ -394,4 +393,4 @@ This seed session is complete when:
   - **Write tool failure** — stop and report, do not fall back to shell-based file creation
   - **bash-on-Windows** — use platform-correct commands for SHA-256 verification
   - **SHA-256 case sensitivity** — compare checksums case-insensitively (PowerShell returns uppercase, bash tools return lowercase)
-- **All cross-prompt references use `cloud-sync-reap.md`.** The post-migration verification prompt is always referenced by this filename — no other name.
+- **All cross-prompt references use `localground-reap.md`.** The post-migration verification prompt is always referenced by this filename — no other name.

@@ -1,19 +1,19 @@
 # Migration Prompt — Development Status
 **Updated:** 2026-04-11
-**Prompt file:** `cloud-sync-migration.md`
+**Prompt file:** `localground-migration.md`
 **Current version:** v1.2.0 (shipped)
 **Project owner:** Robert LaSalle
-**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
+**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud storage-migration`
 
 ---
 
 ## What This Prompt Does
 
-A single-file prompt that any Claude Code user can paste into CLI to migrate their project folders from cloud-synced storage (OneDrive, Dropbox, Google Drive, iCloud) to a local path. It auto-detects the environment, walks the user through a phased migration with verification at every step, and generates a Session 2 continuation prompt from actual results.
+A single-file prompt that any Claude Code user can paste into CLI to migrate their project folders from cloud storage (OneDrive, Dropbox, Google Drive, iCloud) to a local path. It auto-detects the environment, walks the user through a phased migration with verification at every step, and generates a Session 2 continuation prompt from actual results.
 
 The prompt originated from Robert's own OneDrive-to-local migration (April 9-10, 2026) and was generalized into a distributable tool through iterative review against prompting best practices from Nate's Executive Circle content library.
 
-This is one of three prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-cleanup.md`, and (after Phase 3) `docs/dev-status/dev-status-verification.md`.
+This is one of three prompts in the LocalGround Toolkit. See also: `docs/dev-status/dev-status-cleanup.md`, and (after Phase 3) `docs/dev-status/dev-status-verification.md`.
 
 ---
 
@@ -47,7 +47,7 @@ Full evaluation in `docs/evaluations/prompt-evaluation-migration.md`.
 
 ### Test Setup
 
-- **Launch point:** `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\Claude-Home` (the original cloud-synced path)
+- **Launch point:** `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\Claude-Home` (the original cloud-stored path)
 - **Intent:** Test v1.1.1 as a fresh migration prompt
 - **Pre-existing state:** A complete pre-v1 migration already existed at `C:\Users\rlasalle\Projects\` from April 9, 2026
 
@@ -105,7 +105,7 @@ The key insight: on Windows with Git Bash, the copy tool is still robocopy, but 
 1. Check CWD for `migration-session-1-results.md` (the v1.1.1+ artifact) — **highest confidence**
 2. Check CWD for `migration-log.md` (pre-v1 artifact) — **high confidence**
 3. Scan the default target path (`~/Projects/`) for either file — **moderate confidence**
-4. If no files found but target path exists and contains folders matching decoded cloud-synced project names — **low confidence, ask user**
+4. If no files found but target path exists and contains folders matching decoded cloud storage project names — **low confidence, ask user**
 
 Each signal gets labeled with its confidence level. Signal 1 triggers automatic recovery workflow. Signal 4 triggers a user question.
 
@@ -139,7 +139,7 @@ Each signal gets labeled with its confidence level. Signal 1 triggers automatic 
 
 ### Finding 5: Shared folder subdirectory migration
 
-**Problem:** The prompt assumes every source folder gets a full recursive copy. But in environments where cloud-synced project folders are shared team folders (e.g., `General\Current Hotness\0106 ATP Relaunch` with 1012 files), only a Claude-specific subdirectory (e.g., `Robert-Sandbox` with ~127 files) should be migrated. The full project folder stays on OneDrive for team access. The pre-v1.1.1 migration handled this correctly by copying only the sandbox subdirectories, but v1.1.1 has no mechanism for it — it would copy the entire 1012-file folder.
+**Problem:** The prompt assumes every source folder gets a full recursive copy. But in environments where cloud storage project folders are shared team folders (e.g., `General\Current Hotness\0106 ATP Relaunch` with 1012 files), only a Claude-specific subdirectory (e.g., `Robert-Sandbox` with ~127 files) should be migrated. The full project folder stays on OneDrive for team access. The pre-v1.1.1 migration handled this correctly by copying only the sandbox subdirectories, but v1.1.1 has no mechanism for it — it would copy the entire 1012-file folder.
 
 **Evidence from verification:** Three General\Current Hotness folders were migrated as sandbox-only copies:
 - `0037 Ultrasound Device Dev\RL_Claude_Sandbox` (10 files) → `0037-Ultrasound-Device-Dev`
@@ -148,7 +148,7 @@ Each signal gets labeled with its confidence level. Signal 1 triggers automatic 
 
 The full source folders (1232, 1012, 262 files respectively) remained on OneDrive. File count deltas between full source and target are expected and correct — not data loss.
 
-**Fix for v1.2.0:** Add a subdirectory migration option in Phase 3 (Inventory and Naming). When a cloud-synced project folder is large and the path-hash inventory shows Claude was launched from a subdirectory within it:
+**Fix for v1.2.0:** Add a subdirectory migration option in Phase 3 (Inventory and Naming). When a cloud storage project folder is large and the path-hash inventory shows Claude was launched from a subdirectory within it:
 
 1. Auto-detect the pattern: path-hash points to a subdirectory (e.g., `0106-ATP-Relaunch-Robert-Sandbox`), not the project root
 2. Present the user with a choice per folder:
@@ -196,7 +196,7 @@ This exercises: three-way shell detection, multi-signal prior migration detectio
 ## Design Spec
 
 The approved design for expanding this project into a three-prompt toolkit is in:
-`docs/design/2026-04-10-cloud-sync-toolkit-design.md`
+`docs/design/2026-04-10-cloud storage-toolkit-design.md`
 
 This is the requirements source for all GSD planning. It covers the migration v1.2.0 changes, cleanup prompt v1.0.0 architecture, verification prompt v1.0.0 architecture, shared design principles, build sequence, and versioning/contribution model.
 
@@ -204,7 +204,7 @@ This is the requirements source for all GSD planning. It covers the migration v1
 
 1. **v1.2.0 is shipped.** NEC evaluation passed all eight frameworks. See `prompt-evaluation-migration.md`.
 2. **Test v1.2.0** — "Fresh re-run, new target" plan above. Not yet executed.
-3. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud-sync-migration. Push after testing passes. Tag `migration-v1.2.0` release.
+3. **Distribution** — Repo is live at https://github.com/Technically-A-Mechanical-Engineer/claude-code-cloud storage-migration. Push after testing passes. Tag `migration-v1.2.0` release.
 
 ---
 

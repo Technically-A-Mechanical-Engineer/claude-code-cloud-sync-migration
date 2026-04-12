@@ -1,7 +1,6 @@
-# Cloud-Sync Verification for Claude Code Projects
-**v1.0.0** | 2026-04-10
+# LocalGround Toolkit v2.0.0 — Verification
 
-After migrating your Claude Code projects off cloud-synced storage and cleaning up stale artifacts, this prompt audits your current environment — project health, path-hash integrity, and stale references — then maps every finding to an actionable recommendation. Copy everything in this file and paste it into Claude Code CLI as your first message. Claude Code will use the instructions below the separator line; the text above it is for your reference.
+After migrating your Claude Code projects off cloud storage and cleaning up stale artifacts, this prompt audits your current environment — project health, path-hash integrity, and stale references — then maps every finding to an actionable recommendation. Copy everything in this file and paste it into Claude Code CLI as your first message. Claude Code will use the instructions below the separator line; the text above it is for your reference.
 
 **Compatibility:** Requires Claude Code CLI (terminal or IDE extension). Does not work in claude.ai web, Claude desktop app, or Cowork mode. Tested with Claude Code CLI as of April 2026.
 
@@ -26,18 +25,18 @@ For each project directory under your projects folder (e.g., `~/Projects/`):
 1. Open `~/.claude/projects/` in your file manager or terminal
 2. For each directory name, decode it back to a filesystem path (replace each `-` with the appropriate path character — see the migration prompt for encoding rules)
 3. Classify each entry:
-   - **Valid:** Decoded path exists and is not under cloud-synced storage
-   - **Stale:** Decoded path is under cloud-synced storage and a local equivalent exists
+   - **Valid:** Decoded path exists and is not under cloud storage
+   - **Stale:** Decoded path is under cloud storage and a local equivalent exists
    - **Orphan:** Decoded path no longer exists on disk
    - **Undecodable:** Directory name cannot be decoded to any valid path
 4. Note any stale, orphan, or undecodable entries for cleanup
 
 ### 3. Stale References
 
-1. Open each project's `CLAUDE.md` file and search for cloud-synced path strings (OneDrive, Dropbox, Google Drive, iCloud paths)
-2. Check memory files under `~/.claude/projects/*/memory/` for cloud-synced path references
-3. Check settings files (`~/.claude/projects/*/settings.json`) for cloud-synced path references
-4. Note any files still referencing old cloud-synced paths
+1. Open each project's `CLAUDE.md` file and search for cloud storage path strings (OneDrive, Dropbox, Google Drive, iCloud paths)
+2. Check memory files under `~/.claude/projects/*/memory/` for cloud storage path references
+3. Check settings files (`~/.claude/projects/*/settings.json`) for cloud storage path references
+4. Note any files still referencing old cloud storage paths
 
 ## Reading the Verification Report
 
@@ -69,7 +68,7 @@ This verification runs in a **single Claude Code session** with five phases. No 
 - Phase 1: Environment detection — OS, shell, cloud services, home directory, project inventory (~1-2 min)
 - Phase 2: Project health audit — git fsck, git status, hidden dirs, file counts, symlinks for each project (~1-2 min per project)
 - Phase 3: Path-hash integrity audit — decode, classify, check existence for each entry (~1-2 min)
-- Phase 4: Reference audit — search CLAUDE.md, memory files, and settings for cloud-synced path strings (~1-3 min, depends on project count)
+- Phase 4: Reference audit — search CLAUDE.md, memory files, and settings for cloud storage path strings (~1-3 min, depends on project count)
 - Phase 5: Report — generate verification-report.md with traffic light summary, findings, and consolidated action list (~1 min)
 
 **Total time:** Roughly 10-30 minutes depending on the number of projects and path-hash entries. The audit runs without pausing for confirmation — you will see progress updates during longer scans.
@@ -140,7 +139,7 @@ If no cloud sync folders are detected, note this and continue. Phase 4 will be a
 
 Identify project directories to audit. Check for projects in these locations:
 - Default target path: `~/Projects/` (or platform equivalent)
-- Any cloud-synced paths detected in 1.3 that contain project-like directories
+- Any cloud storage paths detected in 1.3 that contain project-like directories
 - CWD if it appears to be a projects parent directory
 
 For each discovered projects parent directory, list all immediate subdirectories. These become the audit targets for Phase 2.
@@ -278,9 +277,9 @@ Record: count of symlinks found. If symlinks are present, list them. Symlinks ar
 
 ### 2.6 — Cloud path check
 
-For each project directory, check whether its path falls under any cloud-synced storage root detected in Phase 1.3.
+For each project directory, check whether its path falls under any cloud storage root detected in Phase 1.3.
 
-Record: "Local" (not under any cloud service root) or "[service name]" (under a specific cloud service). Projects still running from cloud-synced paths are a finding that recommends the migration prompt.
+Record: "Local" (not under any cloud service root) or "[service name]" (under a specific cloud service). Projects still running from cloud storage paths are a finding that recommends the migration prompt.
 
 ### 2.7 — Per-project summary
 
@@ -330,12 +329,12 @@ For each decoded entry, classify using this table:
 
 | Classification | Criteria | Report Color |
 |---|---|---|
-| **Valid** | Decoded path exists on disk and is NOT under cloud-synced storage | Green |
-| **Stale** | Decoded path is under a cloud-synced location AND a local equivalent path-hash directory exists (pointing to a non-cloud path for the same project) | Red |
+| **Valid** | Decoded path exists on disk and is NOT under cloud storage | Green |
+| **Stale** | Decoded path is under a cloud storage location AND a local equivalent path-hash directory exists (pointing to a non-cloud path for the same project) | Red |
 | **Orphan** | Decoded path does not exist on disk anywhere (folder was deleted, renamed, or moved) | Yellow |
 | **Undecodable** | Directory name cannot be decoded to any valid filesystem path | Yellow |
 
-"Local equivalent" means another entry under `~/.claude/projects/` that decodes to a non-cloud-synced path for the same project name (last segment of the decoded path matches).
+"Local equivalent" means another entry under `~/.claude/projects/` that decodes to a non-cloud storage path for the same project name (last segment of the decoded path matches).
 
 ### 3.3 — Gather entry contents
 
@@ -392,7 +391,7 @@ If all entries are valid, record: "All [n] path-hash entries are valid — no st
 
 ## Phase 4 — Reference Audit
 
-Search project files for references to cloud-synced paths detected in Phase 1.3. This phase identifies configuration files, memory files, and settings that still point to old cloud-synced locations.
+Search project files for references to cloud storage paths detected in Phase 1.3. This phase identifies configuration files, memory files, and settings that still point to old cloud storage locations.
 
 If no cloud services were detected in Phase 1.3, report: "No cloud services detected — Phase 4 skipped (no cloud path patterns to search for)." and proceed to Phase 5.
 
@@ -408,14 +407,14 @@ Also build platform-appropriate escaped variants for patterns containing special
 
 ### 4.2 — Define search scope
 
-Search these file types for cloud-synced path references:
+Search these file types for cloud storage path references:
 
 | File Type | Location | Why |
 |---|---|---|
-| `CLAUDE.md` | Project root directories (from Phase 1.4) | Project instructions may reference cloud-synced paths |
-| `CLAUDE.md` | `~/.claude/CLAUDE.md` (global) | Global instructions may reference cloud-synced paths |
-| Memory files | `~/.claude/projects/*/memory/*.md` | Claude Code memory may reference cloud-synced paths |
-| Settings files | `~/.claude/projects/*/settings.json` | Project settings may contain cloud-synced paths |
+| `CLAUDE.md` | Project root directories (from Phase 1.4) | Project instructions may reference cloud storage paths |
+| `CLAUDE.md` | `~/.claude/CLAUDE.md` (global) | Global instructions may reference cloud storage paths |
+| Memory files | `~/.claude/projects/*/memory/*.md` | Claude Code memory may reference cloud storage paths |
+| Settings files | `~/.claude/projects/*/settings.json` | Project settings may contain cloud storage paths |
 | `.claude/settings.json` | Project root directories | Local project settings |
 
 **Explicit exclusions:** Do not search inside `.git/` directories, binary files (images, compiled output, archives), or `node_modules/` directories. These produce false positives and have no user value.
@@ -476,8 +475,8 @@ grep -n "[cloud-pattern]" ~/.claude/CLAUDE.md 2>/dev/null
 
 For each match found, record:
 - File path where the reference was found
-- Line number(s) containing the cloud-synced path
-- The matched cloud-synced path string
+- Line number(s) containing the cloud storage path
+- The matched cloud storage path string
 - Which cloud service it belongs to
 
 Compile findings for the Phase 5 report:
@@ -492,7 +491,7 @@ Reference audit ([n] files searched, [m] references found):
   Global configuration:
     ~/.claude/CLAUDE.md, line [n]: "[matched cloud path string]"
 
-[If no references found:] "No cloud-synced path references found in any searched files."
+[If no references found:] "No cloud storage path references found in any searched files."
 ```
 
 Note: References found in `.planning/` directories should be flagged with a note: "This reference is in a planning/history file. These are historical records — updating them is optional and may not be beneficial." This aligns with the migration prompt's preference to preserve `.planning/` history.
@@ -529,7 +528,7 @@ The report opens with a header block and traffic light summary — one status pe
 |---|---|---|---|
 | **Green** | All projects pass git fsck, no projects on cloud storage | All entries valid | No cloud path references found |
 | **Yellow** | Git fsck warnings (not errors), uncommitted changes, symlinks found, unusually low file counts | Orphan or undecodable entries found (no stale) | References found only in `.planning/` or memory files |
-| **Red** | Git fsck errors, projects still running from cloud-synced storage | Stale entries found (cloud path with local equivalent) | References found in CLAUDE.md or settings files |
+| **Red** | Git fsck errors, projects still running from cloud storage | Stale entries found (cloud path with local equivalent) | References found in CLAUDE.md or settings files |
 
 If an audit area was skipped (e.g., no cloud services detected so Phase 4 was skipped, or no path-hash entries so Phase 3 was skipped), show the status as **GREEN** with the finding text noting the skip reason: "Skipped — no cloud services detected" or "Skipped — no path-hash entries found."
 
@@ -553,16 +552,16 @@ For each finding, use the recommendation mapping below. Each recommendation name
 
 | Finding | Recommendation |
 |---|---|
-| Stale path-hash directories | "Use `cloud-sync-cleanup.md` to remove these stale entries — it will verify each deletion individually before proceeding." |
-| Cloud-synced path references in CLAUDE.md or settings | "Use `cloud-sync-cleanup.md` to clean up stale references, or manually update `[file]` line `[n]` to replace the cloud-synced path with the local equivalent." |
-| Cloud-synced path references in memory files | "Use `cloud-sync-cleanup.md` to address stale references. Memory file references are lower priority — Claude Code will update these naturally as you work from the new paths." |
-| Cloud-synced path references in `.planning/` files | "These are historical records of executed plans. Updating them is optional and may not be beneficial — the references document what was true at the time." |
+| Stale path-hash directories | "Use `localground-cleanup.md` to remove these stale entries — it will verify each deletion individually before proceeding." |
+| Cloud storage path references in CLAUDE.md or settings | "Use `localground-cleanup.md` to clean up stale references, or manually update `[file]` line `[n]` to replace the cloud storage path with the local equivalent." |
+| Cloud storage path references in memory files | "Use `localground-cleanup.md` to address stale references. Memory file references are lower priority — Claude Code will update these naturally as you work from the new paths." |
+| Cloud storage path references in `.planning/` files | "These are historical records of executed plans. Updating them is optional and may not be beneficial — the references document what was true at the time." |
 | Git fsck errors | "Run `git fsck --full` in `[folder path]` to investigate. If objects are unrecoverable, consider re-cloning from remote." |
 | Git fsck warnings | "Warnings are informational and typically non-critical. Run `git fsck --full` in `[folder path]` for details if concerned." |
-| Projects still on cloud-synced paths (no local copy) | "Use `cloud-sync-migration.md` to migrate this project to local storage — it will copy files, verify integrity, and set up Claude Code settings at the new path." |
-| Projects still on cloud-synced paths (local copy exists) | "This project appears to have a local copy at `[local path]`. Use `cloud-sync-cleanup.md` when ready to remove the cloud-synced source folder." |
-| Orphan path-hash entries | "This entry points to a path that no longer exists. Delete manually or use `cloud-sync-cleanup.md` to remove it." |
-| Undecodable path-hash entries | "This entry cannot be decoded to a valid path. Inspect the contents at `~/.claude/projects/[entry]/` and delete manually if not needed, or use `cloud-sync-cleanup.md`." |
+| Projects still on cloud storage paths (no local copy) | "Use `localground-migration.md` to migrate this project to local storage — it will copy files, verify integrity, and set up Claude Code settings at the new path." |
+| Projects still on cloud storage paths (local copy exists) | "This project appears to have a local copy at `[local path]`. Use `localground-cleanup.md` when ready to remove the cloud storage source folder." |
+| Orphan path-hash entries | "This entry points to a path that no longer exists. Delete manually or use `localground-cleanup.md` to remove it." |
+| Undecodable path-hash entries | "This entry cannot be decoded to a valid path. Inspect the contents at `~/.claude/projects/[entry]/` and delete manually if not needed, or use `localground-cleanup.md`." |
 | Symlinks found | "Symlinks can indicate incomplete copies or broken references. Verify each symlink target exists and is accessible." |
 | Unusually low file count (0 or 1 file) | "This project directory has very few files, which may indicate an incomplete copy or an empty project. Verify the project contents are correct." |
 
@@ -571,7 +570,7 @@ For clean audit areas, show positive confirmation rather than silence:
 ```markdown
 ## Project Health
 
-All [n] projects passed health checks. No git fsck errors, no projects running from cloud-synced storage.
+All [n] projects passed health checks. No git fsck errors, no projects running from cloud storage.
 ```
 
 ```markdown
@@ -583,7 +582,7 @@ All [n] path-hash entries are valid. No stale, orphan, or undecodable entries fo
 ```markdown
 ## Stale References
 
-No cloud-synced path references found in any searched files.
+No cloud storage path references found in any searched files.
 ```
 
 ### 5.3 — Consolidated action list
@@ -593,18 +592,18 @@ At the bottom of the report, generate a deduplicated action list that groups rel
 ```markdown
 ## Recommended Actions
 
-1. **Migrate [n] project(s) off cloud storage** — Use `cloud-sync-migration.md` to copy these projects to local paths:
+1. **Migrate [n] project(s) off cloud storage** — Use `localground-migration.md` to copy these projects to local paths:
    - [project name] at [cloud path]
 
-2. **Clean up [n] stale path-hash entries** — Use `cloud-sync-cleanup.md` to remove old settings directories that now have local equivalents.
+2. **Clean up [n] stale path-hash entries** — Use `localground-cleanup.md` to remove old settings directories that now have local equivalents.
 
-3. **Update [n] stale reference(s)** — Use `cloud-sync-cleanup.md` or manually update these files:
+3. **Update [n] stale reference(s)** — Use `localground-cleanup.md` or manually update these files:
    - [file path], line [n]
 
 4. **Investigate [n] git integrity issue(s)** — Run `git fsck --full` in these projects:
    - [project name] at [path]
 
-5. **Review [n] orphan/undecodable path-hash entries** — Delete manually or use `cloud-sync-cleanup.md`:
+5. **Review [n] orphan/undecodable path-hash entries** — Delete manually or use `localground-cleanup.md`:
    - [entry name]
 ```
 
@@ -646,7 +645,7 @@ Your environment is clean. No further action needed.
 This verification session is complete when:
 - All project directories have been audited for health (git fsck, git status, hidden dirs, file counts, symlinks)
 - All path-hash entries under `~/.claude/projects/` have been decoded, classified, and checked
-- CLAUDE.md files, memory files, and settings files have been searched for cloud-synced path references
+- CLAUDE.md files, memory files, and settings files have been searched for cloud storage path references
 - Every finding has been mapped to an actionable recommendation
 - `verification-report.md` exists in CWD with traffic light summary, findings by audit area, and consolidated action list
 - The user has been presented with the report summary in the terminal
@@ -667,6 +666,6 @@ This verification session is complete when:
   - **Path-hash decoding ambiguity** — when multiple valid decoded paths exist, present all candidates in the report
   - **bash-on-Windows path formats** — use platform-correct paths for all audit commands
   - **Post-cleanup state** — if few or no stale entries exist, note this as a healthy state rather than flagging absence
-  - **Fresh/never-migrated environment** — run the same audit regardless of migration history; report current state, which may include projects still on cloud-synced storage
+  - **Fresh/never-migrated environment** — run the same audit regardless of migration history; report current state, which may include projects still on cloud storage
 - **Graceful cross-prompt state.** If path-hash directories that might be expected are absent, interpret this as possible prior cleanup, not corruption. Do not escalate missing entries as errors if a plausible explanation exists.
 - **If everything is clean, say so.** A clean environment gets positive confirmation per audit area — each section shows what passed, not just silence. The user sees proof that the check ran.

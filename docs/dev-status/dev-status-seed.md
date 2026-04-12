@@ -1,6 +1,6 @@
 # Seed Prompt — Development Status
 **Updated:** 2026-04-12
-**Prompt file:** `cloud-sync-seed.md`
+**Prompt file:** `localground-seed.md`
 **Current version:** v1.0.0 (built, pending NEC evaluation)
 **Project owner:** Robert LaSalle
 **Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
@@ -9,11 +9,11 @@
 
 ## What This Prompt Does
 
-A single-file prompt that any Claude Code user can paste into CLI before migrating a project off cloud-synced storage. It plants verifiable markers — a test file with a known SHA-256 checksum and a lightweight git tag — then generates a JSON manifest (`.cloud-sync-seed-manifest.json`) recording all planted markers. The manifest is the data contract between seed and the reap prompt: after migration, `cloud-sync-reap.md` reads the manifest and verifies that markers survived the copy intact.
+A single-file prompt that any Claude Code user can paste into CLI before migrating a project off cloud storage. It plants verifiable markers — a test file with a known SHA-256 checksum and a lightweight git tag — then generates a JSON manifest (`.localground-seed-manifest.json`) recording all planted markers. The manifest is the data contract between seed and the reap prompt: after migration, `localground-reap.md` reads the manifest and verifies that markers survived the copy intact.
 
 Runs in a single session, under 2 minutes. Four phases: environment detection, marker planting, manifest generation, summary. Never modifies or deletes existing project files. Idempotent — detects existing markers and handles re-runs gracefully via an eight-state matrix.
 
-This is one of five prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`, and `docs/dev-status/dev-status-sow.md`.
+This is one of five prompts in the LocalGround Toolkit. See also: `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`, and `docs/dev-status/dev-status-reap.md`.
 
 ---
 
@@ -21,7 +21,7 @@ This is one of five prompts in the Cloud-Sync Toolkit. See also: `docs/dev-statu
 
 | Version | Date | Key Changes | Source |
 |---|---|---|---|
-| v1.0.0 | 2026-04-12 | Initial build. Four phases (environment detection, marker planting, manifest generation, summary). Idempotent — detects existing markers via eight-state matrix. Test file with hardcoded SHA-256 (`60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03`). Lightweight git tag in `cloud-sync-toolkit/seed/<timestamp>` namespace. JSON manifest per sow contract. Three-way shell detection. Five-dimension constraint model. Non-git-repo support (test file only). Cloud-location notice (informational, not blocking). 394 lines. | Claude Code CLI — GSD Phase 9 execution |
+| v1.0.0 | 2026-04-12 | Initial build. Four phases (environment detection, marker planting, manifest generation, summary). Idempotent — detects existing markers via eight-state matrix. Test file with hardcoded SHA-256 (`b530e9ad8cecd43e2fea05670c21bfed6c12457630f90d008c73ead24eaf8ece`). Lightweight git tag in `localground/seed/<timestamp>` namespace. JSON manifest per reap contract. Three-way shell detection. Five-dimension constraint model. Non-git-repo support (test file only). Cloud-location notice (informational, not blocking). 394 lines. | Claude Code CLI — GSD Phase 9 execution |
 
 ---
 
@@ -47,7 +47,7 @@ All 7 SEED requirements from the v2.0.0 requirements addressed:
 
 ### Marker Contract
 
-The seed prompt writes the `.cloud-sync-seed-manifest.json` per the schema defined in `docs/dev-status/dev-status-sow.md` §Manifest Contract. Seed is the writer side of the contract; the reap prompt is the reader side. The manifest schema, field types, and contract rules are maintained in the sow dev-status file as the single source of truth.
+The seed prompt writes the `.localground-seed-manifest.json` per the schema defined in `docs/dev-status/dev-status-reap.md` §Manifest Contract. Seed is the writer side of the contract; the reap prompt is the reader side. The manifest schema, field types, and contract rules are maintained in the reap dev-status file as the single source of truth.
 
 ---
 
@@ -66,13 +66,13 @@ The seed prompt should be tested in multiple scenarios to verify marker planting
 ### Fresh Seed Test
 
 1. Launch Claude Code from a project directory (preferably one that will be migrated)
-2. Paste `cloud-sync-seed.md`
+2. Paste `localground-seed.md`
 3. Verify Phase 1 detects environment correctly
 4. Verify Phase 2 creates test file with matching checksum
 5. Verify Phase 2 creates git tag (if git repo)
 6. Verify Phase 3 generates manifest with correct structure
-7. Verify `.cloud-sync-seed-test` has the expected checksum
-8. Verify `.cloud-sync-seed-manifest.json` is valid JSON matching the contract
+7. Verify `.localground-seed-test` has the expected checksum
+8. Verify `.localground-seed-manifest.json` is valid JSON matching the contract
 
 ### Idempotency Test
 
@@ -90,9 +90,9 @@ The seed prompt should be tested in multiple scenarios to verify marker planting
 
 ### End-to-End Test (with reap)
 
-1. Run `cloud-sync-seed.md` in a project before migration
-2. Run `cloud-sync-migration.md` to migrate the project
-3. Run `cloud-sync-reap.md` from the migrated project
+1. Run `localground-seed.md` in a project before migration
+2. Run `localground-migration.md` to migrate the project
+3. Run `localground-reap.md` from the migrated project
 4. Verify reap reads the manifest and reports PASS for all markers
 
 ---

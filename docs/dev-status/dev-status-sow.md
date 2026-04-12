@@ -13,7 +13,7 @@ A single-file prompt that any Claude Code user can paste into CLI from a migrate
 
 The prompt creates one temporary test file during the operations check (immediately deleted) and writes a single report file. It never modifies existing project files. In seeded mode with all checks passing, it offers to clean up seed markers with individual user confirmation.
 
-This is one of five prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`, and `docs/dev-status/dev-status-seed.md` (Phase 9).
+This is one of five prompts in the Cloud-Sync Toolkit. See also: `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`, and `docs/dev-status/dev-status-seed.md` (to be created in Phase 9).
 
 ---
 

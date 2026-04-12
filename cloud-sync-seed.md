@@ -189,7 +189,7 @@ Version: 1.0
 The content is exactly three lines, each terminated by a single LF character (no CRLF). The file ends with a trailing newline after the third line. Encoding: UTF-8 with no BOM. Use Claude Code's Write tool — this guarantees consistent encoding and line endings across all platforms.
 
 **Expected SHA-256 checksum:** `60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03`
-**Expected size:** 101 bytes
+**Expected size:** 110 bytes
 
 ### 2.2 — Verify test file checksum
 
@@ -284,7 +284,7 @@ Build the `.cloud-sync-seed-manifest.json` content matching this schema. Constru
       "type": "file",
       "path": ".cloud-sync-seed-test",
       "sha256": "60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03",
-      "size_bytes": 101,
+      "size_bytes": 110,
       "content_description": "Static test file for verifying copy integrity after migration"
     },
     "git_tag": {
@@ -334,7 +334,7 @@ Seed markers planted:
 
   Test file: .cloud-sync-seed-test
     SHA-256: 60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03
-    Size: 101 bytes
+    Size: 110 bytes
     Status: Verified
 
   [If git repo:]

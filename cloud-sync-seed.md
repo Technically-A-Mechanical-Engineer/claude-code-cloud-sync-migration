@@ -318,3 +318,77 @@ Read the manifest back using Claude Code's Read tool. Verify:
 - `project_path` matches CWD
 
 If verification fails, report the specific discrepancy — do not silently continue.
+
+---
+
+## Phase 4 — Summary
+
+Present what was planted and guide the user to next steps.
+
+### 4.1 — Present summary
+
+Display a summary of what was planted:
+
+```
+Seed markers planted:
+
+  Test file: .cloud-sync-seed-test
+    SHA-256: 60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03
+    Size: 101 bytes
+    Status: Verified
+
+  [If git repo:]
+  Git tag: cloud-sync-toolkit/seed/[timestamp]
+    Commit: [full hash]
+    Type: lightweight
+    Status: Verified
+
+  [If not a git repo:]
+  Git tag: Skipped (not a git repository)
+
+  Manifest: .cloud-sync-seed-manifest.json
+    Status: Written and verified
+```
+
+### 4.2 — Next steps
+
+Display actionable next steps:
+
+```
+Next steps:
+1. Migrate this project using `cloud-sync-migration.md`
+2. After migration, verify markers survived using `cloud-sync-reap.md`
+
+Do not delete the test file or manifest before migration — they are needed for post-migration verification.
+```
+
+---
+
+## Definition of Done
+
+This seed session is complete when:
+- Environment detection identified the project, shell context, git status, and cloud-storage status
+- Existing marker detection checked for prior seed runs (idempotency)
+- Test file `.cloud-sync-seed-test` exists with verified SHA-256 checksum
+- Git tag `cloud-sync-toolkit/seed/<timestamp>` exists and points to verified commit (or was skipped with reason if not a git repo)
+- `.cloud-sync-seed-manifest.json` exists with valid JSON recording all verified markers
+- The user has been presented with a summary of planted markers and next steps
+
+---
+
+## Guardrails
+
+- **Never modify existing project files.** The only filesystem writes are `.cloud-sync-seed-test`, `.cloud-sync-seed-manifest.json`, and the git tag. All three are new creates — never overwrites of existing project content.
+- **Never assume paths.** Auto-detect first. If detection fails, report the failure and continue.
+- **Platform-correct commands everywhere.** Every command must match the detected shell context. Verify before executing.
+- **Proportional output.** Scale output to scope — this is a quick operation, keep terminal output concise.
+- **The methodology is non-negotiable.** All phases run for every seed operation. No shortcuts, no skipped verification steps.
+- **Handle known edge cases:**
+  - **Not a git repo** — skip git tag, omit from manifest, continue with test file marker only
+  - **Existing markers intact** — report "already seeded" and exit, no duplicate creation
+  - **Partial markers** — restore missing markers, update manifest
+  - **Test file content mismatch** — escalate to user before overwriting
+  - **Write tool failure** — stop and report, do not fall back to shell-based file creation
+  - **bash-on-Windows** — use platform-correct commands for SHA-256 verification
+  - **SHA-256 case sensitivity** — compare checksums case-insensitively (PowerShell returns uppercase, bash tools return lowercase)
+- **All cross-prompt references use `cloud-sync-reap.md`.** The post-migration verification prompt is always referenced by this filename — no other name.

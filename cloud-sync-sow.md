@@ -55,7 +55,7 @@ This check runs in a **single Claude Code session**. The phase count depends on 
 **Seeded mode** (seed manifest present):
 - Phase 1: Environment detection — shell, project identity, path-hash lookup, cloud-location gate, mode detection (~1 min)
 - Phase 2: Seed verification — read manifest, verify test file checksum, verify git tag (~1 min)
-- Phase 3: Health checks — six checks covering git, memory, references, file system, operations (~2-3 min)
+- Phase 3: Health checks — five checks covering git, memory, references, file system, operations (~2-3 min). The sixth check (cloud location) runs in Phase 1.
 - Phase 4: Report — write sow-report.md, present summary (~1 min)
 - Phase 5: Marker cleanup offer — only if no FAIL results (~1 min)
 

@@ -79,3 +79,93 @@ These govern everything below. Do not proceed past any violation — stop and re
 
 - Detect existing markers on re-run (idempotency) — see Phase 1.5 state matrix
 - Handle partial state: if some markers exist but others are missing, restore only the missing markers and update the manifest
+
+---
+
+## Phase 1 — Environment Detection
+
+Gather context about the current project. Do not prompt the user — auto-detect everything.
+
+### 1.1 — Shell and platform
+
+Detect the operating system and active shell. Set the shell context for all subsequent commands using three-way detection:
+
+| Detection | Shell Context | Utility Commands |
+|---|---|---|
+| PowerShell prompt detected (`$PSVersionTable` exists) | PowerShell | PowerShell (Get-FileHash, Test-Path, etc.) |
+| bash-on-Windows detected (`$OSTYPE` contains "msys", "mingw", or "cygwin", OR `uname -s` returns "MINGW*" or "MSYS*") | bash-on-Windows | bash (sha256sum, test, etc.) |
+| bash/zsh on macOS or Linux (`uname -s` returns "Darwin" or "Linux") | native bash/zsh | bash (shasum, test, etc.) |
+
+Do not mix shell syntaxes. Every command in this session must match the detected shell context.
+
+### 1.2 — Project identity
+
+- CWD path
+- Project folder name (basename of CWD)
+- Whether CWD is a git repository (`git rev-parse --is-inside-work-tree`)
+
+### 1.3 — Cloud-location notice
+
+Check whether CWD is under a known cloud-sync path. Use these patterns:
+
+- **OneDrive / OneDrive for Business:** `$env:USERPROFILE\OneDrive*\` (Windows), `~/Library/CloudStorage/OneDrive*` (macOS)
+- **Dropbox:** `$env:USERPROFILE\Dropbox\` or `~/Dropbox`
+- **Google Drive:** `$env:USERPROFILE\Google Drive\` or `~/Google Drive` or `~/Library/CloudStorage/GoogleDrive*`
+- **iCloud Drive:** `~/Library/Mobile Documents/com~apple~CloudDocs`
+
+If CWD is under cloud-synced storage, display informational message (NOT a gate — seed runs before migration):
+
+> "This project is on cloud-synced storage ([service]). Seed markers will be planted here. After planting, use `cloud-sync-migration.md` to migrate, then `cloud-sync-reap.md` to verify markers survived."
+
+If CWD is NOT under cloud-synced storage, note it and continue without comment.
+
+### 1.4 — Git repository check
+
+If `git rev-parse --is-inside-work-tree` succeeds:
+- Record HEAD commit hash: `git rev-parse HEAD` (full 40-character hash)
+- Record branch name: `git branch --show-current`
+
+If not a git repo:
+- Note that git tag marker will be skipped
+- Continue — the test file marker and manifest are still planted
+
+### 1.5 — Existing marker detection (idempotency)
+
+Check for existing markers before acting. Detection order:
+
+1. Check for manifest: attempt to read `.cloud-sync-seed-manifest.json` in CWD using Claude Code's Read tool
+2. If manifest exists: validate JSON, check `version` field
+3. Check each marker:
+   - Test file: does `.cloud-sync-seed-test` exist? If manifest exists, does its SHA-256 match the manifest value?
+   - Git tag: does a tag matching `cloud-sync-toolkit/seed/*` exist? If manifest exists, does the tag name match `markers.git_tag.name`?
+
+**State matrix — action by combination:**
+
+| Manifest | Test File | Git Tag | Action |
+|----------|-----------|---------|--------|
+| Missing | Missing | Missing | **Fresh seed** — proceed to Phase 2 to create all markers |
+| Missing | Exists | Exists | **Anomaly** — markers present without manifest. Escalate: ask user if they want to generate a manifest for existing markers or start fresh |
+| Present + valid | Matches | Matches | **Already seeded** — report "Project already seeded on [manifest.created]. All markers intact." Exit with summary, no further action. |
+| Present + valid | Missing | Matches | **Partial damage** — proceed to Phase 2, restore test file only, update manifest |
+| Present + valid | Matches | Missing | **Partial damage** — proceed to Phase 2, recreate git tag only (if git repo), update manifest |
+| Present + valid | Mismatch | Matches | **Content changed** — Escalate: "Test file exists but content differs from manifest. Overwrite with seed content? [y/n]" |
+| Present + valid | Matches | Wrong commit | **History changed** — WARN: "Git tag points to a different commit than recorded in manifest. This could mean new commits were made after seeding (expected if you continued working). Offer to update tag and manifest to current HEAD? [y/n]" |
+| Present + malformed | Any | Any | **Corrupt manifest** — Escalate: "Manifest JSON is malformed. Regenerate manifest from current state? [y/n]" |
+
+### 1.6 — Present summary and proceed
+
+Display environment summary:
+
+```
+Environment:
+  OS: [detected]
+  Shell: [PowerShell / bash-on-Windows / native bash/zsh]
+  Project: [project name]
+  Path: [CWD]
+  Git repo: [yes/no]
+  [If git repo:] HEAD: [short hash] on [branch]
+  Cloud storage: [detected service / not detected]
+  Existing markers: [none / found — details]
+```
+
+Then proceed directly to Phase 2 — no confirmation gate needed (seed is a low-risk, additive-only operation).

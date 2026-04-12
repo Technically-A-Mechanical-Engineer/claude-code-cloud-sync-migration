@@ -53,7 +53,9 @@ The seed prompt writes the `.cloud-sync-seed-manifest.json` per the schema defin
 
 ## NEC Evaluation
 
-**Status:** Pending — Phase 10
+**Status:** Complete — 2026-04-12
+**Evaluation record:** `docs/evaluations/prompt-evaluation-seed.md`
+**Result:** All eight NEC prompt frameworks passed. 0 findings identified during evaluation.
 
 ---
 

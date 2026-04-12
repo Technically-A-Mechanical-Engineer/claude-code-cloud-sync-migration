@@ -1,7 +1,7 @@
-# Cloud-Sync Verification Prompt — v1.0.0 Evaluation
+# LocalGround Verification Prompt — v1.0.0 Evaluation
 **Evaluated:** 2026-04-11
 **Evaluator:** Claude (claude.ai peer review session)
-**Document under review:** `cloud-sync-verification.md` (v1.0.0)
+**Document under review:** `localground-verification.md` (v1.0.0)
 
 ---
 
@@ -99,8 +99,8 @@ The "not applicable" Recovery dimension is a conscious design choice, not an ove
 - **Cloud service detection patterns are self-contained** (Phase 1.3). The same four-service pattern list used across all three toolkit prompts is duplicated here.
 - **Three-way shell detection is self-contained** (Phase 1.1). Detection table with specific methods and command mappings, identical in structure to the other toolkit prompts.
 - **The Role section establishes a distinct identity.** The verification assistant "audits" and "generates a report" — it does not "migrate" or "clean up." The behavioral posture is calibrated for a read-only tool.
-- **The recommendation mapping table (Phase 5.2) references sibling prompts by filename** but does not depend on them being present. If a user doesn't have the cleanup prompt, the recommendation is still actionable — "use `cloud-sync-cleanup.md`" tells them what to look for.
-- **The prompt works regardless of migration history.** Phase 1.4 discovers project directories from default locations and cloud-synced paths. Phase 1.5 scans path-hash entries. Neither depends on migration artifacts.
+- **The recommendation mapping table (Phase 5.2) references sibling prompts by filename** but does not depend on them being present. If a user doesn't have the cleanup prompt, the recommendation is still actionable — "use `localground-cleanup.md`" tells them what to look for.
+- **The prompt works regardless of migration history.** Phase 1.4 discovers project directories from default locations and cloud storage paths. Phase 1.5 scans path-hash entries. Neither depends on migration artifacts.
 
 ---
 
@@ -177,7 +177,7 @@ The **progress status pattern** (Phase 4.3) is a Loop Designer element adapted f
 
 | Criterion | Status | Notes |
 |---|---|---|
-| Standalone viability | ✅ Pass | Works on any Claude Code environment regardless of migration history. Discovers projects from default paths and cloud-synced locations. Path-hash decoding, cloud service detection, and shell detection are all self-contained. No migration or cleanup artifacts required. |
+| Standalone viability | ✅ Pass | Works on any Claude Code environment regardless of migration history. Discovers projects from default paths and cloud storage locations. Path-hash decoding, cloud service detection, and shell detection are all self-contained. No migration or cleanup artifacts required. |
 | Toolkit integration | ✅ Pass | Phase 5.2 recommendation table maps 14 finding types to specific toolkit prompts by filename. Consolidated action list prioritizes: migrate > cleanup > update references > git investigate > review orphans. Cross-references by filename only — no runtime dependency. |
 | Cross-prompt state handling | ✅ Pass | Graceful cross-prompt state in Preferences and Guardrails. Post-cleanup state (few/no stale entries) interpreted as healthy. Fresh/never-migrated environments handled naturally. |
 | Human-facing section completeness | ✅ Pass | Manual audit checklist covers all three audit areas. "Reading the Verification Report" section explains traffic light system, three-part finding pattern, and consolidated action list. |
@@ -201,7 +201,7 @@ The **progress status pattern** (Phase 4.3) is a Loop Designer element adapted f
 
 ## Conclusion
 
-The verification prompt v1.0.0 passes all eight evaluation frameworks with no findings. It completes the three-prompt Cloud-Sync Toolkit — migration (copy, never delete), cleanup (delete with verification), and verification (audit, never modify).
+The verification prompt v1.0.0 passes all eight evaluation frameworks with no findings. It completes the three-prompt LocalGround Toolkit — migration (copy, never delete), cleanup (delete with verification), and verification (audit, never modify).
 
 Key architectural strengths:
 

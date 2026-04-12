@@ -8,7 +8,7 @@ You are a migration assistant completing the second session of a two-session clo
 
 ### What was completed in Session 1 (2026-04-11)
 
-All 6 project folders were copied from OneDrive for Business cloud-synced storage to local paths. Every folder passed verification: file counts match, hidden directories confirmed, git integrity passed on all 3 repos, zero failures.
+All 6 project folders were copied from OneDrive for Business cloud storage to local paths. Every folder passed verification: file counts match, hidden directories confirmed, git integrity passed on all 3 repos, zero failures.
 
 ### Where this session should be launched from
 
@@ -109,7 +109,7 @@ Wait for user confirmation before proceeding to Phase 8.
 
 ### 8.1 — Search for old path strings
 
-Recursively search these locations for old cloud-sync path strings:
+Recursively search these locations for old cloud storage path strings:
 
 **(a) All project directories under the target path** — search for these old path strings:
 - `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\`
@@ -151,7 +151,7 @@ Present this checklist to the user (informational — do not execute):
 - [ ] Test git operations (status, commit, worktree) in one of the moved repos
 - [ ] Check external references: scripts, automation flows, Power Automate flows, integrations, CI/CD pipelines, bookmarks, terminal aliases
 - [ ] Soak period: use the new locations normally for several days before cleaning up
-- [ ] When ready to clean up source folders and stale settings directories, paste `cloud-sync-cleanup.md` into Claude Code CLI for guided removal with verification
+- [ ] When ready to clean up source folders and stale settings directories, paste `localground-cleanup.md` into Claude Code CLI for guided removal with verification
 
 ---
 

@@ -1,7 +1,7 @@
-# Cloud-Sync Cleanup Prompt — v1.0.0 Evaluation
+# LocalGround Cleanup Prompt — v1.0.0 Evaluation
 **Evaluated:** 2026-04-10
 **Evaluator:** Claude (claude.ai peer review session)
-**Document under review:** `cloud-sync-cleanup.md` (v1.0.0)
+**Document under review:** `localground-cleanup.md` (v1.0.0)
 
 ---
 
@@ -162,11 +162,11 @@ The **risk-escalating phase order** (stale → orphan → source) is a Loop Desi
 | Criterion | Status | Notes |
 |---|---|---|
 | Standalone viability | ✅ Pass | Dual-mode detection ensures the prompt works without migration artifacts. Standalone mode discovers stale/orphan entries through filesystem scanning alone. Path-hash decoding algorithm is inline. All shell detection and cloud service detection is self-contained. |
-| Toolkit integration | ✅ Pass | Post-migration mode reads `migration-session-1-results.md` and `migration-session-2-results.md` for high-confidence classification. Phase 5 next-steps reference both sibling prompts by filename (`claude-code-cloud-sync-migration.md` for incomplete copies, `cloud-sync-verification.md` for health audit). Cross-references are by filename only — no runtime dependency. |
+| Toolkit integration | ✅ Pass | Post-migration mode reads `migration-session-1-results.md` and `migration-session-2-results.md` for high-confidence classification. Phase 5 next-steps reference both sibling prompts by filename (`localground-migration.md` for incomplete copies, `localground-verification.md` for health audit). Cross-references are by filename only — no runtime dependency. |
 | Cross-prompt state handling | ✅ Pass | Missing path-hash directories interpreted as possible prior cleanup. Migration artifacts that reference entries no longer on disk handled gracefully (noted, not escalated). Phase 4 deferral survives across sessions. |
 | Human-facing section completeness | ✅ Pass | Manual cleanup checklist covers all three categories (stale, orphan, source) in risk order. Soak-period recommendation included. Cloud-propagation warning included. Matches the Claude-facing methodology — a user following the manual steps would perform the same verification and risk ordering as the prompt. |
 
-**Design spec compliance check:** The cleanup prompt implements all requirements from the toolkit design spec (`2026-04-10-cloud-sync-toolkit-design.md`):
+**Design spec compliance check:** The cleanup prompt implements all requirements from the toolkit design spec (`2026-04-10-cloud storage-toolkit-design.md`):
 
 | Design Spec Requirement | Implementation |
 |---|---|

@@ -1,4 +1,4 @@
-# Cloud-Sync Toolkit Design Spec
+# LocalGround Toolkit Design Spec
 **Date:** 2026-04-10
 **Author:** Robert LaSalle + Claude
 **Status:** Approved
@@ -7,33 +7,35 @@
 
 ## Overview
 
-Expand the cloud-sync migration project from a single prompt file into a three-prompt toolkit. Each prompt is an independent, standalone file that users paste into Claude Code CLI. The prompts reference each other by filename but do not depend on each other to function.
+Expand the cloud storage migration project from a single prompt file into a three-prompt toolkit. Each prompt is an independent, standalone file that users paste into Claude Code CLI. The prompts reference each other by filename but do not depend on each other to function.
 
 | Prompt | File | Purpose | Deletes anything? |
 |---|---|---|---|
-| Migration | `claude-code-cloud-sync-migration.md` | Copies projects from cloud-synced storage to local paths | No |
-| Cleanup | `cloud-sync-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries | Yes (with confirmation) |
-| Verification | `cloud-sync-verification.md` | Audits current state, reports findings, recommends next steps | No |
+| Migration | `localground-migration.md` | Copies projects from cloud storage to local paths | No |
+| Cleanup | `localground-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries | Yes (with confirmation) |
+| Verification | `localground-verification.md` | Audits current state, reports findings, recommends next steps | No |
 
 ---
 
 ## Project Structure
 
 ```
-claude-code-cloud-sync-migration/
-  claude-code-cloud-sync-migration.md   (migration prompt, v1.2.0)
-  cloud-sync-cleanup.md                 (cleanup prompt, v1.0.0 - new)
-  cloud-sync-verification.md            (verification prompt, v1.0.0 - new)
-  dev-status-migration.md              (migration prompt dev status)
-  dev-status-cleanup.md               (cleanup prompt dev status)
-  prompt-evaluation-migration.md        (migration prompt evaluation)
-  prompt-evaluation-cleanup.md          (cleanup prompt evaluation)
+claude-code-cloud storage-migration/
+  localground-migration.md               (migration prompt, v1.2.0)
+  localground-cleanup.md                 (cleanup prompt, v1.0.0 - new)
+  localground-verification.md            (verification prompt, v1.0.0 - new)
   CLAUDE.md                             (updated file map and project scope)
   README.md                             (updated to describe the toolkit)
   docs/
-    superpowers/
+    dev-status/
+      dev-status-migration.md           (migration prompt dev status)
+      dev-status-cleanup.md             (cleanup prompt dev status)
+    evaluations/
+      prompt-evaluation-migration.md    (migration prompt evaluation)
+      prompt-evaluation-cleanup.md      (cleanup prompt evaluation)
+    design/
       specs/
-        2026-04-10-cloud-sync-toolkit-design.md  (this file)
+        2026-04-10-cloud storage-toolkit-design.md  (this file)
 ```
 
 ---
@@ -83,7 +85,7 @@ Replace single-file crash recovery check with priority-ordered signal cascade:
 1. CWD contains `migration-session-1-results.md` (v1.1.1+ artifact) — highest confidence
 2. CWD contains `migration-log.md` (pre-v1 artifact) — high confidence
 3. Default target path (`~/Projects/`) contains either file — moderate confidence
-4. Target path exists with folders matching decoded cloud-synced project names — low confidence, ask user
+4. Target path exists with folders matching decoded cloud storage project names — low confidence, ask user
 
 ### Finding 3: "Already done" branch with four options
 
@@ -130,7 +132,7 @@ This catches the problem before wasting time on a copy that produces empty files
 
 Replace the manual cleanup bullet list with a reference to the cleanup prompt:
 
-> "When you're ready to clean up source folders and stale settings directories, paste `cloud-sync-cleanup.md` into Claude Code CLI."
+> "When you're ready to clean up source folders and stale settings directories, paste `localground-cleanup.md` into Claude Code CLI."
 
 ---
 
@@ -141,7 +143,7 @@ Replace the manual cleanup bullet list with a reference to the cleanup prompt:
 | Mode | Trigger | Behavior |
 |---|---|---|
 | Post-migration | Finds `migration-session-1-results.md` or `migration-session-2-results.md` at current path or `~/Projects/` | Uses migration results as source of truth. High confidence, fewer questions. |
-| Standalone | No migration artifacts found | Scans for cloud-synced paths, duplicate folders, stale entries. Classifies and asks user to confirm. More questions, same safety. |
+| Standalone | No migration artifacts found | Scans for cloud storage paths, duplicate folders, stale entries. Classifies and asks user to confirm. More questions, same safety. |
 
 ### Phases
 
@@ -172,7 +174,7 @@ The human-readable section above the separator includes a manual cleanup checkli
 - **Phase 1: Environment detection.** OS, shell, cloud services, home directory.
 - **Phase 2: Project health audit.** For each directory under `~/Projects/` (or user-specified path): git fsck, git status, hidden directories, file counts, symlink check.
 - **Phase 3: Path-hash audit.** Scan `~/.claude/projects/`, decode each entry, classify as valid / stale / orphan / undecodable. Check whether each decoded path exists on disk.
-- **Phase 4: Reference audit.** Search CLAUDE.md files, memory files, and settings for cloud-synced path strings. Report any still pointing to old locations.
+- **Phase 4: Reference audit.** Search CLAUDE.md files, memory files, and settings for cloud-stored path strings. Report any still pointing to old locations.
 - **Phase 5: Report.** Write `verification-report.md` with findings and recommended next steps.
 
 ### No Confirmation Gates for Actions
@@ -189,12 +191,12 @@ Each finding maps to a concrete next step:
 
 | Finding | Recommendation |
 |---|---|
-| Stale path-hash directories | Use `cloud-sync-cleanup.md` to remove these |
-| Cloud-synced path references in CLAUDE.md/memory | Use `cloud-sync-cleanup.md` or manually update [file] line [n] |
+| Stale path-hash directories | Use `localground-cleanup.md` to remove these |
+| Cloud storage path references in CLAUDE.md/memory | Use `localground-cleanup.md` or manually update [file] line [n] |
 | Git fsck errors | Run `git fsck --full` in [folder] to investigate |
-| Source folders still on cloud storage with verified local copies | Use `cloud-sync-cleanup.md` when ready |
-| Projects still running from cloud-synced paths (no local copy) | Use `claude-code-cloud-sync-migration.md` to migrate |
-| Orphan/undecodable path-hash entries | Delete manually or use `cloud-sync-cleanup.md` |
+| Source folders still on cloud storage with verified local copies | Use `localground-cleanup.md` when ready |
+| Projects still running from cloud storage paths (no local copy) | Use `localground-migration.md` to migrate |
+| Orphan/undecodable path-hash entries | Delete manually or use `localground-cleanup.md` |
 
 ---
 

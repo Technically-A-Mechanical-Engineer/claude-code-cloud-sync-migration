@@ -1,19 +1,19 @@
 # Cleanup Prompt — Development Status
 **Updated:** 2026-04-11
-**Prompt file:** `cloud-sync-cleanup.md`
+**Prompt file:** `localground-cleanup.md`
 **Current version:** v1.0.0 (built, NEC evaluation passed)
 **Project owner:** Robert LaSalle
-**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
+**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud storage-migration`
 
 ---
 
 ## What This Prompt Does
 
-A single-file prompt that any Claude Code user can paste into CLI to safely remove stale artifacts left behind after migrating projects from cloud-synced storage. It handles three categories of cleanup in risk-ascending order: stale path-hash directories (lowest risk), orphan/undecodable path-hash directories (medium risk), and source folders on cloud storage (highest risk). Every deletion requires individual user confirmation with verification evidence shown first.
+A single-file prompt that any Claude Code user can paste into CLI to safely remove stale artifacts left behind after migrating projects from cloud storage. It handles three categories of cleanup in risk-ascending order: stale path-hash directories (lowest risk), orphan/undecodable path-hash directories (medium risk), and source folders on cloud storage (highest risk). Every deletion requires individual user confirmation with verification evidence shown first.
 
 Works in two modes: post-migration mode (reads migration artifacts for high-confidence cleanup) or standalone mode (auto-detects everything independently). Both modes follow the same safety methodology.
 
-This is one of three prompts in the Cloud-Sync Toolkit. See also: `dev-status-migration.md`, and (after Phase 3) `dev-status-verification.md`.
+This is one of three prompts in the LocalGround Toolkit. See also: `docs/dev-status/dev-status-migration.md`, and (after Phase 3) `docs/dev-status/dev-status-verification.md`.
 
 ---
 
@@ -40,7 +40,7 @@ This is one of three prompts in the Cloud-Sync Toolkit. See also: `dev-status-mi
 | 2 | 02-03 | Phase 4 (source folder deletion with full verification, cloud-propagation warning, soak-period check) |
 | 3 | 02-04 | Phase 5 (report and summary) + full consistency pass |
 
-Wave 2 ran sequentially (Plans 02-02 and 02-03 both modify `cloud-sync-cleanup.md`).
+Wave 2 ran sequentially (Plans 02-02 and 02-03 both modify `localground-cleanup.md`).
 
 ### Requirements Coverage
 
@@ -75,7 +75,7 @@ Four minor findings identified during evaluation, all resolved before final verd
 
 **Observation (not a finding):** At 946 lines, cleanup prompt is 75% larger than migration (540 lines). Growth is from three-way platform command blocks for destructive operations. Right trade-off per design principles. Monitor CLI paste behavior.
 
-Full evaluation in `prompt-evaluation-cleanup.md`.
+Full evaluation in `docs/evaluations/prompt-evaluation-cleanup.md`.
 
 ---
 
@@ -92,7 +92,7 @@ The cleanup prompt should be tested against Robert's actual post-migration envir
 
 ### Test Sequence
 
-1. Paste `cloud-sync-cleanup.md` into Claude Code CLI
+1. Paste `localground-cleanup.md` into Claude Code CLI
 2. Verify Phase 1 detects post-migration mode (finds migration artifacts)
 3. Verify Phase 1 classifies path-hash entries correctly (stale, orphan, valid, undecodable)
 4. Phase 2: confirm or skip a few stale path-hash deletions, verify logging

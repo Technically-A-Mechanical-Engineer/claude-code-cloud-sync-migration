@@ -1,6 +1,6 @@
 # v2.0.0 Design Input
 
-**Context:** This document captures the design direction for the next milestone of the Cloud-Sync Toolkit, based on testing and design work done during the v1.2.0 milestone completion session (2026-04-11). Paste this into `/gsd-new-milestone` as context when starting the v2.0.0 milestone.
+**Context:** This document captures the design direction for the next milestone of the LocalGround Toolkit, based on testing and design work done during the v1.2.0 milestone completion session (2026-04-11). Paste this into `/gsd-new-milestone` as context when starting the v2.0.0 milestone.
 
 ## What Exists Today (v1.2.0 — shipped)
 
@@ -8,11 +8,11 @@ Three independent prompts, each a single markdown file:
 
 | Prompt | File | Version | Purpose |
 |--------|------|---------|---------|
-| Migration | `claude-code-cloud-sync-migration.md` | v1.2.0 | Copies projects from cloud-synced storage to local paths |
-| Cleanup | `cloud-sync-cleanup.md` | v1.0.0 | Removes stale path-hash dirs, orphan entries, source folders |
-| Verification | `cloud-sync-verification.md` | v1.0.0 | Read-only audit of environment health |
+| Migration | `localground-migration.md` | v1.2.0 | Copies projects from cloud storage to local paths |
+| Cleanup | `localground-cleanup.md` | v1.0.0 | Removes stale path-hash dirs, orphan entries, source folders |
+| Verification | `localground-verification.md` | v1.0.0 | Read-only audit of environment health |
 
-All three passed NEC evaluation and manual testing (see `test-artifacts/` for test report and artifacts).
+All three passed NEC evaluation and manual testing (see `docs/test-artifacts/` for test report and artifacts).
 
 ## v2 Vision: Five-Prompt Toolkit
 
@@ -20,15 +20,15 @@ Two new prompts added. All five remain independent markdown files — one file, 
 
 | Prompt | When to run | Status |
 |--------|-------------|--------|
-| **Seed** (new) | Before migration | Plants verifiable markers in each project at its cloud-synced location |
+| **Seed** (new) | Before migration | Plants verifiable markers in each project at its cloud storage location |
 | **Migration** (existing) | During migration | Copies projects to local paths. No changes needed unless findings from testing require fixes. |
-| **Sow** (new) | After migration | Verifies seed markers survived the copy, then runs health checks on the migrated project |
+| **Reap** (new) | After migration | Verifies seed markers survived the copy, then runs health checks on the migrated project |
 | **Cleanup** (existing) | When ready to delete source folders | No changes needed unless findings from testing require fixes. |
 | **Verification** (existing) | Anytime | No changes needed unless findings from testing require fixes. |
 
 ## Seed Prompt — Design Intent
 
-**Purpose:** Run before migration in each project at its current cloud-synced location. Plants known markers that the sow prompt can verify after migration.
+**Purpose:** Run before migration in each project at its current cloud storage location. Plants known markers that the reap prompt can verify after migration.
 
 **Marker types to consider:**
 - A small test file with a known checksum (proves file content survived copy)
@@ -42,16 +42,16 @@ Two new prompts added. All five remain independent markdown files — one file, 
 - Markers must be unambiguous to verify (no "this looks right" — pass or fail)
 - Must work across all three shell contexts (PowerShell, bash-on-Windows, native bash)
 
-**Open question:** What's the right marker format? The sow prompt needs to know exactly what to look for. This is a cross-prompt data contract — seed writes, sow reads.
+**Open question:** What's the right marker format? The reap prompt needs to know exactly what to look for. This is a cross-prompt data contract — seed writes, reap reads.
 
-## Sow Prompt — Design Intent
+## Reap Prompt — Design Intent
 
 **Purpose:** Run after migration in each project at its new local location. Two-part check:
 
 1. **Seed verification** (if seeds were planted) — Did the markers survive the copy? Checksum match, git tag present, memory entry intact.
 2. **Health checks** (always runs) — Git integrity, memory connection, stale references, file system, operations test.
 
-**A working draft exists:** `post-migration-health-check.md` in the project root is a v0.1 draft of the health check portion. It was tested against all migrated projects on 2026-04-11 — all passed. This draft becomes the foundation for the sow prompt's health check section.
+**A working draft exists:** `docs/design/post-migration-health-check.md` is a v0.1 draft of the health check portion. It was tested against all migrated projects on 2026-04-11 — all passed. This draft becomes the foundation for the reap prompt's health check section.
 
 **Two operating modes:**
 - **With seeds:** Full fidelity check + health checks. High confidence. Can replace the soak-period recommendation for users willing to run both prompts.
@@ -75,7 +75,7 @@ Testing surfaced four findings against the existing prompts. These should be add
 | F-03 | Verification | Low | sed errors during Phase 3 path-hash decoding on bash-on-Windows — quoting issue, doesn't affect results but looks bad |
 | F-04 | Migration | Informational | Parallel tool calls can cancel each other under manual approval mode — consider noting in human-readable section |
 
-Full details in `test-artifacts/2026-04-11-01-test-report.md`.
+Full details in `docs/test-artifacts/2026-04-11-01-test-report.md`.
 
 ## v2 Requirements from v1 REQUIREMENTS.md
 
@@ -94,11 +94,11 @@ These were identified during v1 but deferred:
 
 | File | What it contains |
 |------|-----------------|
-| `post-migration-health-check.md` | v0.1 draft of the sow prompt's health check section (tested, working) |
-| `test-artifacts/2026-04-11-01-test-report.md` | Full test report with findings F-01 through F-04 |
-| `test-artifacts/2026-04-11-01-migration-session-1-results.md` | Migration test output (6 folders, all passed) |
-| `test-artifacts/2026-04-11-01-session-2-prompt.md` | Generated Session 2 prompt from migration test |
-| `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Original design spec (requirements source for v1) |
+| `docs/design/post-migration-health-check.md` | v0.1 draft of the reap prompt's health check section (tested, working) |
+| `docs/test-artifacts/2026-04-11-01-test-report.md` | Full test report with findings F-01 through F-04 |
+| `docs/test-artifacts/2026-04-11-01-migration-session-1-results.md` | Migration test output (6 folders, all passed) |
+| `docs/test-artifacts/2026-04-11-01-session-2-prompt.md` | Generated Session 2 prompt from migration test |
+| `docs/design/2026-04-10-cloud storage-toolkit-design.md` | Original design spec (requirements source for v1) |
 | `.planning/milestones/v1.2.0-REQUIREMENTS.md` | Archived v1 requirements with traceability |
 | `.planning/RETROSPECTIVE.md` | v1.2.0 retrospective with lessons learned |
 

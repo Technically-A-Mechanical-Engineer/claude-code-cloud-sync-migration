@@ -1,14 +1,16 @@
-# Cloud-Sync Toolkit for Claude Code Projects
+# LocalGround Toolkit for Claude Code Projects
 
 ## What This Is
 
-A three-prompt toolkit that Claude Code users paste into CLI to migrate project folders from cloud-synced storage, clean up stale artifacts, and verify project health. Each prompt is an independent markdown file — one file, one paste.
+A five-prompt toolkit that Claude Code users paste into CLI to migrate project folders off cloud-synced storage — with pre-migration verification, migration, post-migration health checks, cleanup, and environment auditing. Each prompt is an independent markdown file — one file, one paste.
 
 | Prompt | File | Purpose |
 |---|---|---|
-| Migration | `claude-code-cloud-sync-migration.md` | Copies projects from cloud-synced storage to local paths |
-| Cleanup | `cloud-sync-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries |
-| Verification | `cloud-sync-verification.md` | Audits current state, reports findings, recommends next steps |
+| Seed | `localground-seed.md` | Plants verifiable markers before migration |
+| Migration | `localground-migration.md` | Copies projects from cloud-synced storage to local paths |
+| Reap | `localground-reap.md` | Verifies markers survived migration, runs health checks |
+| Cleanup | `localground-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries |
+| Verification | `localground-verification.md` | Audits current state, reports findings, recommends next steps |
 
 The target audience is Claude Code users hitting git errors, file lock failures, or sync conflicts from working in cloud-synced folders. Distribution is markdown files — not skills, not plugins, not packages.
 
@@ -18,40 +20,51 @@ Robert LaSalle
 
 ## Current State
 
-- **Migration prompt:** v1.2.0 (shipped). Tagged migration-v1.2.0, merged to master.
-- **Cleanup prompt:** v1.0.0 (shipped). 946 lines, NEC evaluation passed with 4 minor findings (all fixed).
-- **Verification prompt:** v1.0.0 (shipped). 658 lines. NEC evaluation passed all eight frameworks, zero findings.
-- **Design spec:** `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the three-prompt expansion. This is the requirements source for all GSD planning.
-- **Evaluation:** All three prompts passed all applicable NEC prompt frameworks (details in `prompt-evaluation-migration.md`, `prompt-evaluation-cleanup.md`, and `prompt-evaluation-verification.md`)
+- **Toolkit version:** v2.0.0 (LocalGround Toolkit). All five prompts carry the unified version header `LocalGround Toolkit v2.0.0`.
+- **Seed prompt:** Shipped. Plants verifiable markers (test file + git tag) before migration.
+- **Migration prompt:** Shipped. Two-session design — copies project folders, then migrates settings.
+- **Reap prompt:** Shipped. Verifies seed markers survived migration, runs six health checks.
+- **Cleanup prompt:** Shipped. Removes stale path-hash directories, orphan entries, and source folders.
+- **Verification prompt:** Shipped. Read-only environment audit with traffic light findings.
+- **Design spec:** `docs/design/2026-04-10-localground-toolkit-design.md` — approved design for the toolkit expansion. This is the requirements source for all GSD planning.
+- **Evaluation:** All five prompts passed all applicable NEC prompt frameworks (details in `docs/evaluations/prompt-evaluation-seed.md`, `docs/evaluations/prompt-evaluation-migration.md`, `docs/evaluations/prompt-evaluation-reap.md`, `docs/evaluations/prompt-evaluation-cleanup.md`, and `docs/evaluations/prompt-evaluation-verification.md`)
 
 ## File Map
 
 | File | Purpose |
 |---|---|
-| `claude-code-cloud-sync-migration.md` | Migration prompt (current: v1.2.0). Prior versions in git history. |
-| `cloud-sync-cleanup.md` | Cleanup prompt (current: v1.0.0). Built 2026-04-10/11. |
-| `cloud-sync-verification.md` | Verification prompt (current: v1.0.0). Built 2026-04-11. |
-| `dev-status-migration.md` | Migration prompt dev status — version history, test execution, findings, testing plan |
-| `dev-status-cleanup.md` | Cleanup prompt dev status — build summary, NEC evaluation, testing plan |
-| `dev-status-verification.md` | Verification prompt build summary, NEC evaluation, testing plan |
-| `prompt-evaluation-migration.md` | Migration prompt NEC framework evaluation (v1.1.1 and v1.2.0) |
-| `prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation (v1.0.0) |
-| `prompt-evaluation-verification.md` | Verification prompt NEC framework evaluation (v1.0.0) |
-| `docs/superpowers/specs/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
+| `localground-seed.md` | Seed prompt — pre-migration marker planting |
+| `localground-migration.md` | Migration prompt — two-session copy and settings migration |
+| `localground-reap.md` | Reap prompt — post-migration health check and marker verification |
+| `localground-cleanup.md` | Cleanup prompt — stale artifact removal |
+| `localground-verification.md` | Verification prompt — read-only environment audit |
+| `docs/dev-status/dev-status-seed.md` | Seed prompt dev status |
+| `docs/dev-status/dev-status-migration.md` | Migration prompt dev status — version history, test execution, findings, testing plan |
+| `docs/dev-status/dev-status-reap.md` | Reap prompt dev status |
+| `docs/dev-status/dev-status-cleanup.md` | Cleanup prompt dev status — build summary, NEC evaluation, testing plan |
+| `docs/dev-status/dev-status-verification.md` | Verification prompt build summary, NEC evaluation, testing plan |
+| `docs/evaluations/prompt-evaluation-seed.md` | Seed prompt NEC evaluation |
+| `docs/evaluations/prompt-evaluation-migration.md` | Migration prompt NEC framework evaluation |
+| `docs/evaluations/prompt-evaluation-reap.md` | Reap prompt NEC evaluation |
+| `docs/evaluations/prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation |
+| `docs/evaluations/prompt-evaluation-verification.md` | Verification prompt NEC framework evaluation |
+| `docs/design/2026-04-10-localground-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
 
 ## Architecture
 
 ### Toolkit Overview
 
-The toolkit has three independent prompts, each with a distinct execution model:
+The toolkit has five independent prompts, each with a distinct execution model:
 
 | Prompt | Sessions | Safety Model | Key Output |
 |---|---|---|---|
+| Seed | Single session | Write-only: one test file + one git tag. Never modifies existing content. | `.localground-seed-manifest.json` |
 | Migration | Two sessions (Session 1: copy, Session 2: settings) | Never deletes. Every copy verified. | `migration-session-1-results.md`, `session-2-prompt.md` |
-| Cleanup | Single session | Deletes only with individual user confirmation and verified local copy. Cloud-propagation warning on every source deletion. | `cleanup-log.md` |
+| Reap | Single session | Read-only verification + single manifest cleanup. | `localground-reap-report.md` |
+| Cleanup | Single session | Deletes only with individual user confirmation and verified local copy. Cloud-propagation warning on every source deletion. | `cleanup-results.md` |
 | Verification | Single session | Read-only. Never modifies or deletes. Single permitted write: `verification-report.md`. | `verification-report.md` |
 
-All three prompts share: three-way shell detection, five-dimension constraint model (Must/Must-not/Prefer/Escalate/Recover), auto-detect-first design, and graceful cross-prompt state handling. Each prompt contains its own self-contained copy of shared detection logic (path-hash decoding, cloud service patterns, shell detection) — no runtime dependency between prompts.
+All five prompts share: three-way shell detection, five-dimension constraint model (Must/Must-not/Prefer/Escalate/Recover), auto-detect-first design, and graceful cross-prompt state handling. Each prompt contains its own self-contained copy of shared detection logic (path-hash decoding, cloud service patterns, shell detection) — no runtime dependency between prompts.
 
 ### Two-Session Design
 
@@ -79,28 +92,29 @@ The prompt's constraint architecture extends the standard four-quadrant pattern 
 - **One file, one paste.** The user manages one markdown file per session. Human-facing guide and Claude Code instructions live in the same file, separated by a clear marker.
 - **Session 2 generated from actual results.** The continuation prompt is built from verified migration data, not templates with "update this after Session 1" placeholders.
 - **Methodology is non-negotiable.** Phased approach, constraint architecture, verification steps, confirmation gates, and no-delete policy apply regardless of migration size.
-- **Not a skill.** This is a one-shot migration playbook. It fails the recurrence criterion for skill encoding. Distribution is via file sharing (GitHub gist or repo), not the skills directory.
+- **Verifiable migration.** Seed markers planted before migration are verified after — no trust, only evidence.
+- **Not a skill.** This is a paste-and-run toolkit. Distribution is via file sharing (GitHub gist or repo), not the skills directory.
 
 ## Development Workflow
 
 - Development happens in this folder
-- Changes to the prompt update `claude-code-cloud-sync-migration.md` in place — git tracks version history
-- Dev status reports track findings, version history, and testing plans per prompt (`dev-status-migration.md`, `dev-status-cleanup.md`)
+- Changes to the prompt update `localground-migration.md` in place — git tracks version history
+- Dev status reports track findings, version history, and testing plans per prompt (`docs/dev-status/dev-status-seed.md`, `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-reap.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`)
 - Evaluation uses Nate's Executive Circle prompt frameworks — run the same eight-framework review on each new version
 - Testing uses the "fresh re-run, new target" approach documented in the dev status report
 
 ## Rules
 
-- New versions update `claude-code-cloud-sync-migration.md` in place — prior versions are preserved in git history
+- New versions update `localground-migration.md` in place — prior versions are preserved in git history
 - The dev status report is the single source of truth for what needs to change in the next version
 - When building a new version, start from the most recent prompt file as the base
 
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
-**Cloud-Sync Toolkit for Claude Code**
+**LocalGround Toolkit for Claude Code**
 
-A three-prompt toolkit that Claude Code CLI users paste into their terminal to migrate project folders off cloud-synced storage, clean up stale artifacts afterward, and verify project health. Each prompt is an independent markdown file — one file, one paste, no installation. The target audience is Claude Code users hitting git errors, file lock failures, or sync conflicts from working in OneDrive, Dropbox, Google Drive, or iCloud folders.
+A five-prompt toolkit that Claude Code CLI users paste into their terminal to migrate project folders off cloud-synced storage — with pre-migration verification, migration, post-migration health checks, cleanup, and environment auditing. Each prompt is an independent markdown file — one file, one paste, no installation. The target audience is Claude Code users hitting git errors, file lock failures, or sync conflicts from working in OneDrive, Dropbox, Google Drive, or iCloud folders.
 
 **Core Value:** Get Claude Code users off cloud-synced storage safely — no data loss, no silent failures, every action verified before and after.
 
@@ -128,7 +142,7 @@ A three-prompt toolkit that Claude Code CLI users paste into their terminal to m
 - None — This is a single-file prompt. No frameworks are installed or required.
 - Nate's Executive Circle prompt kits (State of Prompt Engineering Kit, Six Weeks Kit, Building Agents Is 80% Plumbing Kit, Skills Are Infrastructure Now Kit) — Used to evaluate the prompt against eight frameworks. Not runtime dependencies.
 - Manual testing via fresh re-run to a parallel target path — No automated test runner exists.
-- Not applicable — development is editing `claude-code-cloud-sync-migration.md` in place.
+- Not applicable — development is editing `localground-migration.md` in place.
 ## Key Dependencies
 - Claude Code CLI (user's installation) — The prompt is useless without it. Version matters: Phase 7.1 includes an escalation trigger if the `~/.claude/projects/` directory structure changes between sessions (CLI update risk).
 - robocopy (Windows built-in) — Copy tool for Windows migrations. Called from within the prompt's Phase 4 instructions.

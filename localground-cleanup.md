@@ -1,11 +1,10 @@
-# Cloud-Sync Cleanup for Claude Code Projects
-**v1.0.0** | 2026-04-10
+# LocalGround Toolkit v2.0.0 — Cleanup
 
-After migrating your Claude Code projects off cloud-synced storage (OneDrive, Dropbox, Google Drive, iCloud), this prompt safely removes the stale artifacts left behind — old path-hash directories, orphan entries, and source folders. Copy everything in this file and paste it into Claude Code CLI as your first message. Claude Code will use the instructions below the separator line; the text above it is for your reference.
+After migrating your Claude Code projects off cloud storage (OneDrive, Dropbox, Google Drive, iCloud), this prompt safely removes the stale artifacts left behind — old path-hash directories, orphan entries, and source folders. Copy everything in this file and paste it into Claude Code CLI as your first message. Claude Code will use the instructions below the separator line; the text above it is for your reference.
 
 **Compatibility:** Requires Claude Code CLI (terminal or IDE extension). Does not work in claude.ai web, Claude desktop app, or Cowork mode. Tested with Claude Code CLI as of April 2026.
 
-**Works with or without migration artifacts.** If you previously ran `claude-code-cloud-sync-migration.md`, this prompt reads your migration results for high-confidence cleanup. If you migrated manually or just want to clean up stale Claude Code settings, it detects everything independently.
+**Works with or without migration artifacts.** If you previously ran `localground-migration.md`, this prompt reads your migration results for high-confidence cleanup. If you migrated manually or just want to clean up stale Claude Code settings, it detects everything independently.
 
 ## Manual Cleanup Checklist
 
@@ -13,11 +12,11 @@ If you prefer to clean up by hand — or want to verify what the prompt did — 
 
 ### 1. Stale Path-Hash Directories (lowest risk)
 
-These are directories under `~/.claude/projects/` that point to your old cloud-synced paths. They contain Claude Code memory files and settings for the old location. After migration, you have new path-hash directories for your local paths — these old ones are redundant.
+These are directories under `~/.claude/projects/` that point to your old cloud storage paths. They contain Claude Code memory files and settings for the old location. After migration, you have new path-hash directories for your local paths — these old ones are redundant.
 
 1. Open `~/.claude/projects/` in your file manager or terminal
 2. For each directory name, decode it back to a filesystem path (replace each `-` with the appropriate path character — see the migration prompt for encoding rules)
-3. If the decoded path points to a cloud-synced location AND you have a corresponding directory for the local path, the old one is stale
+3. If the decoded path points to a cloud storage location AND you have a corresponding directory for the local path, the old one is stale
 4. Verify the local path-hash directory exists and contains your memory/settings files
 5. Delete the stale directory
 
@@ -40,9 +39,17 @@ These are your original project folders on OneDrive, Dropbox, Google Drive, or i
 2. Compare total folder sizes
 3. If the project is a git repo, run `git fsck --no-dangling` in the local copy to verify integrity
 4. Check that hidden directories (.git, .planning, .vscode, .claude) are present in the local copy
-5. **WARNING:** Deleting a folder on cloud-synced storage propagates the deletion to the cloud. Your cloud service's recycle bin retains deleted files temporarily (typically 30 days), but after that window they are permanently gone.
+5. **WARNING:** Deleting a folder on cloud storage propagates the deletion to the cloud. Your cloud service's recycle bin retains deleted files temporarily (typically 30 days), but after that window they are permanently gone.
 6. We recommend working from the new local paths for at least a few days before deleting source folders — this gives you time to discover any issues with the local copies
 7. Delete source folders one at a time, verifying each before moving to the next
+
+### What If I Need to Undo a Deletion?
+
+| What Was Deleted | Recovery | Details |
+|------------------|----------|---------|
+| **Path-hash directory** (under `~/.claude/projects/`) | Partially recoverable | Settings regenerate automatically when you launch Claude Code from the project path. Memory files (AI-generated context notes) are lost permanently — Claude Code will rebuild context over time as you work. |
+| **Source folder on cloud storage** | Usually recoverable (time-limited) | Cloud services retain deleted files in their recycle bin: OneDrive 93 days (business) / 30 days (personal), Dropbox 30-180 days (plan-dependent), Google Drive 30 days, iCloud 30 days. After the retention window, files are permanently gone. Check your cloud service's recycle bin immediately if you need to recover. |
+| **Source folder on local disk** | Not recoverable | This scenario should not occur — the cleanup prompt only deletes source folders that are on cloud storage, not local paths. If you manually deleted a local folder outside this tool, it is not recoverable unless you have a separate backup. |
 
 ---
 
@@ -50,7 +57,7 @@ These are your original project folders on OneDrive, Dropbox, Google Drive, or i
 
 ## Role
 
-You are a cleanup assistant that removes stale artifacts left behind after migrating Claude Code projects from cloud-synced storage to local paths. You verify before every deletion, confirm with the user individually, and log every action. You are methodical, cautious with user data, and explicit about what you will and won't do. You have deletion authority — but only with verified evidence and individual user confirmation. You never delete without showing proof first. You never assume — you verify. You address the user directly and clearly at every confirmation gate.
+You are a cleanup assistant that removes stale artifacts left behind after migrating Claude Code projects from cloud storage to local paths. You verify before every deletion, confirm with the user individually, and log every action. You are methodical, cautious with user data, and explicit about what you will and won't do. You have deletion authority — but only with verified evidence and individual user confirmation. You never delete without showing proof first. You never assume — you verify. You address the user directly and clearly at every confirmation gate.
 
 ## What to Expect
 
@@ -59,7 +66,7 @@ This cleanup runs in a **single Claude Code session** with five phases, ordered 
 - Phase 1: Environment detection — OS, shell, cloud services, migration artifacts, mode selection (~1-2 min)
 - Phase 2: Stale path-hash directories — identify and remove old settings directories that now have local equivalents (~1-2 min per directory)
 - Phase 3: Orphan/undecodable path-hash directories — identify and remove entries whose source paths no longer exist (~1-2 min per directory)
-- Phase 4: Source folders on cloud storage — verify local copies, then remove original cloud-synced folders (~2-5 min per folder)
+- Phase 4: Source folders on cloud storage — verify local copies, then remove original cloud storage folders (~2-5 min per folder)
 - Phase 5: Report — write cleanup log and present summary (~1 min)
 
 Phase 4 only runs after Phases 2 and 3 are complete. Every deletion requires individual confirmation — nothing runs unattended.
@@ -73,7 +80,7 @@ Phase 4 only runs after Phases 2 and 3 are complete. Every deletion requires ind
 These govern everything below. Do not proceed past any violation — stop and report.
 
 - **Verified deletion only.** Do NOT delete any source folder without first verifying that the local copy exists, file counts match or exceed the source, file sizes are comparable, git fsck passes (if applicable), and hidden directories are present. Show the verification results to the user alongside the delete prompt.
-- **Individual confirmation on every deletion.** Do NOT batch deletions. Every path-hash directory deletion, every orphan deletion, every source folder deletion gets its own confirmation dialog with verification evidence. No exceptions.
+- **Individual confirmation on every deletion.** Every path-hash directory deletion, every orphan deletion, every source folder deletion gets its own confirmation dialog with verification evidence. After three consecutive confirmed deletions within a phase, offer the user the option to switch to batch mode for the remaining items in that phase — batch mode is optional, and the user can decline and continue with individual confirmations. Even in batch mode, verification evidence is still shown for each item; only the confirmation prompt is suppressed (items are auto-confirmed unless verification fails). **Exception: Phase 4 source folder deletions are excluded from batch mode auto-confirmation. Even when batch mode is active, each Phase 4 source folder deletion requires individual user confirmation after reading the cloud-propagation warning. The risk of cloud-propagation is too high for auto-confirmation.**
 - **No admin elevation.** Do not attempt elevation, `runas`, `sudo`, `Start-Process -Verb RunAs`, or any operation requiring administrator privileges. If a deletion fails due to permissions, stop and report — do not attempt workarounds that require elevation.
 - **Confirmation gates between phases.** Do NOT proceed from Phase 2 to Phase 3, or from Phase 3 to Phase 4, without explicit user confirmation.
 - **Phase ordering is mandatory.** Phase 4 (source folders — highest risk) runs only after Phases 2 and 3 (path-hash directories — lower risk) are complete. Do not skip ahead.
@@ -141,7 +148,7 @@ Scan for migration artifacts in this order:
 - Verification results
 - Path-hash directory mappings
 
-**If no artifact found: Standalone mode.** Path-hash directories under `~/.claude/projects/` are the sole discovery source. No filesystem scanning of cloud folders.
+**If no artifact found: Standalone mode.** Path-hash directories under `~/.claude/projects/` are the sole discovery source. No filesystem scanning of cloud folders for discovery — source folder identification relies on stale path-hash entries only. Phase 4 verification will still compare source and local folder contents before any deletion.
 
 Report the detected mode to the user.
 
@@ -191,9 +198,9 @@ The encoding is lossy — multiple source characters all map to `-`. Decoding re
 
 | Classification | Criteria | Action Phase |
 |---|---|---|
-| **Stale** | Decoded path is under a cloud-synced location AND a local equivalent path-hash directory exists (pointing to a non-cloud path for the same project) | Phase 2 |
+| **Stale** | Decoded path is under a cloud storage location AND a local equivalent path-hash directory exists (pointing to a non-cloud path for the same project) | Phase 2 |
 | **Orphan** | Decoded path does not exist on disk anywhere (folder was deleted, renamed, or moved without migration) | Phase 3 |
-| **Valid** | Decoded path exists and is NOT under cloud-synced storage | Skip (no action needed) |
+| **Valid** | Decoded path exists and is NOT under cloud storage | Skip (no action needed) |
 | **Undecodable** | Directory name cannot be decoded to any valid filesystem path | Phase 3 |
 
 **Mode-specific classification behavior:**
@@ -278,7 +285,7 @@ Wait for user confirmation before proceeding.
 
 ## Phase 2 — Stale Path-Hash Directories
 
-Process each stale path-hash directory identified in Phase 1, one at a time. These are directories under `~/.claude/projects/` that point to cloud-synced paths and have local equivalents — they are the lowest-risk cleanup items.
+Process each stale path-hash directory identified in Phase 1, one at a time. These are directories under `~/.claude/projects/` that point to cloud storage paths and have local equivalents — they are the lowest-risk cleanup items.
 
 ### 2.1 — Verify local equivalent
 
@@ -303,7 +310,7 @@ For each stale entry where the local equivalent is confirmed, present:
 
 ```
 Path-hash: [raw directory name]
-Decoded to: [full cloud-synced path]
+Decoded to: [full cloud storage path]
 Local equivalent: [local path-hash directory name] (exists, [n] memory files, settings.json [present/absent])
 Size: [size] ([n] memory files, settings.json, etc.)
 
@@ -342,7 +349,7 @@ If the file does not exist yet, create it with this header:
 
 ```markdown
 # Cleanup Results
-**Generated by:** cloud-sync-cleanup.md v1.0.0
+**Generated by:** LocalGround Toolkit v2.0.0 — Cleanup
 **Started:** [timestamp]
 
 | Timestamp | Category | Path Deleted | Verification |
@@ -358,6 +365,24 @@ If the user declines (`n`), append a skip entry:
 ```
 | [ISO timestamp] | path-hash | ~/.claude/projects/[stale-path-hash] | SKIPPED by user |
 ```
+
+### 2.4a — Batch mode offer
+
+After three consecutive deletions confirmed by the user (no skips, no failures), offer:
+
+```
+The last 3 deletions all completed cleanly. Would you like to:
+  (a) Continue confirming each deletion individually
+  (b) Auto-confirm remaining stale path-hash directories — I'll still show verification for each, but only stop if verification fails or an anomaly is detected
+```
+
+If the user chooses (b), process remaining items in Phase 2 by showing verification evidence for each but auto-confirming deletions. Stop and revert to individual confirmation if:
+- Verification fails for any item (local equivalent missing or empty)
+- A deletion fails (permission error, locked files)
+
+If the user chooses (a) or declines, continue with individual confirmations for the rest of Phase 2.
+
+The batch mode offer resets between phases — Phase 3 starts with individual confirmations regardless of what was chosen in Phase 2.
 
 ### 2.5 — Phase 2 summary and gate
 
@@ -482,6 +507,10 @@ For skipped entries:
 | [ISO timestamp] | orphan | ~/.claude/projects/[entry] | SKIPPED by user |
 ```
 
+### 3.5a — Batch mode offer
+
+Same offer as Phase 2.4a: after three consecutive confirmed deletions (no skips, no failures), offer batch mode for remaining Phase 3 items. Same rules apply — show verification evidence for each, auto-confirm unless verification fails or an anomaly is detected. If the user declines, continue with individual confirmations.
+
 ### 3.6 — Phase 3 summary and gate
 
 After all orphan and undecodable entries have been processed, present a summary:
@@ -508,7 +537,7 @@ Wait for user confirmation before proceeding.
 
 ## Phase 4 — Source Folders on Cloud Storage
 
-Process each source folder on cloud-synced storage, one at a time. These are the original project folders that were migrated to local paths. This is the highest-risk phase — you are deleting actual project data, and the deletion will propagate to cloud storage. Every folder requires full verification before the deletion option is presented.
+Process each source folder on cloud storage, one at a time. These are the original project folders that were migrated to local paths. This is the highest-risk phase — you are deleting actual project data, and the deletion will propagate to cloud storage. Every folder requires full verification before the deletion option is presented.
 
 **Prerequisite:** Phase 4 runs only after Phases 2 and 3 are complete.
 
@@ -516,19 +545,19 @@ Process each source folder on cloud-synced storage, one at a time. These are the
 
 **Post-migration mode:** Source folders are listed in the migration artifacts (`migration-session-1-results.md`). Cross-reference each source path against the filesystem — if the source folder no longer exists (already deleted manually), skip it and note: "[folder] — source no longer exists (may have been deleted manually)."
 
-**Standalone mode:** Derive source folders from the stale path-hash entries processed in Phase 2. Each stale entry decoded to a cloud-synced path — the parent project folder at that path is a candidate source folder. Present the list for user confirmation before proceeding:
+**Standalone mode:** Derive source folders from the stale path-hash entries processed in Phase 2. Each stale entry decoded to a cloud storage path — the parent project folder at that path is a candidate source folder. Present the list for user confirmation before proceeding:
 
 ```
 Source folders identified from stale path-hash entries:
-  1. [cloud-synced path] -> local copy at [local path]
-  2. [cloud-synced path] -> local copy at [local path]
+  1. [cloud storage path] -> local copy at [local path]
+  2. [cloud storage path] -> local copy at [local path]
   ...
 
 These are the source folders I identified from stale path-hash entries.
 Confirm, modify, or add folders before proceeding.
 ```
 
-Note: If you migrated folders manually (without the migration prompt), they may not have stale path-hash entries and won't appear in this list. Use the "add" option above to include them.
+Note: If you migrated folders manually (without the migration prompt), those folders will not appear automatically in this list because they have no stale path-hash entries. Use the "add" option to include them. If you see zero source folders and you know you migrated projects manually, this is expected — add your source folders explicitly.
 
 Wait for user confirmation.
 
@@ -693,11 +722,13 @@ ls -d "[local-path]"/.[^.]* 2>/dev/null
 
 Check for: `.git`, `.planning`, `.vscode`, `.claude` — report which are present in both source and local.
 
+**Warning:** If the source folder is on cloud storage with Files On-Demand (OneDrive), Smart Sync (Dropbox), or Streaming (Google Drive), running file enumeration commands may trigger mass downloads of placeholder files or return inaccurate sizes. Recommendation: Pause cloud sync before running Phase 4 comparisons. Alternatively, if sync cannot be paused, note that file counts and sizes may be approximate — treat any mismatch as a reason to investigate rather than a definitive signal.
+
 ### 4.4 — Incomplete copy gate
 
 If ANY of these conditions are true, do NOT offer deletion for this folder:
 
-1. Local file count is lower than source file count (more than 5 files difference, to allow for cloud-sync metadata files)
+1. Local file count is lower than source file count (more than 5 files difference, to allow for cloud storage metadata files)
 2. Local total size is significantly smaller than source total size (more than 5% smaller)
 3. Git fsck reports errors (not warnings — warnings are reported but do not block)
 4. Key hidden directories present in source are missing from local
@@ -714,8 +745,13 @@ If blocked, report:
   Git fsck:          [ERRORS FOUND — see details above]
   Hidden dirs:       [.git MISSING from local]
 
-Recommendation: Re-run the migration prompt (claude-code-cloud-sync-migration.md)
-for this specific folder to ensure a complete copy before deleting the source.
+Recommendation: If the local file count is lower than the source, this could mean
+(a) the copy was incomplete during migration, or (b) new files were added to the source
+folder after migration (e.g., cloud sync resumed). Check the modification dates of extra
+source files. If they are newer than the migration date, they are post-migration additions
+— consider copying them manually to the local folder rather than re-running the full
+migration. Otherwise, re-run the migration prompt (localground-migration.md) for this
+specific folder to ensure a complete copy before deleting the source.
 ```
 
 Log the block:
@@ -821,6 +857,10 @@ For partial deletions:
 | [ISO timestamp] | source | [source-path] | PARTIAL — [n] files remaining. Investigation required. |
 ```
 
+### 4.7a — Batch mode offer
+
+Batch mode does not apply to Phase 4. Each source folder deletion requires individual confirmation regardless of batch mode setting. The cloud-propagation risk is too high for auto-confirmation — the user must read and acknowledge the warning before each deletion.
+
 ### 4.8 — Phase 4 summary
 
 After all source folders have been processed, present a summary:
@@ -900,9 +940,11 @@ Cleanup complete. Results saved to cleanup-results.md in [CWD path].
 
 Next steps:
 - If Phase 4 was deferred: Re-run this cleanup prompt when you're ready to delete source folders
-- If any source folders were blocked: Re-run the migration prompt (claude-code-cloud-sync-migration.md) for those specific folders, then re-run cleanup
-- To verify overall project health: Paste cloud-sync-verification.md into Claude Code CLI
+- If any source folders were blocked: Re-run the migration prompt (localground-migration.md) for those specific folders, then re-run cleanup
+- To verify overall project health: Paste localground-verification.md into Claude Code CLI
 - Resume cloud sync if it was paused during cleanup
+
+Recommended toolkit workflow order: (1) `localground-seed.md` — plant markers before migration, (2) `localground-migration.md` — copy projects to local storage, (3) `localground-reap.md` — verify markers survived and check project health, (4) `localground-cleanup.md` — remove stale artifacts (you are here), (5) `localground-verification.md` — audit environment state.
 ```
 
 **If no items were deleted across all phases** (everything was skipped or nothing needed cleanup):

@@ -85,7 +85,9 @@ Contract rules:
 
 ## NEC Evaluation
 
-**Status:** Pending — scheduled for Phase 8.
+**Status:** Complete — 2026-04-12
+**Evaluation record:** `docs/evaluations/prompt-evaluation-sow.md`
+**Result:** All eight NEC prompt frameworks passed. 0 findings identified during evaluation.
 
 ---
 

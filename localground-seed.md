@@ -8,7 +8,7 @@ Before migrating a Claude Code project off cloud storage, this prompt plants ver
 
 ## When to Run
 
-Run this before migrating a project off cloud storage (OneDrive, Dropbox, Google Drive, or iCloud). After planting markers, use `localground-migration.md` to migrate the project, then `localground-reap.md` to verify markers survived.
+Run this before migrating a project off cloud storage (OneDrive, Dropbox, Google Drive, or iCloud). Run this from your project root directory (the folder where you normally launch Claude Code). The seed markers will be planted in the current working directory. After planting markers, use `localground-migration.md` to migrate the project, then `localground-reap.md` to verify markers survived.
 
 ## What to Expect
 
@@ -73,6 +73,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 - If existing markers found with content mismatch: stop and present the finding to the user before overwriting (see Phase 1.5 idempotency matrix)
 - If existing manifest contains malformed JSON: offer to regenerate from current state
 - If Write tool fails for test file or manifest: stop and report — do not fall back to shell-based file creation
+- Tag namespace collision — a `localground/seed/*` tag exists on a different commit and no manifest is present. Present the existing tag details and ask the user whether to overwrite the tag or abort.
 
 ### Recover
 
@@ -122,7 +123,7 @@ If CWD is NOT under cloud storage, note it and continue without comment.
 
 If `git rev-parse --is-inside-work-tree` succeeds:
 - Record HEAD commit hash: `git rev-parse HEAD` (full 40-character hash)
-- Record branch name: `git branch --show-current`
+- Record branch name: `git branch --show-current`. If the result is empty (detached HEAD state — e.g., during a rebase or tag checkout), record branch as `(detached HEAD)` and continue. This does not affect marker creation.
 
 If not a git repo:
 - Note that git tag marker will be skipped
@@ -146,6 +147,8 @@ Check for existing markers before acting. Detection order:
 | Missing | Exists | Exists | **Anomaly** — markers present without manifest. Escalate: ask user if they want to generate a manifest for existing markers or start fresh |
 | Missing | Exists | Missing | **Anomaly** — partial markers without manifest. Escalate: ask user if they want to generate a manifest for the existing test file or start fresh |
 | Missing | Missing | Exists | **Anomaly** — partial markers without manifest. Escalate: ask user if they want to generate a manifest for the existing tag or start fresh |
+
+"Start fresh" means overwrite the existing test file content and recreate the git tag pointing to the current HEAD commit. This does not delete any other project files.
 | Present + valid | Matches | Matches | **Already seeded** — report "Project already seeded on [manifest.created]. All markers intact." Exit with summary, no further action. |
 | Present + valid | Missing | Matches | **Partial damage** — proceed to Phase 2, restore test file only, update manifest |
 | Present + valid | Matches | Missing | **Partial damage** — proceed to Phase 2, recreate git tag only (if git repo), update manifest |
@@ -191,7 +194,7 @@ Version: 1.0
 The content is exactly three lines, each terminated by a single LF character (no CRLF). The file ends with a trailing newline after the third line. Encoding: UTF-8 with no BOM. Use Claude Code's Write tool — this guarantees consistent encoding and line endings across all platforms.
 
 **Expected SHA-256 checksum:** `b530e9ad8cecd43e2fea05670c21bfed6c12457630f90d008c73ead24eaf8ece`
-**Expected size:** 113 bytes
+**Expected size:** 113 bytes (informational — SHA-256 checksum is the authoritative verification; size is documented for reference only)
 
 ### 2.2 — Verify test file checksum
 
@@ -236,6 +239,8 @@ If CWD is a git repo:
    ```
 
    Note: colons replaced with hyphens for Windows filesystem compatibility (git stores tag refs as files under `.git/refs/tags/`).
+
+   Both commands assume UTC time is available via the system clock. This is standard on all platforms where Claude Code runs.
 
 2. Create the lightweight tag:
    ```bash
@@ -300,6 +305,7 @@ Build the `.localground-seed-manifest.json` content matching this schema. Constr
 ```
 
 Important:
+- `version` is the manifest schema version (for forward compatibility if the schema changes). `toolkit_version` records which toolkit release planted the markers. The reap prompt uses `version` for schema compatibility and `toolkit_version` for toolkit lineage.
 - The `created` timestamp uses real colons (ISO 8601 format) — only the tag name uses hyphens for filesystem compatibility
 - The `project_path` field contains the full CWD path with proper JSON escaping (backslashes doubled on Windows — e.g., `C:\\Users\\rlasalle\\Projects\\OB1`). Claude Code's Write tool handles this automatically.
 - The `commit` field MUST be the full 40-character hash (not the 7-character short hash). The reap prompt uses `git rev-parse` for comparison, which returns a full hash.

@@ -26,7 +26,7 @@ Robert LaSalle
 - **Reap prompt:** Shipped. Verifies seed markers survived migration, runs six health checks.
 - **Cleanup prompt:** Shipped. Removes stale path-hash directories, orphan entries, and source folders.
 - **Verification prompt:** Shipped. Read-only environment audit with traffic light findings.
-- **Design spec:** `docs/design/2026-04-10-cloud-sync-toolkit-design.md` — approved design for the toolkit expansion. This is the requirements source for all GSD planning.
+- **Design spec:** `docs/design/2026-04-10-localground-toolkit-design.md` — approved design for the toolkit expansion. This is the requirements source for all GSD planning.
 - **Evaluation:** All five prompts passed all applicable NEC prompt frameworks (details in `docs/evaluations/prompt-evaluation-seed.md`, `docs/evaluations/prompt-evaluation-migration.md`, `docs/evaluations/prompt-evaluation-reap.md`, `docs/evaluations/prompt-evaluation-cleanup.md`, and `docs/evaluations/prompt-evaluation-verification.md`)
 
 ## File Map
@@ -48,7 +48,7 @@ Robert LaSalle
 | `docs/evaluations/prompt-evaluation-reap.md` | Reap prompt NEC evaluation |
 | `docs/evaluations/prompt-evaluation-cleanup.md` | Cleanup prompt NEC framework evaluation |
 | `docs/evaluations/prompt-evaluation-verification.md` | Verification prompt NEC framework evaluation |
-| `docs/design/2026-04-10-cloud-sync-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
+| `docs/design/2026-04-10-localground-toolkit-design.md` | Approved design spec — requirements source for GSD planning |
 
 ## Architecture
 

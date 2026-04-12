@@ -51,6 +51,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 - **Confirmation gates.** Do NOT proceed between phases without explicit user confirmation. Within the copy phase, do NOT proceed to the next folder until the user confirms the current one (see Phase 4.7 for a batch option after consecutive successes).
 - **No partial-state cleanup.** If a copy operation fails or is incomplete, do NOT delete or overwrite the partial target. Report the state and wait for instructions.
 - **Escalation trigger.** If you encounter path references, path-hash directories, or settings that don't map to known source paths or the expected target, report them separately and do not modify them — wait for instructions.
+- **Disk space exhaustion during copy.** If free space is insufficient for the next folder, stop and present options: free space and retry, skip this folder, or abort the remaining migration.
 - **rsync trailing slashes (macOS/Linux only).** Always include trailing slashes on both source and target paths in rsync commands. Missing slashes cause rsync to create a nested subdirectory instead of copying contents.
 
 ### Preferences
@@ -117,7 +118,7 @@ Then present four options with "pick this if" guidance:
 | 3. Fresh re-run, same target | Full migration to the same path | You want to redo the migration in place (collision handling on every folder) | Full Phase 2-6 with pre-existing target dialogs on every folder | `migration-session-1-results.md` at target path |
 | 4. Done | No further action needed | The prior migration is trusted and you just need to start using the new path | Handoff instructions only (Phase 6 summary) | No artifact |
 
-Wait for the user's selection before proceeding. If Option 1 is selected, run verification checks and write the report, then proceed to Phase 6. If Option 2 or 3, proceed to Phase 2. If Option 4, proceed directly to Phase 6.
+Wait for the user's selection before proceeding. If Option 1 is selected: re-read `migration-session-1-results.md` from the current directory to determine source and target paths from the prior migration. Run verification checks (git fsck, file counts, hidden dirs, symlinks) on each target folder using the same Phase 4.4-4.6 checks. If the results log is missing, run Phase 1.3-1.5 auto-detection to rediscover source paths. Output: `migration-verification-results.md` with per-folder verification status. Then proceed to Phase 6. If Option 2 or 3, proceed to Phase 2. If Option 4, proceed directly to Phase 6.
 
 ### 1.3 — User profile path
 
@@ -141,11 +142,12 @@ Report all sync roots found. Note that a single cloud service may contain projec
 
 Scan `~/.claude/projects/` (all platforms). If this directory does not exist or is empty, note that no Claude Code project settings exist yet and skip to 1.6 — the migration is still valuable for moving folders off cloud sync, but Session 2's Phase 7 (settings migration) will be abbreviated.
 
-**Path-hash decoding:** Claude Code encodes filesystem paths as directory names by replacing path separators (`\`, `/`), drive colons (`:`), spaces, commas, and other special characters each with a single hyphen (`-`). Consecutive hyphens are NOT collapsed — they indicate adjacent special characters in the original path.
+**Path-hash decoding:** Claude Code encodes filesystem paths as directory names by replacing path separators (`\`, `/`), drive colons (`:`), spaces, commas, periods in path components, parentheses, brackets, and other non-alphanumeric characters each with a single hyphen (`-`). Percent-encoded sequences (e.g., `%28`) are NOT used — Claude Code's path-hash encoding uses direct hyphen substitution, not URL encoding. Consecutive hyphens are NOT collapsed — they indicate adjacent special characters in the original path.
 
 Examples:
 - `C:\Users\rlasalle\Projects\Claude-Home` -> `C--Users-rlasalle-Projects-Claude-Home`
 - `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\OB1` -> `C--Users-rlasalle-OneDrive---ThermoTek--Inc-Documents-Projects-OB1`
+- `C:\Users\rlasalle\Projects\MyApp (v2)\src` -> `C--Users-rlasalle-Projects-MyApp--v2--src`
 
 For each path-hash directory:
 - Decode the directory name back to a filesystem path using the rules above
@@ -259,6 +261,8 @@ Run the appropriate command:
 
 If creation fails due to permissions, stop and advise the user to choose a different target path.
 
+If the user reports they cannot complete pre-flight (sync won't pause, files won't download, editor won't close): present options: (a) proceed anyway with the understanding that placeholder files may not copy correctly — Phase 3.5 will catch most issues; (b) abort and troubleshoot the blocking issue first; (c) skip the blocking step and continue pre-flight with remaining items.
+
 Ask the user to confirm: **"Pre-flight complete. Proceed."**
 
 ---
@@ -302,7 +306,7 @@ If subdirectory-only is selected:
 - Phase 4 verification compares file counts against the subdirectory source, not the full parent
 - The Session 2 prompt's Phase 8 reference search uses the subdirectory path, not the parent
 
-Ask the user: "Review the list. You can exclude folders by number, rename targets, or add folders I missed. Which folders should I migrate?"
+Ask the user: "Review the list. Folder names with spaces have been renamed with hyphens (e.g., 'My Project' becomes 'My-Project'). To keep an original name with spaces, say 'keep original for [number]'. You can also exclude folders by number, rename targets, or add folders I missed. Which folders should I migrate?"
 
 Wait for approval of the final move list.
 
@@ -337,6 +341,9 @@ Check for Smart Sync placeholders using `xattr`:
 find "<source>" -type f -exec xattr -l {} \; 2>/dev/null | grep "com.dropbox" | head -5
 ```
 
+**Google Drive:**
+Google Drive for Desktop uses a virtual file system. Placeholder detection: check for files with 0 bytes that are expected to have content. On macOS, check for `com.google.drivefs` extended attributes via `xattr -l`. On Windows, Google Drive files may show as 'online-only' in File Explorer but appear as regular files to CLI tools when Drive for Desktop is running — if file counts are significantly lower than expected, this may indicate Drive is not running or files are not cached.
+
 **0-byte file detection:** After the placeholder check, scan each source folder for 0-byte files:
 
 **PowerShell:**
@@ -368,6 +375,8 @@ Wait for user confirmation that all folders show READY before proceeding to Phas
 
 Process each approved folder one at a time, in order, with the active working directory last (if applicable).
 
+Before copying each folder, check available disk space. If free space is less than the estimated size of this folder plus a 20% buffer, stop and present the user with options: (a) free disk space and retry, (b) skip this folder and continue with smaller folders, (c) abort the remaining migration. Use `Get-PSDrive` (PowerShell), `df -h` (bash) to check.
+
 For each folder:
 
 ### 4.1 — Check for pre-existing target
@@ -391,7 +400,7 @@ robocopy "<source>" "<target>" /E /COPY:DAT /DCOPY:DAT /R:3 /W:5 /XJ
 ```bash
 MSYS_NO_PATHCONV=1 robocopy "<source>" "<target>" /E /COPY:DAT /DCOPY:DAT /R:3 /W:5 /XJ
 ```
-robocopy is a Windows binary callable from Git Bash. The same flags apply as in PowerShell. `MSYS_NO_PATHCONV=1` prevents Git Bash from converting Windows-style paths to Unix-style paths. Without it, robocopy receives mangled paths and fails.
+robocopy is a Windows binary callable from Git Bash. The same flags apply as in PowerShell. `MSYS_NO_PATHCONV=1` prevents Git Bash from converting Windows-style paths to Unix-style paths. Without it, robocopy receives mangled paths and fails. Apply `MSYS_NO_PATHCONV=1` to ALL robocopy invocations from bash-on-Windows, not just this phase. Git Bash path mangling affects any command receiving Windows-style paths.
 
 **macOS/Linux:**
 ```bash
@@ -527,7 +536,7 @@ Do NOT proceed to the next folder without confirmation (or batch-mode authorizat
 
 ### 4.8 — Log results to file
 
-Write the migration results to a running log file at `[target-path]/migration-session-1-results.md` as each folder is verified. Append each folder's report (from 4.7) after the user confirms it. This file serves as:
+Write the migration results to a running log file at `[target-path]/migration-session-1-results.md` as each folder is verified. The results file has this structure: (1) Header with migration date, target root path, shell context, and toolkit version. (2) Per-folder report sections using the Phase 4.7 template. (3) Path-hash classification table from Phase 1.5. (4) Summary section with total counts (migrated/skipped/failed). Append each folder's report (from 4.7) after the user confirms it. Also record the path-hash classification (has memory / settings only / empty) for each project — Session 2 needs this to verify all settings were migrated. This file serves as:
 - The persistent record of what was migrated
 - The source of truth for generating the Session 2 prompt in Phase 5
 - The crash recovery checkpoint if the session is interrupted
@@ -581,7 +590,7 @@ Identical in substance to Session 1's Role — migration assistant, methodical, 
 Prerequisite: Phase 7 must complete first.
 
 8.1 — Recursive search across these locations for old cloud storage path strings:
-  - (a) All project directories under the target path — search for the actual old path strings (list every source root discovered in Phase 1, e.g., `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\`, `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\General\Current Hotness\`, etc.)
+  - (a) All project directories under the target path — search for the actual old path strings (list every source root discovered in Phase 1, e.g., `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\Documents\Projects\`, `C:\Users\rlasalle\OneDrive - ThermoTek, Inc\General\Current Hotness\`, etc.). Exclude from recursive search: `.git/`, `node_modules/`, `__pycache__/`, `vendor/`, `.venv/`, `build/`, `dist/`, and binary files. Search only text files: `.md`, `.txt`, `.json`, `.yaml`, `.yml`, `.toml`, `.cfg`, `.ini`, `.env`, `.sh`, `.ps1`, `.bat`, `.cmd`, and source code files (`.js`, `.ts`, `.py`, `.go`, `.rs`, `.java`, `.cs`, `.rb`).
   - (b) All new path-hash directories populated in Phase 7
   - (c) Git config `safe.directory` entries (if dubious ownership was detected during Phase 4)
 
@@ -606,6 +615,7 @@ Phase 9 is informational — present this checklist to the user, do not execute 
 - Test git operations (status, commit, worktree) in one of the moved repos
 - Check external references: scripts, automation flows, Power Automate flows, integrations, CI/CD pipelines, bookmarks, terminal aliases
 - Soak period: use the new locations normally for several days before cleaning up
+- If a `.localground-seed-manifest.json` file exists in a source folder, seed markers are being copied as part of the normal migration. Their integrity will be verified by `localground-reap.md` after migration — no action needed during the migration itself.
 - When you're ready to verify project health, paste `localground-reap.md` into Claude Code CLI. It runs six health checks (git integrity, memory connection, stale references, file system, operations test, cloud location gate) and reports PASS/WARN/FAIL per check. If you planted seed markers before migration, it also verifies those markers survived the copy.
 - When you're ready to clean up source folders and stale settings directories, paste `localground-cleanup.md` into Claude Code CLI. It will detect the migration artifacts and guide you through safe removal with verification at every step.
 
@@ -635,6 +645,8 @@ Before writing the file, verify the generated prompt contains all required eleme
 - Commands match the detected platform/shell
 
 **Proportional output:** Include everything the Session 2 prompt needs to execute correctly. Don't pad with explanatory prose, but don't truncate operational detail to hit a target length. A 2-folder migration needs the same structural completeness as a 10-folder migration — just a shorter migration table.
+
+This validation is structural (correct sections present, required fields populated) rather than syntactic (parsing generated commands for correctness). The generated commands use the same platform-specific templates as Session 1, so syntactic correctness follows from template correctness.
 
 If any element is missing or inconsistent, fix it before saving.
 

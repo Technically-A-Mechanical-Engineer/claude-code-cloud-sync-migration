@@ -169,3 +169,93 @@ Environment:
 ```
 
 Then proceed directly to Phase 2 — no confirmation gate needed (seed is a low-risk, additive-only operation).
+
+---
+
+## Phase 2 — Marker Planting
+
+Create the test file and git tag. Skip this phase entirely if Phase 1.5 determined the project is "Already seeded" — go directly to Phase 4 summary.
+
+### 2.1 — Create test file
+
+Use Claude Code's Write tool to create `.cloud-sync-seed-test` in CWD with this **exact content** — do not compose at runtime, do not modify, do not add extra whitespace:
+
+```
+Cloud-Sync Toolkit Seed Test File
+Do not modify or delete until after running cloud-sync-reap.md
+Version: 1.0
+```
+
+The content is exactly three lines, each terminated by a single LF character (no CRLF). The file ends with a trailing newline after the third line. Encoding: UTF-8 with no BOM. Use Claude Code's Write tool — this guarantees consistent encoding and line endings across all platforms.
+
+**Expected SHA-256 checksum:** `60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03`
+**Expected size:** 101 bytes
+
+### 2.2 — Verify test file checksum
+
+Immediately after creation, verify the checksum using platform-specific commands:
+
+**PowerShell:**
+```powershell
+(Get-FileHash -Algorithm SHA256 ".cloud-sync-seed-test").Hash.ToLower()
+```
+
+**bash (Linux / bash-on-Windows):**
+```bash
+sha256sum ".cloud-sync-seed-test" | cut -d' ' -f1
+```
+
+**bash (macOS):**
+```bash
+shasum -a 256 ".cloud-sync-seed-test" | cut -d' ' -f1
+```
+
+Compare the computed hash (case-insensitive) against the expected value: `60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03`
+
+- If match: PASS — record in results
+- If mismatch: FAIL — stop and report. Include both expected and actual checksums. This likely means Write tool behavior has changed. Do not proceed to manifest generation with an unverified checksum.
+
+### 2.3 — Create git tag (skip if not a git repo)
+
+If CWD is not a git repository (detected in Phase 1.4), skip this step entirely. Display: "Not a git repository — git tag marker skipped."
+
+If CWD is a git repo:
+
+1. Generate the timestamp for the tag name. Use shell commands for a real system timestamp:
+
+   **PowerShell:**
+   ```powershell
+   (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH-mm-ssZ")
+   ```
+
+   **bash (all platforms):**
+   ```bash
+   date -u +"%Y-%m-%dT%H-%M-%SZ"
+   ```
+
+   Note: colons replaced with hyphens for Windows filesystem compatibility (git stores tag refs as files under `.git/refs/tags/`).
+
+2. Create the lightweight tag:
+   ```bash
+   git tag "cloud-sync-toolkit/seed/[timestamp]" HEAD
+   ```
+
+3. Verify the tag was created:
+   ```bash
+   git tag -l "cloud-sync-toolkit/seed/[timestamp]"
+   ```
+   Must return the tag name. If empty, creation failed — report error.
+
+4. Record the full commit hash the tag points to:
+   ```bash
+   git rev-parse "cloud-sync-toolkit/seed/[timestamp]"
+   ```
+   Must return a 40-character lowercase hex string. Store this value for the manifest.
+
+### 2.4 — Compile marker results
+
+Collect results from 2.1-2.3:
+- Test file: path, SHA-256 (verified), size in bytes
+- Git tag (if created): full tag name, full commit hash, tag type ("lightweight")
+
+If any marker creation failed, note the failure. Proceed to Phase 3 with whatever markers were successfully created and verified — the manifest records only verified markers.

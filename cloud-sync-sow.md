@@ -103,7 +103,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 ### Escalate
 
 - If CWD is under cloud-synced storage, stop immediately — the project has not been migrated. Present the cloud-location gate message and recommend `cloud-sync-migration.md`
-- If the seed manifest is present but contains malformed JSON, FAIL seed verification with a clear parse error message — do not crash
+- If the seed manifest is present but contains malformed JSON, FAIL seed verification with a clear parse error message, skip Phase 2, and proceed to Phase 3 — do not crash
 - If the seed manifest has an unrecognized `version` field value, WARN (not FAIL) and attempt to verify known marker types — graceful degradation
 - If the path-hash directory exists but has a different project's memory (name mismatch), stop and report — possible path-hash collision
 

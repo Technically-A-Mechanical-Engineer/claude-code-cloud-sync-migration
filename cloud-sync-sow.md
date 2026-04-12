@@ -60,7 +60,7 @@ This check runs in a **single Claude Code session**. The phase count depends on 
 - Phase 5: Marker cleanup offer — only if no FAIL results (~1 min)
 
 **Unseeded mode** (no seed manifest):
-- Phase 1: Environment detection (~1 min)
+- Phase 1: Environment detection, including cloud-location gate and mode detection (~1 min)
 - Phase 3: Health checks (~2-3 min)
 - Phase 4: Report (~1 min)
 

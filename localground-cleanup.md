@@ -80,7 +80,7 @@ Phase 4 only runs after Phases 2 and 3 are complete. Every deletion requires ind
 These govern everything below. Do not proceed past any violation — stop and report.
 
 - **Verified deletion only.** Do NOT delete any source folder without first verifying that the local copy exists, file counts match or exceed the source, file sizes are comparable, git fsck passes (if applicable), and hidden directories are present. Show the verification results to the user alongside the delete prompt.
-- **Individual confirmation on every deletion.** Every path-hash directory deletion, every orphan deletion, every source folder deletion gets its own confirmation dialog with verification evidence. After three consecutive confirmed deletions within a phase, offer the user the option to switch to batch mode for the remaining items in that phase — batch mode is optional, and the user can decline and continue with individual confirmations. Even in batch mode, verification evidence is still shown for each item; only the confirmation prompt is suppressed (items are auto-confirmed unless verification fails).
+- **Individual confirmation on every deletion.** Every path-hash directory deletion, every orphan deletion, every source folder deletion gets its own confirmation dialog with verification evidence. After three consecutive confirmed deletions within a phase, offer the user the option to switch to batch mode for the remaining items in that phase — batch mode is optional, and the user can decline and continue with individual confirmations. Even in batch mode, verification evidence is still shown for each item; only the confirmation prompt is suppressed (items are auto-confirmed unless verification fails). **Exception: Phase 4 source folder deletions are excluded from batch mode auto-confirmation. Even when batch mode is active, each Phase 4 source folder deletion requires individual user confirmation after reading the cloud-propagation warning. The risk of cloud-propagation is too high for auto-confirmation.**
 - **No admin elevation.** Do not attempt elevation, `runas`, `sudo`, `Start-Process -Verb RunAs`, or any operation requiring administrator privileges. If a deletion fails due to permissions, stop and report — do not attempt workarounds that require elevation.
 - **Confirmation gates between phases.** Do NOT proceed from Phase 2 to Phase 3, or from Phase 3 to Phase 4, without explicit user confirmation.
 - **Phase ordering is mandatory.** Phase 4 (source folders — highest risk) runs only after Phases 2 and 3 (path-hash directories — lower risk) are complete. Do not skip ahead.
@@ -148,7 +148,7 @@ Scan for migration artifacts in this order:
 - Verification results
 - Path-hash directory mappings
 
-**If no artifact found: Standalone mode.** Path-hash directories under `~/.claude/projects/` are the sole discovery source. No filesystem scanning of cloud folders.
+**If no artifact found: Standalone mode.** Path-hash directories under `~/.claude/projects/` are the sole discovery source. No filesystem scanning of cloud folders for discovery — source folder identification relies on stale path-hash entries only. Phase 4 verification will still compare source and local folder contents before any deletion.
 
 Report the detected mode to the user.
 
@@ -557,7 +557,7 @@ These are the source folders I identified from stale path-hash entries.
 Confirm, modify, or add folders before proceeding.
 ```
 
-Note: If you migrated folders manually (without the migration prompt), they may not have stale path-hash entries and won't appear in this list. Use the "add" option above to include them.
+Note: If you migrated folders manually (without the migration prompt), those folders will not appear automatically in this list because they have no stale path-hash entries. Use the "add" option to include them. If you see zero source folders and you know you migrated projects manually, this is expected — add your source folders explicitly.
 
 Wait for user confirmation.
 
@@ -722,6 +722,8 @@ ls -d "[local-path]"/.[^.]* 2>/dev/null
 
 Check for: `.git`, `.planning`, `.vscode`, `.claude` — report which are present in both source and local.
 
+**Warning:** If the source folder is on cloud storage with Files On-Demand (OneDrive), Smart Sync (Dropbox), or Streaming (Google Drive), running file enumeration commands may trigger mass downloads of placeholder files or return inaccurate sizes. Recommendation: Pause cloud sync before running Phase 4 comparisons. Alternatively, if sync cannot be paused, note that file counts and sizes may be approximate — treat any mismatch as a reason to investigate rather than a definitive signal.
+
 ### 4.4 — Incomplete copy gate
 
 If ANY of these conditions are true, do NOT offer deletion for this folder:
@@ -743,8 +745,13 @@ If blocked, report:
   Git fsck:          [ERRORS FOUND — see details above]
   Hidden dirs:       [.git MISSING from local]
 
-Recommendation: Re-run the migration prompt (localground-migration.md)
-for this specific folder to ensure a complete copy before deleting the source.
+Recommendation: If the local file count is lower than the source, this could mean
+(a) the copy was incomplete during migration, or (b) new files were added to the source
+folder after migration (e.g., cloud sync resumed). Check the modification dates of extra
+source files. If they are newer than the migration date, they are post-migration additions
+— consider copying them manually to the local folder rather than re-running the full
+migration. Otherwise, re-run the migration prompt (localground-migration.md) for this
+specific folder to ensure a complete copy before deleting the source.
 ```
 
 Log the block:
@@ -852,7 +859,7 @@ For partial deletions:
 
 ### 4.7a — Batch mode offer
 
-Same offer as Phase 2.4a: after three consecutive confirmed source folder deletions (no skips, no blocks, no failures), offer batch mode for remaining Phase 4 items. Same rules apply — show full verification evidence and cloud-propagation warning for each, auto-confirm unless verification fails. In batch mode, the cloud-propagation warning is still displayed for every item — it is never suppressed.
+Batch mode does not apply to Phase 4. Each source folder deletion requires individual confirmation regardless of batch mode setting. The cloud-propagation risk is too high for auto-confirmation — the user must read and acknowledge the warning before each deletion.
 
 ### 4.8 — Phase 4 summary
 
@@ -936,6 +943,8 @@ Next steps:
 - If any source folders were blocked: Re-run the migration prompt (localground-migration.md) for those specific folders, then re-run cleanup
 - To verify overall project health: Paste localground-verification.md into Claude Code CLI
 - Resume cloud sync if it was paused during cleanup
+
+Recommended toolkit workflow order: (1) `localground-seed.md` — plant markers before migration, (2) `localground-migration.md` — copy projects to local storage, (3) `localground-reap.md` — verify markers survived and check project health, (4) `localground-cleanup.md` — remove stale artifacts (you are here), (5) `localground-verification.md` — audit environment state.
 ```
 
 **If no items were deleted across all phases** (everything was skipped or nothing needed cleanup):

@@ -61,7 +61,7 @@ The toolkit has five independent prompts, each with a distinct execution model:
 | Seed | Single session | Write-only: one test file + one git tag. Never modifies existing content. | `.localground-seed-manifest.json` |
 | Migration | Two sessions (Session 1: copy, Session 2: settings) | Never deletes. Every copy verified. | `migration-session-1-results.md`, `session-2-prompt.md` |
 | Reap | Single session | Read-only verification + single manifest cleanup. | `localground-reap-report.md` |
-| Cleanup | Single session | Deletes only with individual user confirmation and verified local copy. Cloud-propagation warning on every source deletion. | `cleanup-log.md` |
+| Cleanup | Single session | Deletes only with individual user confirmation and verified local copy. Cloud-propagation warning on every source deletion. | `cleanup-results.md` |
 | Verification | Single session | Read-only. Never modifies or deletes. Single permitted write: `verification-report.md`. | `verification-report.md` |
 
 All five prompts share: three-way shell detection, five-dimension constraint model (Must/Must-not/Prefer/Escalate/Recover), auto-detect-first design, and graceful cross-prompt state handling. Each prompt contains its own self-contained copy of shared detection logic (path-hash decoding, cloud service patterns, shell detection) — no runtime dependency between prompts.

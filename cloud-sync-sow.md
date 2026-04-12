@@ -566,7 +566,7 @@ Remove-Item "[markers.test_file.path]"
 Test-Path "[markers.test_file.path]"  # Should return False
 ```
 
-bash:
+bash (all platforms):
 ```bash
 rm "[markers.test_file.path]"
 [ ! -f "[markers.test_file.path]" ] && echo "REMOVED" || echo "FAILED"

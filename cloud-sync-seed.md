@@ -259,3 +259,62 @@ Collect results from 2.1-2.3:
 - Git tag (if created): full tag name, full commit hash, tag type ("lightweight")
 
 If any marker creation failed, note the failure. Proceed to Phase 3 with whatever markers were successfully created and verified — the manifest records only verified markers.
+
+---
+
+## Phase 3 — Manifest Generation
+
+Write the JSON manifest recording all verified markers.
+
+### 3.1 — Construct manifest JSON
+
+Build the `.cloud-sync-seed-manifest.json` content matching this schema. Construct the JSON string in Claude Code and write it using the Write tool.
+
+**Schema (exact structure — field names and types must match exactly):**
+
+```json
+{
+  "version": "1.0",
+  "toolkit_version": "2.0.0",
+  "created": "[ISO 8601 UTC timestamp from shell — e.g., 2026-04-12T14:30:00Z]",
+  "project_path": "[CWD path]",
+  "project_name": "[basename of CWD]",
+  "markers": {
+    "test_file": {
+      "type": "file",
+      "path": ".cloud-sync-seed-test",
+      "sha256": "60b4d407c9746e8146a3cee6ac97a301dfd8a86d5e616c6edbf37af406cb0b03",
+      "size_bytes": 101,
+      "content_description": "Static test file for verifying copy integrity after migration"
+    },
+    "git_tag": {
+      "type": "git_tag",
+      "name": "cloud-sync-toolkit/seed/[timestamp]",
+      "commit": "[full 40-char commit hash from Phase 2.3]",
+      "tag_type": "lightweight"
+    }
+  }
+}
+```
+
+Important:
+- The `created` timestamp uses real colons (ISO 8601 format) — only the tag name uses hyphens for filesystem compatibility
+- The `project_path` field contains the full CWD path with proper JSON escaping (backslashes doubled on Windows — e.g., `C:\\Users\\rlasalle\\Projects\\OB1`). Claude Code's Write tool handles this automatically.
+- The `commit` field MUST be the full 40-character hash (not the 7-character short hash). The reap prompt uses `git rev-parse` for comparison, which returns a full hash.
+- If CWD is not a git repo, omit the `markers.git_tag` object entirely — do not include it with null values. The `markers` object will contain only `test_file`.
+- Include only markers that were successfully created and verified in Phase 2.
+
+### 3.2 — Write manifest
+
+Use Claude Code's Write tool to write the manifest JSON to `.cloud-sync-seed-manifest.json` in CWD.
+
+### 3.3 — Verify manifest
+
+Read the manifest back using Claude Code's Read tool. Verify:
+- Valid JSON (parseable)
+- `version` field is `"1.0"`
+- `markers.test_file.sha256` matches the expected checksum
+- If git tag was created: `markers.git_tag.commit` is a 40-character hex string
+- `project_path` matches CWD
+
+If verification fails, report the specific discrepancy — do not silently continue.

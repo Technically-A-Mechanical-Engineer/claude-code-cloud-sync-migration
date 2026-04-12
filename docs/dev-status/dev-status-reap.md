@@ -13,7 +13,7 @@ A single-file prompt that any Claude Code user can paste into CLI from a migrate
 
 The prompt creates one temporary test file during the operations check (immediately deleted) and writes a single report file. It never modifies existing project files. In seeded mode with all checks passing, it offers to clean up seed markers with individual user confirmation.
 
-This is one of five prompts in the LocalGround Toolkit. See also: `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`, and `docs/dev-status/dev-status-seed.md` (to be created in Phase 9).
+This is one of five prompts in the LocalGround Toolkit. See also: `docs/dev-status/dev-status-migration.md`, `docs/dev-status/dev-status-cleanup.md`, `docs/dev-status/dev-status-verification.md`, and `docs/dev-status/dev-status-seed.md`.
 
 ---
 
@@ -48,7 +48,7 @@ All 8 SOW-xx requirements from the v2.0.0 requirements addressed:
 
 ### Manifest Contract
 
-This prompt defines the `.localground-seed-manifest.json` schema that the Seed prompt (Phase 9) must write to. The schema is:
+This prompt defines the `.localground-seed-manifest.json` schema that the Seed prompt (`localground-seed.md`) writes to. The schema is:
 
 ```json
 {
@@ -106,7 +106,7 @@ The reap prompt should be tested in two modes against Robert's actual migrated p
 
 ### Seeded Mode Test
 
-Requires the Seed prompt (Phase 9) to be built first:
+Requires the Seed prompt (`localground-seed.md`) — now available:
 1. Run `localground-seed.md` in a project before migration
 2. Run migration
 3. Launch Claude Code from the migrated project
@@ -130,7 +130,7 @@ Requires the Seed prompt (Phase 9) to be built first:
 
 1. **NEC Evaluation** — Phase 8: evaluate against eight NEC prompt frameworks
 2. **Unseeded Mode Test** — Can execute immediately against migrated projects
-3. **Seeded Mode Test** — Requires Seed prompt (Phase 9) first
+3. **Seeded Mode Test** — Requires Seed prompt (`localground-seed.md`)
 4. **Distribution** — Ship as part of v2.0.0 toolkit release (Phase 11)
 
 ---

@@ -4,7 +4,7 @@ After migrating your Claude Code projects off cloud storage, this prompt verifie
 
 **Compatibility:** Requires Claude Code CLI (terminal or IDE extension). Does not work in claude.ai web, Claude desktop app, or Cowork mode. Tested with Claude Code CLI as of April 2026.
 
-**Nearly read-only.** This prompt creates one temporary test file during the operations check (immediately deleted) and writes a single report file (`reap-report.md`). It never modifies existing project files.
+**Nearly read-only.** This prompt creates one temporary test file during the operations check (immediately deleted) and writes a single report file (`reap-report.md`). In seeded mode with all checks passing, it also offers to remove seed markers (test file and git tag) with individual confirmation. It never modifies existing project files.
 
 ## Two Operating Modes
 
@@ -92,7 +92,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 
 ### Prefer
 
-- Run checks in parallel where they have no dependencies
+- Run independent checks in sequence without unnecessary pauses between them — do not wait for user confirmation between individual health checks. Claude Code CLI executes commands sequentially; this preference means minimizing idle time, not parallel execution.
 - Report results as a single summary table after all checks complete, not one check at a time
 - If a check cannot run (e.g., not a git repo), report SKIP with reason rather than FAIL
 - Overwrite prior `reap-report.md` — latest run supersedes previous
@@ -110,6 +110,7 @@ These govern everything below. Do not proceed past any violation — stop and re
 
 - If any individual check fails with a tool error (not a finding, but an error running the check command), report the error and continue with remaining checks — do not abort the entire diagnostic
 - If the seed manifest exists but markers are missing (user cleaned up markers but not manifest), report FAIL per missing marker — this is correct behavior, not a crash condition
+- If the computed path-hash directory does not exist, scan `~/.claude/projects/` for entries containing the project folder name as a substring. Report any near-matches as a possible encoding mismatch with a WARN note. This catches encoding bugs (especially bash-on-Windows `sed` issues) without requiring the user to debug the encoding algorithm.
 
 ---
 
@@ -200,7 +201,24 @@ This phase runs only in seeded mode. In unseeded mode, skip to Phase 3.
 
 ### 2.1 — Read manifest
 
-The manifest was already read and parsed in Phase 1.5. Extract the `markers` object. The expected marker types are:
+The manifest was already read and parsed in Phase 1.5. Compare `manifest.project_path` to the current working directory. If they differ, add a WARN note to the report: "Manifest was created for [manifest.project_path] but reap is running in [CWD]. This is expected after migration — or may indicate a misplaced manifest." Do not gate execution on this mismatch.
+
+Expected manifest structure:
+```json
+{
+  "version": "1.0",
+  "toolkit_version": "2.0.0",
+  "markers": {
+    "test_file": { "path": "...", "sha256": "...", "size_bytes": 113 },
+    "git_tag": { "name": "...", "commit": "..." }
+  },
+  "project_path": "...",
+  "seeded_at": "..."
+}
+```
+The seed prompt (`localground-seed.md`) Phase 3.1 defines this schema. All field references in this phase use dotted notation against this structure.
+
+Extract the `markers` object. The expected marker types are:
 
 - `test_file`: A file with known content and checksum planted by the seed prompt
 - `git_tag`: A lightweight git tag planted by the seed prompt
@@ -296,6 +314,8 @@ git branch -l
 
 ### 3.2 — Memory connection
 
+Claude Code stores per-project memory and settings in `~/.claude/projects/[path-hash]/`. This directory is created automatically after the first session in a project and contains conversation memory that persists across sessions.
+
 Use the path-hash directory found (or not found) in Phase 1.4.
 
 Check `~/.claude/projects/[encoded-CWD-path]/`:
@@ -339,7 +359,7 @@ Search these files for cloud storage path patterns:
 - `memory/*.md` files
 - `settings.json` (if exists)
 
-Patterns to search for:
+Patterns to search for (WSL-style paths like `/mnt/c/Users/.../OneDrive/` are partially covered by substring matching on service names — the substring `OneDrive`, `Dropbox`, etc. will match in most WSL path references):
 - `OneDrive`
 - `Dropbox`
 - `Google Drive`
@@ -584,7 +604,7 @@ Verify each removal succeeded. If removal fails, report the error and continue.
 
 After cleanup, inform the user:
 
-"Seed markers have been removed. The manifest file (`.localground-seed-manifest.json`) remains — it is a record of what was planted. To run reap in unseeded mode in the future, delete the manifest: `rm .localground-seed-manifest.json` (bash) or `Remove-Item .localground-seed-manifest.json` (PowerShell)."
+"Seed markers have been removed. The manifest file (`.localground-seed-manifest.json`) remains — it is a record of what was planted. Important: If you delete markers but keep the manifest, future reap runs will report FAIL for missing markers — this is technically correct but misleading, since the markers were intentionally removed, not lost during migration. To avoid misleading results, delete the manifest after removing markers. This returns reap to unseeded mode: `rm .localground-seed-manifest.json` (bash) or `Remove-Item .localground-seed-manifest.json` (PowerShell)."
 
 If the user declined any cleanup, include a note with manual cleanup commands:
 
@@ -598,6 +618,7 @@ If the user declined any cleanup, include a note with manual cleanup commands:
 ## Definition of Done
 
 This reap session is complete when:
+- If the cloud-location gate (Phase 1.3) stopped execution, this session is complete when the gate message has been presented and no further phases were attempted
 - Environment detection identified the project, shell context, path-hash status, and operating mode
 - In seeded mode: each seed marker has been independently verified with PASS or FAIL
 - All six health checks have been run (or SKIP reported with reason for inapplicable checks)

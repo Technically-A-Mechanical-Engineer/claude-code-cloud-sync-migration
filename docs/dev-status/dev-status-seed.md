@@ -42,7 +42,7 @@ All 7 SEED requirements from the v2.0.0 requirements addressed:
 | SEED-03 | Generate JSON manifest recording all markers | Phase 3 — manifest generation |
 | SEED-04 | Three-way shell detection | Phase 1.1 — shell and platform |
 | SEED-05 | Five-dimension constraint model | Operating Constraints section |
-| SEED-06 | Idempotent — re-running updates existing markers | Phase 1.5 — existing marker detection + state matrix |
+| SEED-06 | Idempotent — detects existing markers, exits cleanly if intact, restores only missing or changed markers | Phase 1.5 — existing marker detection + state matrix |
 | SEED-07 | Does not modify existing project files | Operating Constraints: Must-not |
 
 ### Marker Contract

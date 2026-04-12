@@ -68,7 +68,7 @@ This prompt defines the `.cloud-sync-seed-manifest.json` schema that the Seed pr
     "git_tag": {
       "type": "git_tag",
       "name": "cloud-sync-toolkit/seed/<timestamp>",
-      "commit": "short commit hash",
+      "commit": "full commit hash (40 chars, lowercase)",
       "tag_type": "lightweight"
     }
   }

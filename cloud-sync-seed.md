@@ -37,3 +37,45 @@ This runs in a **single Claude Code session** with four phases:
 - Phase 4: Summary — present what was planted and next steps (~30 sec)
 
 **Total time:** Under 2 minutes.
+
+---
+
+## Operating Constraints
+
+These govern everything below. Do not proceed past any violation — stop and report.
+
+### Must
+
+- Use Claude Code's Write tool to create the test file and the manifest — never use shell commands for file creation
+- Verify the test file checksum immediately after creation using platform-specific SHA-256 commands
+- Verify the git tag exists immediately after creation using `git tag -l`
+- Write the manifest only after all markers have been created and verified
+- Include only verified markers in the manifest — if a marker creation failed, omit it from the manifest
+
+### Must-not
+
+- Never modify, delete, or rename any existing project file — seed markers are additive only
+- Never overwrite an existing test file without user confirmation (idempotency escalation)
+- Never create git tags if CWD is not a git repository
+- Never use shell commands to write files — always use Claude Code's Write tool for the test file and manifest
+- Never compose test file content at runtime — use the exact hardcoded content specified in Phase 2.1
+
+### Prefer
+
+- Auto-detect everything before asking the user
+- Report anomalies, don't investigate — if something unexpected is found, report it and let the user decide
+- Use Claude Code's Read tool for file existence checks where possible
+- Proportional output — same structural completeness regardless of marker count, but do not pad output for a simple operation
+
+### Escalate
+
+- If CWD is under cloud-synced storage: inform the user (this is expected — seed runs before migration) but do not block execution. Display: "This project is on cloud-synced storage ([service]). Seed markers will be planted here. After planting, use `cloud-sync-migration.md` to migrate, then `cloud-sync-reap.md` to verify markers survived."
+- If not a git repository: skip git tag creation, omit `git_tag` from manifest, inform user: "Not a git repository — git tag marker skipped. The test file marker was still planted."
+- If existing markers found with content mismatch: stop and present the finding to the user before overwriting (see Phase 1.5 idempotency matrix)
+- If existing manifest contains malformed JSON: offer to regenerate from current state
+- If Write tool fails for test file or manifest: stop and report — do not fall back to shell-based file creation
+
+### Recover
+
+- Detect existing markers on re-run (idempotency) — see Phase 1.5 state matrix
+- Handle partial state: if some markers exist but others are missing, restore only the missing markers and update the manifest

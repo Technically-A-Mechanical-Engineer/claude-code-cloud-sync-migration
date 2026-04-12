@@ -63,7 +63,7 @@ You are a verification assistant that audits Claude Code project environments fo
 
 ## What to Expect
 
-This verification runs in a **single Claude Code session** with five phases. No confirmation gates are needed — this is a read-only audit.
+This verification runs in a **single Claude Code session** with five phases. One confirmation point at the end of Phase 1 to verify the detected environment is correct. After that, the remaining phases run without further pauses.
 
 - Phase 1: Environment detection — OS, shell, cloud services, home directory, project inventory (~1-2 min)
 - Phase 2: Project health audit — git fsck, git status, hidden dirs, file counts, symlinks for each project (~1-2 min per project)
@@ -90,10 +90,17 @@ These govern everything below. Do not proceed past any violation — stop and re
 When multiple valid approaches exist:
 
 - **Report anomalies, don't investigate.** If something looks off — unexpected file counts, unusual hidden directories, unrecognized path patterns — report it and let the user decide rather than diagnosing autonomously.
-- **Known cloud patterns only.** Use the established cloud service path patterns (OneDrive, Dropbox, Google Drive, iCloud). Do not attempt to detect custom mount points or non-standard cloud sync configurations. Low false positives over completeness.
+- **Known cloud patterns only.** Use the established cloud service path patterns (OneDrive, Dropbox, Google Drive, iCloud). Do not attempt to detect custom mount points or non-standard cloud sync configurations. Low false positives over completeness. The specific failure mode this prevents: flagging custom mount points, NAS paths, or non-cloud network drives as cloud storage, which would generate false-positive findings and erode user trust in the report.
 - **Graceful cross-prompt state.** Interpret missing path-hash directories as possible prior cleanup, not corruption. If the environment shows signs of a completed cleanup (few or no stale entries), note this positively rather than flagging absence as an issue.
 - **Overwrite prior reports.** If `verification-report.md` already exists in CWD, overwrite it. The report is a point-in-time snapshot — the latest run supersedes the previous one.
 - **Proportional output.** Scale the report to scope — same structural completeness regardless of project count, but do not pad a 2-project audit with unnecessary bulk.
+
+### Escalate (stop or adapt)
+
+- Permission failure on any project directory — log the failure in the report and continue with remaining projects
+- `~/.claude/projects/` directory does not exist — report as a finding (Claude Code settings infrastructure missing) and skip Phases 3-4
+- Undecodable path-hash entry — classify as undecodable, include in report, do not attempt to force a decode
+- Command timeout during file enumeration — report approximate results with a note that the count may be incomplete
 
 ### Recovery
 
@@ -245,16 +252,16 @@ Record which of the common hidden directories are present: `.git`, `.planning`, 
 
 ### 2.4 — File count
 
-Count total files in each project directory.
+Count total files in each project directory. Excludes `.git/` and `node_modules/` to avoid slow enumeration on large repos. These directories do not affect project health assessment.
 
 **PowerShell:**
 ```powershell
-(Get-ChildItem -Recurse -File -Force "[project-path]").Count
+(Get-ChildItem -Recurse -File -Force "[project-path]" | Where-Object { $_.FullName -notmatch '[\\/](\.git|node_modules)[\\/]' }).Count
 ```
 
 **bash:**
 ```bash
-find "[project-path]" -type f | wc -l
+find "[project-path]" -type f -not -path "*/.git/*" -not -path "*/node_modules/*" | wc -l
 ```
 
 Record the count. This is informational — there is no source to compare against in a verification audit. Unusually low counts (0 or 1 file) are flagged as a warning.
@@ -309,7 +316,8 @@ Use the decoding algorithm from Phase 1.5 to reconstruct the filesystem path for
 2. After the drive/root prefix, each `-` could be a path separator or an original hyphen in a folder name
 3. To resolve ambiguity: attempt to reconstruct the path segment by segment, checking each candidate against the actual filesystem to find the longest matching prefix
 4. If the fully reconstructed path exists on disk, decoding succeeds
-5. If no valid path can be reconstructed, classify as "undecodable"
+5. If decoding requires checking more than 20 candidate paths against the filesystem, classify the entry as undecodable and move on. The combinatorial explosion of hyphen-separated segments on systems with long path names makes exhaustive checking impractical.
+6. If no valid path can be reconstructed, classify as "undecodable"
 
 **Implementation note — bash-on-Windows compatibility:**
 
@@ -420,6 +428,8 @@ Search these file types for cloud storage path references:
 **Explicit exclusions:** Do not search inside `.git/` directories, binary files (images, compiled output, archives), or `node_modules/` directories. These produce false positives and have no user value.
 
 ### 4.3 — Execute search with progress updates
+
+Progress update: "Scanning path-hash memory files... [N of M entries]". The path-hash scan may take longer than the per-project scan if many stale entries exist.
 
 For each project directory discovered in Phase 1.4, print a progress update before scanning:
 
@@ -553,12 +563,12 @@ For each finding, use the recommendation mapping below. Each recommendation name
 | Finding | Recommendation |
 |---|---|
 | Stale path-hash directories | "Use `localground-cleanup.md` to remove these stale entries — it will verify each deletion individually before proceeding." |
-| Cloud storage path references in CLAUDE.md or settings | "Use `localground-cleanup.md` to clean up stale references, or manually update `[file]` line `[n]` to replace the cloud storage path with the local equivalent." |
-| Cloud storage path references in memory files | "Use `localground-cleanup.md` to address stale references. Memory file references are lower priority — Claude Code will update these naturally as you work from the new paths." |
+| Cloud storage path references in CLAUDE.md or settings | "Manually update the reference to the new local path (see line [N] in [file]), or note it for the next time you edit that file. The cleanup prompt handles directory deletion, not file content editing." |
+| Cloud storage path references in memory files | "Manually update the reference to the new local path (see line [N] in [file]), or note it for the next time you edit that file. The cleanup prompt handles directory deletion, not file content editing. Memory file references are lower priority — Claude Code will update these naturally as you work from the new paths." |
 | Cloud storage path references in `.planning/` files | "These are historical records of executed plans. Updating them is optional and may not be beneficial — the references document what was true at the time." |
 | Git fsck errors | "Run `git fsck --full` in `[folder path]` to investigate. If objects are unrecoverable, consider re-cloning from remote." |
 | Git fsck warnings | "Warnings are informational and typically non-critical. Run `git fsck --full` in `[folder path]` for details if concerned." |
-| Projects still on cloud storage paths (no local copy) | "Use `localground-migration.md` to migrate this project to local storage — it will copy files, verify integrity, and set up Claude Code settings at the new path." |
+| Projects still on cloud storage paths (no local copy) | "Use `localground-seed.md` to plant verifiable markers first, then `localground-migration.md` to migrate, then `localground-reap.md` to verify markers survived. Running seed before migration ensures you can prove file integrity after the copy." |
 | Projects still on cloud storage paths (local copy exists) | "This project appears to have a local copy at `[local path]`. Use `localground-cleanup.md` when ready to remove the cloud storage source folder." |
 | Orphan path-hash entries | "This entry points to a path that no longer exists. Delete manually or use `localground-cleanup.md` to remove it." |
 | Undecodable path-hash entries | "This entry cannot be decoded to a valid path. Inspect the contents at `~/.claude/projects/[entry]/` and delete manually if not needed, or use `localground-cleanup.md`." |
@@ -643,6 +653,7 @@ Your environment is clean. No further action needed.
 ## Definition of Done
 
 This verification session is complete when:
+- User confirmed the environment summary (Phase 1.6) before the full audit proceeded
 - All project directories have been audited for health (git fsck, git status, hidden dirs, file counts, symlinks)
 - All path-hash entries under `~/.claude/projects/` have been decoded, classified, and checked
 - CLAUDE.md files, memory files, and settings files have been searched for cloud storage path references

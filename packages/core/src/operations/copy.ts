@@ -203,10 +203,15 @@ function rsync(source: string, target: string): Result<CopyData, CopyFailureReas
 
 /**
  * Parse file count from robocopy stdout (best-effort).
- * Looks for the "Files : " line in the summary section.
+ * Robocopy summary format: "Files :   total   copied   skipped   mismatch   FAILED   extras"
+ * We parse the second number (copied count), not the first (total).
+ *
+ * Locale limitation: robocopy output keywords are locale-sensitive on non-English
+ * Windows. The "Files" keyword may differ, causing this parser to return 0.
  */
 function parseRobocopyFileCount(stdout: string): number {
-  const match = stdout.match(/Files\s*:\s*(\d+)/);
+  // Match the Files summary line and capture the second number (copied count)
+  const match = stdout.match(/Files\s*:\s*\d+\s+(\d+)/);
   return match ? parseInt(match[1], 10) : 0;
 }
 

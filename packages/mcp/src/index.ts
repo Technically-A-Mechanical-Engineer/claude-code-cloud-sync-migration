@@ -4,7 +4,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { detect, decode, placeholderDetect, detectPlatform, seed } from '@localground/core';
+import { detect, decode, placeholderDetect, detectPlatform, seed, verify } from '@localground/core';
 import type { Result } from '@localground/core';
 import { z } from 'zod';
 
@@ -118,6 +118,25 @@ server.registerTool('localground_seed', {
   },
 }, async ({ projectPath }, _extra) => {
   const result = await seed(projectPath);
+  return resultToMcp(result);
+});
+
+// localground_verify — verify seed markers against manifest
+server.registerTool('localground_verify', {
+  description:
+    'Verify seed markers against the manifest created by the seed tool. Checks that the test file checksum matches and the git tag is present. Returns per-marker pass/fail results.',
+  inputSchema: {
+    projectPath: z.string().describe('Absolute path to the project directory to verify'),
+    manifestPath: z.string().optional().describe('Path to the seed manifest JSON file. Defaults to .localground-seed-manifest.json in projectPath.'),
+  },
+  annotations: {
+    title: 'Verify Markers',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+  },
+}, async ({ projectPath, manifestPath }, _extra) => {
+  const result = await verify(projectPath, manifestPath);
   return resultToMcp(result);
 });
 

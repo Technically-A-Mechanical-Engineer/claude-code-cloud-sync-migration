@@ -28,9 +28,9 @@ Robert LaSalle
 
 ## Current State
 
-- **Toolkit version:** v3.0.0-dev (in development). Monorepo scaffolded with npm workspaces. Core library (`@localground/core`) built with all 12 deterministic operations. MCP server and CLI are compilable stubs.
+- **Toolkit version:** v3.0.0-dev (in development). Monorepo scaffolded with npm workspaces. Core library (`@localground/core`) built with all 12 deterministic operations. MCP server (`@localground/mcp`) built with all 9 tools. CLI is a compilable stub.
 - **Core library:** `@localground/core` exports 12 CORE functions (detect, decode, classify, checksum, compare, placeholderDetect, gitCheck, copy, seed, verify, scan, chunk) plus utilities and all public types. TypeScript strict mode, zero errors.
-- **MCP server:** `@localground/mcp` — compilable stub re-exporting core types. Real implementation in Phase 13.
+- **MCP server:** `@localground/mcp` — fully implemented with 9 MCP tools (detect, decode_path_hash, seed, copy, verify, health_check, audit, cleanup_scan, placeholder_check). Uses McpServer from @modelcontextprotocol/sdk v1.29.0 with stdio transport. Chunked copy with continuation token, health check composing 6 core functions, audit with per-project progress notifications. All tools have annotations (readOnlyHint, destructiveHint, idempotentHint). Zero stdout pollution.
 - **CLI:** `@localground/cli` — compilable stub re-exporting core types. Real implementation in Phase 14.
 - **v2.0.0 prompts:** All five prompts shipped and preserved in `prompts/` as no-install fallback.
 - **Design spec:** `docs/design/2026-04-10-localground-toolkit-design.md` — approved design for the toolkit expansion. This is the requirements source for all GSD planning.
@@ -49,7 +49,7 @@ Robert LaSalle
 | `packages/core/src/integrity/` | Integrity checks: checksum, compare, placeholder detection, git health |
 | `packages/core/src/operations/` | File operations: copy, seed, verify, scan, chunk |
 | `packages/core/src/util/` | Internal utilities: spawn, paths |
-| `packages/mcp/` | `@localground/mcp` — MCP server (stub, Phase 13) |
+| `packages/mcp/` | `@localground/mcp` — MCP server (9 tools, fully implemented) |
 | `packages/cli/` | `@localground/cli` — standalone CLI (stub, Phase 14) |
 
 ### v2.0.0 Prompts (legacy fallback)

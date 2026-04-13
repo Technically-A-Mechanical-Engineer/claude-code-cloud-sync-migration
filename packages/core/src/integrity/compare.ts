@@ -80,16 +80,22 @@ interface DirectoryScan {
 
 /**
  * Recursively scan a directory for file count, total size, and hidden directories.
+ * Depth-limited (default 50) and symlink-safe to prevent infinite recursion.
  */
-async function scanDirectory(dirPath: string): Promise<DirectoryScan> {
+async function scanDirectory(dirPath: string, maxDepth: number = 50): Promise<DirectoryScan> {
   let fileCount = 0;
   let totalSize = 0;
   const hiddenDirs: string[] = [];
 
-  async function walk(currentPath: string): Promise<void> {
+  async function walk(currentPath: string, depth: number): Promise<void> {
+    if (depth > maxDepth) return;
+
     const entries = await fs.readdir(currentPath, { withFileTypes: true });
 
     for (const entry of entries) {
+      // Skip symlinks to prevent infinite loops from symlink cycles
+      if (entry.isSymbolicLink()) continue;
+
       const fullPath = path.join(currentPath, entry.name);
 
       if (entry.isDirectory()) {
@@ -97,7 +103,7 @@ async function scanDirectory(dirPath: string): Promise<DirectoryScan> {
         if (entry.name.startsWith('.')) {
           hiddenDirs.push(path.relative(dirPath, fullPath));
         }
-        await walk(fullPath);
+        await walk(fullPath, depth + 1);
       } else if (entry.isFile()) {
         fileCount++;
         try {
@@ -110,7 +116,7 @@ async function scanDirectory(dirPath: string): Promise<DirectoryScan> {
     }
   }
 
-  await walk(dirPath);
+  await walk(dirPath, 0);
   return { fileCount, totalSize, hiddenDirs: hiddenDirs.sort() };
 }
 

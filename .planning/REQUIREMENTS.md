@@ -27,12 +27,12 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 - [x] **MCP-01**: Register MCP server with stdio transport using @modelcontextprotocol/sdk v1.x
 - [x] **MCP-02**: Expose `localground_detect` tool — returns structured environment JSON (OS, shell, cloud service, projects, path-hashes)
 - [x] **MCP-03**: Expose `localground_decode_path_hash` tool — converts path-hash names to filesystem paths
-- [ ] **MCP-04**: Expose `localground_seed` tool — plants verifiable markers, returns manifest JSON
+- [x] **MCP-04**: Expose `localground_seed` tool — plants verifiable markers, returns manifest JSON
 - [ ] **MCP-05**: Expose `localground_copy` tool — copies one project directory with chunked operation and verification
-- [ ] **MCP-06**: Expose `localground_verify` tool — reads manifest, verifies each marker, returns per-marker results
+- [x] **MCP-06**: Expose `localground_verify` tool — reads manifest, verifies each marker, returns per-marker results
 - [ ] **MCP-07**: Expose `localground_health_check` tool — runs six health checks on one project, returns PASS/WARN/FAIL per check
 - [ ] **MCP-08**: Expose `localground_audit` tool — environment-wide read-only audit, returns structured findings with traffic-light scoring
-- [ ] **MCP-09**: Expose `localground_cleanup_scan` tool — read-only scan identifying stale/orphan/source candidates without deleting
+- [x] **MCP-09**: Expose `localground_cleanup_scan` tool — read-only scan identifying stale/orphan/source candidates without deleting
 - [x] **MCP-10**: Expose `localground_placeholder_check` tool — detects cloud placeholder files in a directory
 - [x] **MCP-11**: Apply tool annotations (readOnlyHint, destructiveHint, idempotentHint) to every tool
 - [x] **MCP-12**: Return structured error responses (isError: true) with actionable messages on all failures
@@ -120,12 +120,12 @@ Explicitly excluded. Documented to prevent scope creep.
 | MCP-01 | Phase 13 | Complete |
 | MCP-02 | Phase 13 | Complete |
 | MCP-03 | Phase 13 | Complete |
-| MCP-04 | Phase 13 | Pending |
+| MCP-04 | Phase 13 | Complete |
 | MCP-05 | Phase 13 | Pending |
-| MCP-06 | Phase 13 | Pending |
+| MCP-06 | Phase 13 | Complete |
 | MCP-07 | Phase 13 | Pending |
 | MCP-08 | Phase 13 | Pending |
-| MCP-09 | Phase 13 | Pending |
+| MCP-09 | Phase 13 | Complete |
 | MCP-10 | Phase 13 | Complete |
 | MCP-11 | Phase 13 | Complete |
 | MCP-12 | Phase 13 | Complete |

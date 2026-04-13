@@ -4,8 +4,12 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { detect, decode, placeholderDetect, detectPlatform, seed, verify, scan, classify, chunk, copy } from '@localground/core';
-import type { Result, ChunkPlan, CopyData } from '@localground/core';
+import {
+  detect, decode, placeholderDetect, detectPlatform, seed, verify, scan,
+  classify, chunk, copy, gitCheck, compare, isPathCloudSynced,
+  getClaudeProjectsDir,
+} from '@localground/core';
+import type { Result, ChunkPlan, CopyData, PathHashEntry } from '@localground/core';
 import { z } from 'zod';
 
 // --- Constants ---
@@ -44,6 +48,15 @@ function resultToMcp<T>(result: Result<T, string>): {
     content: [{ type: 'text', text: `${result.reason}: ${result.detail}` }],
     isError: true,
   };
+}
+
+// --- Health Check Result Type ---
+
+/** Per-check result for localground_health_check composite tool. */
+interface HealthCheck {
+  check: string;
+  status: 'PASS' | 'WARN' | 'FAIL' | 'N/A';
+  detail: string;
 }
 
 // --- Copy Token (Continuation Token for Chunked Copy) ---
@@ -365,6 +378,153 @@ server.registerTool('localground_copy', {
         progress: `${newIndex}/${state.plan.totalChunks} chunks copied`,
         currentFolder: currentChunk.entries.join(', '),
       }, null, 2),
+    }],
+  };
+});
+
+// localground_health_check — six-check composite tool for one project
+server.registerTool('localground_health_check', {
+  description:
+    'Run six health checks on one project: git integrity, placeholder files, cloud sync status, path-hash validity, seed marker verification, and source/target alignment. Returns per-check PASS/WARN/FAIL/N/A status.',
+  inputSchema: {
+    projectPath: z.string().describe('Absolute path to the project directory to check'),
+    manifestPath: z.string().optional().describe('Path to seed manifest. Defaults to .localground-seed-manifest.json in projectPath. Checks 5-6 return N/A if no manifest exists.'),
+    sourcePath: z.string().optional().describe('Original source path for source/target comparison (check 6). Required for check 6; if omitted, check 6 returns N/A.'),
+  },
+  annotations: {
+    title: 'Health Check',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+  },
+}, async ({ projectPath, manifestPath, sourcePath }, _extra) => {
+  const checks: HealthCheck[] = [];
+  const platformResult = detectPlatform();
+  const platform = platformResult.success ? platformResult.data.platform : 'linux';
+
+  // Check 1: Git integrity
+  try {
+    const gitResult = await gitCheck(projectPath);
+    if (!gitResult.success) {
+      checks.push({ check: 'git_integrity', status: 'FAIL', detail: `${gitResult.reason}: ${gitResult.detail}` });
+    } else {
+      const g = gitResult.data;
+      if (!g.fsck.passed) {
+        checks.push({ check: 'git_integrity', status: 'FAIL', detail: `git fsck failed: ${g.fsck.output}` });
+      } else if (!g.status.clean || g.dubiousOwnership) {
+        checks.push({ check: 'git_integrity', status: 'WARN', detail: g.dubiousOwnership ? 'Dubious ownership detected' : `Uncommitted changes: ${g.status.output}` });
+      } else {
+        checks.push({ check: 'git_integrity', status: 'PASS', detail: `Branch: ${g.branch}, commit: ${g.commitHash.slice(0, 8)}` });
+      }
+    }
+  } catch (err: unknown) {
+    checks.push({ check: 'git_integrity', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+  }
+
+  // Check 2: Placeholder files
+  try {
+    const phResult = await placeholderDetect(projectPath, platform);
+    if (!phResult.success) {
+      checks.push({ check: 'placeholder_files', status: 'FAIL', detail: `${phResult.reason}: ${phResult.detail}` });
+    } else if (phResult.data.hasPlaceholders) {
+      checks.push({ check: 'placeholder_files', status: 'WARN', detail: `${phResult.data.placeholderCount} placeholder files detected (${phResult.data.percentage.toFixed(1)}% of ${phResult.data.totalFiles} files)` });
+    } else {
+      checks.push({ check: 'placeholder_files', status: 'PASS', detail: `No placeholder files detected in ${phResult.data.totalFiles} files` });
+    }
+  } catch (err: unknown) {
+    checks.push({ check: 'placeholder_files', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+  }
+
+  // Check 3: Cloud sync active
+  try {
+    const envResult = await detect();
+    if (!envResult.success) {
+      checks.push({ check: 'cloud_sync', status: 'FAIL', detail: `${envResult.reason}: ${envResult.detail}` });
+    } else {
+      const synced = isPathCloudSynced(projectPath, envResult.data.cloud.syncRoot);
+      if (synced) {
+        checks.push({ check: 'cloud_sync', status: 'WARN', detail: `Project is on cloud-synced storage (${envResult.data.cloud.service})` });
+      } else {
+        checks.push({ check: 'cloud_sync', status: 'PASS', detail: 'Project is on local (non-cloud-synced) storage' });
+      }
+    }
+  } catch (err: unknown) {
+    checks.push({ check: 'cloud_sync', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+  }
+
+  // Check 4: Path-hash validity
+  try {
+    const envResult = await detect();
+    if (!envResult.success) {
+      checks.push({ check: 'path_hash_validity', status: 'FAIL', detail: `${envResult.reason}: ${envResult.detail}` });
+    } else {
+      const projectHashes = envResult.data.pathHashes.filter(
+        (h) => h.decodedPath !== null && h.decodedPath.toLowerCase() === projectPath.toLowerCase()
+      );
+      if (projectHashes.length === 0) {
+        checks.push({ check: 'path_hash_validity', status: 'PASS', detail: 'No path-hash entries found for this project path' });
+      } else {
+        const classifications = await Promise.all(projectHashes.map((h) => classify(h)));
+        const stale = classifications.filter((c) => c.success && c.data.classification === 'stale');
+        const orphan = classifications.filter((c) => c.success && c.data.classification === 'orphan');
+        if (stale.length > 0 || orphan.length > 0) {
+          checks.push({ check: 'path_hash_validity', status: 'WARN', detail: `Found ${stale.length} stale and ${orphan.length} orphan path-hash entries` });
+        } else {
+          checks.push({ check: 'path_hash_validity', status: 'PASS', detail: `${projectHashes.length} valid path-hash entries` });
+        }
+      }
+    }
+  } catch (err: unknown) {
+    checks.push({ check: 'path_hash_validity', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+  }
+
+  // Check 5: Seed markers (N/A if no manifest)
+  try {
+    const verifyResult = await verify(projectPath, manifestPath);
+    if (!verifyResult.success) {
+      if (verifyResult.reason === 'manifest_not_found') {
+        checks.push({ check: 'seed_markers', status: 'N/A', detail: 'No seed manifest found — seed was not run for this project' });
+      } else {
+        checks.push({ check: 'seed_markers', status: 'FAIL', detail: `${verifyResult.reason}: ${verifyResult.detail}` });
+      }
+    } else if (verifyResult.data.allPassed) {
+      checks.push({ check: 'seed_markers', status: 'PASS', detail: `All ${verifyResult.data.results.length} markers verified` });
+    } else {
+      const failed = verifyResult.data.results.filter((r) => !r.passed);
+      checks.push({ check: 'seed_markers', status: 'FAIL', detail: `${failed.length} of ${verifyResult.data.results.length} markers failed verification` });
+    }
+  } catch (err: unknown) {
+    checks.push({ check: 'seed_markers', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+  }
+
+  // Check 6: Source/target alignment (N/A if no sourcePath)
+  if (!sourcePath) {
+    checks.push({ check: 'source_target_alignment', status: 'N/A', detail: 'No source path provided — cannot compare source and target' });
+  } else {
+    try {
+      const compareResult = await compare(sourcePath, projectPath);
+      if (!compareResult.success) {
+        checks.push({ check: 'source_target_alignment', status: 'FAIL', detail: `${compareResult.reason}: ${compareResult.detail}` });
+      } else {
+        const c = compareResult.data;
+        if (c.fileCountMatch && c.sizeMatch) {
+          checks.push({ check: 'source_target_alignment', status: 'PASS', detail: `Source and target match: ${c.source.fileCount} files, ${c.source.totalSize} bytes` });
+        } else {
+          const mismatches: string[] = [];
+          if (!c.fileCountMatch) mismatches.push(`file count: source=${c.source.fileCount} vs target=${c.target.fileCount}`);
+          if (!c.sizeMatch) mismatches.push(`size: source=${c.source.totalSize} vs target=${c.target.totalSize}`);
+          checks.push({ check: 'source_target_alignment', status: 'WARN', detail: `Mismatch: ${mismatches.join('; ')}` });
+        }
+      }
+    } catch (err: unknown) {
+      checks.push({ check: 'source_target_alignment', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+    }
+  }
+
+  return {
+    content: [{
+      type: 'text' as const,
+      text: JSON.stringify({ checks }, null, 2),
     }],
   };
 });

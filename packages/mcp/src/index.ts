@@ -92,6 +92,10 @@ function decodeCopyToken(token: string): CopyToken | null {
       typeof parsed.filesCopied === 'number' &&
       typeof parsed.maxExitCode === 'number'
     ) {
+      // Validate source and target are absolute paths — reject relative/traversal paths
+      if (!path.isAbsolute(parsed.source) || !path.isAbsolute(parsed.target)) {
+        return null;
+      }
       return {
         source: parsed.source,
         target: parsed.target,

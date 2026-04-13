@@ -4,8 +4,9 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { detect } from '@localground/core';
+import { detect, decode, placeholderDetect, detectPlatform } from '@localground/core';
 import type { Result } from '@localground/core';
+import { z } from 'zod';
 
 // --- Constants ---
 
@@ -59,6 +60,24 @@ server.registerTool('localground_detect', {
   },
 }, async (_extra) => {
   const result = await detect();
+  return resultToMcp(result);
+});
+
+// localground_decode_path_hash — decode Claude Code path-hash directory names
+server.registerTool('localground_decode_path_hash', {
+  description:
+    'Decode a Claude Code path-hash directory name (e.g., "C--Users-bob-Projects-myapp") to its original filesystem path. Returns the decoded path and whether the directory exists.',
+  inputSchema: {
+    hashDirName: z.string().describe('The path-hash directory name from ~/.claude/projects/ (e.g., "C--Users-bob-Projects-myapp")'),
+  },
+  annotations: {
+    title: 'Decode Path Hash',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+  },
+}, async ({ hashDirName }, _extra) => {
+  const result = await decode(hashDirName);
   return resultToMcp(result);
 });
 

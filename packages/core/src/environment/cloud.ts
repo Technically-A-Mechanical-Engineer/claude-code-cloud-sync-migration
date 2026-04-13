@@ -104,14 +104,21 @@ export async function detectCloudService(
 
 /**
  * Check if a path within a given directory is inside a cloud-synced folder.
+ * Case-insensitive on Windows (case-insensitive filesystem), case-sensitive
+ * on macOS/Linux to avoid false positives on case-sensitive filesystems.
  */
 export function isPathCloudSynced(
   targetPath: string,
   cloudSyncRoot: string | null,
 ): boolean {
   if (!cloudSyncRoot) return false;
-  const normalizedTarget = targetPath.toLowerCase().replace(/\\/g, '/');
-  const normalizedRoot = cloudSyncRoot.toLowerCase().replace(/\\/g, '/');
+  const isWindows = process.platform === 'win32';
+  const normalizedTarget = isWindows
+    ? targetPath.toLowerCase().replace(/\\/g, '/')
+    : targetPath.replace(/\\/g, '/');
+  const normalizedRoot = isWindows
+    ? cloudSyncRoot.toLowerCase().replace(/\\/g, '/')
+    : cloudSyncRoot.replace(/\\/g, '/');
   return normalizedTarget.startsWith(normalizedRoot);
 }
 

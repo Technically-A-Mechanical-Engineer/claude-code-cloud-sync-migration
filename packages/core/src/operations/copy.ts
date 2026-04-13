@@ -68,28 +68,33 @@ export async function copy(
     };
   }
 
-  // Create target directory
-  try {
-    await fs.mkdir(target, { recursive: false });
-  } catch (err: unknown) {
-    const errno = (err as NodeJS.ErrnoException).code;
-    if (errno === 'EACCES' || errno === 'EPERM') {
-      return {
-        success: false,
-        reason: 'permission_denied',
-        detail: `Permission denied creating target directory: ${target}`,
-      };
-    }
-    if (errno !== 'EEXIST') {
-      return {
-        success: false,
-        reason: 'copy_error',
-        detail: `Failed to create target directory: ${(err as Error).message}`,
-      };
+  const isWindows = process.platform === 'win32';
+
+  // Robocopy creates the target directory itself — pre-creating it would
+  // leave an empty directory artifact on copy failure. Only rsync needs
+  // the target to exist before copying.
+  if (!isWindows) {
+    try {
+      await fs.mkdir(target, { recursive: false });
+    } catch (err: unknown) {
+      const errno = (err as NodeJS.ErrnoException).code;
+      if (errno === 'EACCES' || errno === 'EPERM') {
+        return {
+          success: false,
+          reason: 'permission_denied',
+          detail: `Permission denied creating target directory: ${target}`,
+        };
+      }
+      if (errno !== 'EEXIST') {
+        return {
+          success: false,
+          reason: 'copy_error',
+          detail: `Failed to create target directory: ${(err as Error).message}`,
+        };
+      }
     }
   }
 
-  const isWindows = process.platform === 'win32';
   if (isWindows) {
     return robocopy(source, target);
   }

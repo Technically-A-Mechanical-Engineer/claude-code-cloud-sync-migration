@@ -6,10 +6,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   detect, decode, placeholderDetect, detectPlatform, seed, verify, scan,
   classify, chunk, copy, gitCheck, compare, isPathCloudSynced,
-  getClaudeProjectsDir,
 } from '@localground/core';
-import type { Result, ChunkPlan, CopyData, PathHashEntry } from '@localground/core';
+import type { Result, Success, ChunkPlan, CopyData, PathHashEntry } from '@localground/core';
 import { z } from 'zod';
+import path from 'node:path';
+import fs from 'node:fs/promises';
 
 // --- Constants ---
 
@@ -67,6 +68,7 @@ interface CopyToken {
   plan: ChunkPlan;
   currentIndex: number;
   filesCopied: number;
+  maxExitCode: number;
 }
 
 function encodeCopyToken(state: CopyToken): string {
@@ -87,7 +89,8 @@ function decodeCopyToken(token: string): CopyToken | null {
       Array.isArray(parsed.plan.chunks) &&
       typeof parsed.plan.totalChunks === 'number' &&
       typeof parsed.currentIndex === 'number' &&
-      typeof parsed.filesCopied === 'number'
+      typeof parsed.filesCopied === 'number' &&
+      typeof parsed.maxExitCode === 'number'
     ) {
       return {
         source: parsed.source,
@@ -95,12 +98,76 @@ function decodeCopyToken(token: string): CopyToken | null {
         plan: parsed.plan as ChunkPlan,
         currentIndex: parsed.currentIndex,
         filesCopied: parsed.filesCopied,
+        maxExitCode: parsed.maxExitCode,
       };
     }
     return null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Copy all entries within one chunk by iterating per-entry.
+ *
+ * Directories are copied via copy(). Files are copied via fs.copyFile().
+ * The root target directory must already exist before calling this function.
+ *
+ * Returns aggregated filesCopied count and the max exit code across entries.
+ */
+async function copyChunkEntries(
+  rootSource: string,
+  rootTarget: string,
+  entries: string[],
+): Promise<Result<{ filesCopied: number; maxExitCode: number }, string>> {
+  let totalFilesCopied = 0;
+  let maxExitCode = 0;
+
+  for (const entryName of entries) {
+    const entrySrc = path.join(rootSource, entryName);
+    const entryTgt = path.join(rootTarget, entryName);
+
+    // Determine if entry is a file or directory
+    let stat;
+    try {
+      stat = await fs.stat(entrySrc);
+    } catch {
+      return {
+        success: false,
+        reason: 'copy_error',
+        detail: `Source entry not found: ${entrySrc}`,
+      };
+    }
+
+    if (stat.isDirectory()) {
+      const copyResult = await copy(entrySrc, entryTgt);
+      if (!copyResult.success) {
+        return {
+          success: false,
+          reason: copyResult.reason,
+          detail: copyResult.detail,
+        };
+      }
+      totalFilesCopied += copyResult.data.filesCopied;
+      maxExitCode = Math.max(maxExitCode, copyResult.data.exitCode);
+    } else if (stat.isFile()) {
+      try {
+        await fs.copyFile(entrySrc, entryTgt);
+        totalFilesCopied += 1;
+      } catch (err: unknown) {
+        return {
+          success: false,
+          reason: 'copy_error',
+          detail: `Failed to copy file ${entrySrc}: ${err instanceof Error ? err.message : String(err)}`,
+        };
+      }
+    }
+  }
+
+  return {
+    success: true,
+    data: { filesCopied: totalFilesCopied, maxExitCode },
+  };
 }
 
 // --- Tool Registrations ---
@@ -254,11 +321,35 @@ server.registerTool('localground_copy', {
       };
     }
 
-    // Multi-chunk case: copy first chunk
+    // Multi-chunk case: pre-create root target, then copy first chunk per-entry
+    // Safety: refuse to overwrite existing target (same contract as copy())
+    try {
+      await fs.access(target);
+      return {
+        content: [{ type: 'text' as const, text: 'target_exists: Target directory already exists. Refusing to overwrite (safety model).' }],
+        isError: true,
+      };
+    } catch {
+      // Target does not exist — safe to proceed
+    }
+
+    // Create root target directory so per-entry copy calls can write into it
+    try {
+      await fs.mkdir(target, { recursive: true });
+    } catch (err: unknown) {
+      return {
+        content: [{ type: 'text' as const, text: `copy_error: Failed to create target directory: ${err instanceof Error ? err.message : String(err)}` }],
+        isError: true,
+      };
+    }
+
     const firstChunk = plan.chunks[0];
-    const copyResult = await copy(firstChunk.source, firstChunk.target);
-    if (!copyResult.success) {
-      return resultToMcp(copyResult);
+    const chunkResult = await copyChunkEntries(source, target, firstChunk.entries);
+    if (!chunkResult.success) {
+      return {
+        content: [{ type: 'text' as const, text: `${chunkResult.reason}: ${chunkResult.detail}` }],
+        isError: true,
+      };
     }
 
     const state: CopyToken = {
@@ -266,7 +357,8 @@ server.registerTool('localground_copy', {
       target,
       plan,
       currentIndex: 1,
-      filesCopied: copyResult.data.filesCopied,
+      filesCopied: chunkResult.data.filesCopied,
+      maxExitCode: chunkResult.data.maxExitCode,
     };
 
     // Send progress notification if client requested it
@@ -320,13 +412,17 @@ server.registerTool('localground_copy', {
   }
 
   const currentChunk = state.plan.chunks[state.currentIndex];
-  const copyResult = await copy(currentChunk.source, currentChunk.target);
-  if (!copyResult.success) {
-    return resultToMcp(copyResult);
+  const chunkResult = await copyChunkEntries(state.source, state.target, currentChunk.entries);
+  if (!chunkResult.success) {
+    return {
+      content: [{ type: 'text' as const, text: `${chunkResult.reason}: ${chunkResult.detail}` }],
+      isError: true,
+    };
   }
 
   const newIndex = state.currentIndex + 1;
-  const totalFilesCopied = state.filesCopied + copyResult.data.filesCopied;
+  const totalFilesCopied = state.filesCopied + chunkResult.data.filesCopied;
+  const newMaxExitCode = Math.max(state.maxExitCode, chunkResult.data.maxExitCode);
 
   // Send progress notification
   if (extra._meta?.progressToken !== undefined) {
@@ -343,6 +439,7 @@ server.registerTool('localground_copy', {
 
   // Check if this was the last chunk
   if (newIndex >= state.plan.totalChunks) {
+    const tool = process.platform === 'win32' ? 'robocopy' : 'rsync';
     return {
       content: [{
         type: 'text' as const,
@@ -351,8 +448,8 @@ server.registerTool('localground_copy', {
           result: {
             source: state.source,
             target: state.target,
-            tool: copyResult.data.tool,
-            exitCode: copyResult.data.exitCode,
+            tool,
+            exitCode: newMaxExitCode,
             filesCopied: totalFilesCopied,
             summary: `Copied ${state.plan.totalChunks} chunks (${totalFilesCopied} files total)`,
           } satisfies CopyData,
@@ -366,6 +463,7 @@ server.registerTool('localground_copy', {
     ...state,
     currentIndex: newIndex,
     filesCopied: totalFilesCopied,
+    maxExitCode: newMaxExitCode,
   };
 
   return {

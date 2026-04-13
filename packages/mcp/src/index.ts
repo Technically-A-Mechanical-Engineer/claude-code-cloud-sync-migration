@@ -550,24 +550,34 @@ server.registerTool('localground_health_check', {
   }
 
   // Check 4: Path-hash validity
+  // decode() each path-hash entry first — detect() returns decodedPath: null by design
   try {
-    const envResult = await detect();
-    if (!envResult.success) {
-      checks.push({ check: 'path_hash_validity', status: 'FAIL', detail: `${envResult.reason}: ${envResult.detail}` });
+    const envResult4 = await detect();
+    if (!envResult4.success) {
+      checks.push({ check: 'path_hash_validity', status: 'FAIL', detail: `${envResult4.reason}: ${envResult4.detail}` });
     } else {
-      const projectHashes = envResult.data.pathHashes.filter(
-        (h) => h.decodedPath !== null && h.decodedPath.toLowerCase() === projectPath.toLowerCase()
+      // Decode all path-hash entries to get real filesystem paths
+      const decoded = await Promise.all(
+        envResult4.data.pathHashes.map((h) => decode(h.hashDirName))
       );
-      if (projectHashes.length === 0) {
+      // Filter for entries that decoded successfully and match this project path
+      const projectEntries = decoded
+        .filter((r): r is Success<PathHashEntry> =>
+          r.success && r.data.decodedPath !== null &&
+          r.data.decodedPath.toLowerCase() === projectPath.toLowerCase()
+        )
+        .map((r) => r.data);
+
+      if (projectEntries.length === 0) {
         checks.push({ check: 'path_hash_validity', status: 'PASS', detail: 'No path-hash entries found for this project path' });
       } else {
-        const classifications = await Promise.all(projectHashes.map((h) => classify(h)));
+        const classifications = await Promise.all(projectEntries.map((entry) => classify(entry)));
         const stale = classifications.filter((c) => c.success && c.data.classification === 'stale');
         const orphan = classifications.filter((c) => c.success && c.data.classification === 'orphan');
         if (stale.length > 0 || orphan.length > 0) {
           checks.push({ check: 'path_hash_validity', status: 'WARN', detail: `Found ${stale.length} stale and ${orphan.length} orphan path-hash entries` });
         } else {
-          checks.push({ check: 'path_hash_validity', status: 'PASS', detail: `${projectHashes.length} valid path-hash entries` });
+          checks.push({ check: 'path_hash_validity', status: 'PASS', detail: `${projectEntries.length} valid path-hash entries` });
         }
       }
     }

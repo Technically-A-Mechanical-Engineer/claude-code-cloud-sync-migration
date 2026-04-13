@@ -2,17 +2,25 @@
 
 ## What This Is
 
-A five-prompt toolkit that Claude Code users paste into CLI to migrate project folders off cloud-synced storage — with pre-migration verification, migration, post-migration health checks, cleanup, and environment auditing. Each prompt is an independent markdown file — one file, one paste.
+A toolkit that helps Claude Code CLI users migrate project folders off cloud-synced storage, verify migration integrity, clean up stale artifacts, and audit environment health. The target audience is Claude Code users hitting git errors, file lock failures, or sync conflicts from working in OneDrive, Dropbox, Google Drive, or iCloud folders.
+
+**v3.0.0** restructures the toolkit into a three-layer architecture:
+
+| Layer | Package | Purpose |
+|---|---|---|
+| Core library | `@localground/core` | Shared deterministic operations — environment detection, integrity checks, file operations |
+| MCP server | `@localground/mcp` | Exposes core operations as native Claude Code tool calls via MCP protocol |
+| CLI | `@localground/cli` | Standalone terminal interface (`npx @localground/cli`) |
+
+The v2.0.0 paste-and-run prompts remain in `prompts/` as a no-install fallback:
 
 | Prompt | File | Purpose |
 |---|---|---|
-| Seed | `localground-seed.md` | Plants verifiable markers before migration |
-| Migration | `localground-migration.md` | Copies projects from cloud-synced storage to local paths |
-| Reap | `localground-reap.md` | Verifies markers survived migration, runs health checks |
-| Cleanup | `localground-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries |
-| Verification | `localground-verification.md` | Audits current state, reports findings, recommends next steps |
-
-The target audience is Claude Code users hitting git errors, file lock failures, or sync conflicts from working in cloud-synced folders. Distribution is markdown files — not skills, not plugins, not packages.
+| Seed | `prompts/localground-seed.md` | Plants verifiable markers before migration |
+| Migration | `prompts/localground-migration.md` | Copies projects from cloud-synced storage to local paths |
+| Reap | `prompts/localground-reap.md` | Verifies markers survived migration, runs health checks |
+| Cleanup | `prompts/localground-cleanup.md` | Removes stale source folders, path-hash directories, and orphan entries |
+| Verification | `prompts/localground-verification.md` | Audits current state, reports findings, recommends next steps |
 
 ## Project Owner
 
@@ -20,24 +28,44 @@ Robert LaSalle
 
 ## Current State
 
-- **Toolkit version:** v2.0.0 (LocalGround Toolkit). All five prompts carry the unified version header `LocalGround Toolkit v2.0.0`.
-- **Seed prompt:** Shipped. Plants verifiable markers (test file + git tag) before migration.
-- **Migration prompt:** Shipped. Two-session design — copies project folders, then migrates settings.
-- **Reap prompt:** Shipped. Verifies seed markers survived migration, runs six health checks.
-- **Cleanup prompt:** Shipped. Removes stale path-hash directories, orphan entries, and source folders.
-- **Verification prompt:** Shipped. Read-only environment audit with traffic light findings.
+- **Toolkit version:** v3.0.0-dev (in development). Monorepo scaffolded with npm workspaces. Core library (`@localground/core`) built with all 12 deterministic operations. MCP server and CLI are compilable stubs.
+- **Core library:** `@localground/core` exports 12 CORE functions (detect, decode, classify, checksum, compare, placeholderDetect, gitCheck, copy, seed, verify, scan, chunk) plus utilities and all public types. TypeScript strict mode, zero errors.
+- **MCP server:** `@localground/mcp` — compilable stub re-exporting core types. Real implementation in Phase 13.
+- **CLI:** `@localground/cli` — compilable stub re-exporting core types. Real implementation in Phase 14.
+- **v2.0.0 prompts:** All five prompts shipped and preserved in `prompts/` as no-install fallback.
 - **Design spec:** `docs/design/2026-04-10-localground-toolkit-design.md` — approved design for the toolkit expansion. This is the requirements source for all GSD planning.
-- **Evaluation:** All five prompts passed all applicable NEC prompt frameworks (details in `docs/evaluations/prompt-evaluation-seed.md`, `docs/evaluations/prompt-evaluation-migration.md`, `docs/evaluations/prompt-evaluation-reap.md`, `docs/evaluations/prompt-evaluation-cleanup.md`, and `docs/evaluations/prompt-evaluation-verification.md`)
+- **Evaluation:** All five v2.0.0 prompts passed all applicable NEC prompt frameworks (details in `docs/evaluations/prompt-evaluation-seed.md`, `docs/evaluations/prompt-evaluation-migration.md`, `docs/evaluations/prompt-evaluation-reap.md`, `docs/evaluations/prompt-evaluation-cleanup.md`, and `docs/evaluations/prompt-evaluation-verification.md`)
 
 ## File Map
 
-| File | Purpose |
+### v3.0.0 Monorepo Packages
+
+| Path | Purpose |
 |---|---|
-| `localground-seed.md` | Seed prompt — pre-migration marker planting |
-| `localground-migration.md` | Migration prompt — two-session copy and settings migration |
-| `localground-reap.md` | Reap prompt — post-migration health check and marker verification |
-| `localground-cleanup.md` | Cleanup prompt — stale artifact removal |
-| `localground-verification.md` | Verification prompt — read-only environment audit |
+| `packages/core/` | `@localground/core` — shared library (environment, integrity, operations) |
+| `packages/core/src/index.ts` | Core barrel export — flat public API (D-07) |
+| `packages/core/src/types.ts` | All public TypeScript types (Result, domain types) |
+| `packages/core/src/environment/` | Environment detection: platform, cloud service, path-hash decode/classify |
+| `packages/core/src/integrity/` | Integrity checks: checksum, compare, placeholder detection, git health |
+| `packages/core/src/operations/` | File operations: copy, seed, verify, scan, chunk |
+| `packages/core/src/util/` | Internal utilities: spawn, paths |
+| `packages/mcp/` | `@localground/mcp` — MCP server (stub, Phase 13) |
+| `packages/cli/` | `@localground/cli` — standalone CLI (stub, Phase 14) |
+
+### v2.0.0 Prompts (legacy fallback)
+
+| Path | Purpose |
+|---|---|
+| `prompts/localground-seed.md` | Seed prompt — pre-migration marker planting |
+| `prompts/localground-migration.md` | Migration prompt — two-session copy and settings migration |
+| `prompts/localground-reap.md` | Reap prompt — post-migration health check and marker verification |
+| `prompts/localground-cleanup.md` | Cleanup prompt — stale artifact removal |
+| `prompts/localground-verification.md` | Verification prompt — read-only environment audit |
+
+### Documentation
+
+| Path | Purpose |
+|---|---|
 | `docs/dev-status/dev-status-seed.md` | Seed prompt dev status |
 | `docs/dev-status/dev-status-migration.md` | Migration prompt dev status — version history, test execution, findings, testing plan |
 | `docs/dev-status/dev-status-reap.md` | Reap prompt dev status |
@@ -52,9 +80,27 @@ Robert LaSalle
 
 ## Architecture
 
-### Toolkit Overview
+### Three-Layer Architecture (v3.0.0)
 
-The toolkit has five independent prompts, each with a distinct execution model:
+The v3.0.0 toolkit is structured as a monorepo with three npm workspace packages:
+
+```
+@localground/core   — Shared library: 12 deterministic operations, all types
+@localground/mcp    — MCP server: exposes core ops as Claude Code tool calls
+@localground/cli    — Standalone CLI: terminal interface via npx
+```
+
+**Core library** (`packages/core/`) provides a flat public API — all functions import directly from `@localground/core`:
+```typescript
+import { detect, decode, copy, verify, checksum } from '@localground/core';
+import type { Result, EnvironmentInfo, CopyData } from '@localground/core';
+```
+
+**Safety model** is enforced in code: Result types (never throws), platform-specific tool selection (robocopy/rsync), and the same no-delete/verify-everything principles from v2.0.0.
+
+### v2.0.0 Prompt Architecture (legacy fallback)
+
+The v2.0.0 toolkit has five independent prompts in `prompts/`, each with a distinct execution model:
 
 | Prompt | Sessions | Safety Model | Key Output |
 |---|---|---|---|
@@ -131,32 +177,34 @@ A five-prompt toolkit that Claude Code CLI users paste into their terminal to mi
 ## Technology Stack
 
 ## Languages
+- TypeScript ~5.7 — Core library, MCP server, CLI (v3.0.0)
 - Markdown — Prompt specification, user-facing documentation, dev status reporting, evaluation records
 - PowerShell — Target shell for Windows users executing the migration (specified inside the prompt)
 - Bash — Target shell for macOS/Linux users and Windows Git Bash users executing the migration
 ## Runtime
+- Node.js >=20.0.0 — Required for v3.0.0 packages
 - Claude Code CLI — The runtime that executes the prompt. Tested against Claude Code CLI as of April 2026.
-- Not applicable — no packages, no dependencies, no build step.
-- Lockfile: Not present.
+- Lockfile: package-lock.json (npm workspaces)
+## Build Tools
+- tsup ^9.0.0 — TypeScript bundler for all three packages
+- npm workspaces — Monorepo package management (root package.json)
+## Test Tools
+- Vitest ^3.0.0 — Test runner (configured, test suite to be built)
 ## Frameworks
-- None — This is a single-file prompt. No frameworks are installed or required.
-- Nate's Executive Circle prompt kits (State of Prompt Engineering Kit, Six Weeks Kit, Building Agents Is 80% Plumbing Kit, Skills Are Infrastructure Now Kit) — Used to evaluate the prompt against eight frameworks. Not runtime dependencies.
-- Manual testing via fresh re-run to a parallel target path — No automated test runner exists.
-- Not applicable — development is editing `localground-migration.md` in place.
+- Nate's Executive Circle prompt kits (State of Prompt Engineering Kit, Six Weeks Kit, Building Agents Is 80% Plumbing Kit, Skills Are Infrastructure Now Kit) — Used to evaluate prompts against eight frameworks. Not runtime dependencies.
 ## Key Dependencies
-- Claude Code CLI (user's installation) — The prompt is useless without it. Version matters: Phase 7.1 includes an escalation trigger if the `~/.claude/projects/` directory structure changes between sessions (CLI update risk).
-- robocopy (Windows built-in) — Copy tool for Windows migrations. Called from within the prompt's Phase 4 instructions.
-- rsync (macOS/Linux standard) — Copy tool for macOS/Linux migrations.
-- git — Required for git integrity verification steps (Phase 4.6). Present on any system where Claude Code users have repos.
+- Claude Code CLI (user's installation) — Required for MCP server integration and prompt execution.
+- robocopy (Windows built-in) — Copy tool for Windows migrations. Called by `@localground/core` copy().
+- rsync (macOS/Linux standard) — Copy tool for macOS/Linux migrations. Called by `@localground/core` copy().
+- git — Required for git integrity verification. Present on any system where Claude Code users have repos.
 ## Configuration
 - No environment variables required for this project.
 - No `.env` file exists or is needed.
-- No build configuration. The prompt file is the artifact.
+- TypeScript configuration: `tsconfig.json` (root) with project references to each package.
 ## Platform Requirements
-- Any text editor capable of editing Markdown
+- Node.js >=20.0.0
 - Git for version control
-- Claude Code CLI for testing
-- Claude Code CLI installed
+- Claude Code CLI for MCP server integration and testing
 - Windows: PowerShell or Git Bash (MINGW64/MSYS2/WSL) available
 - macOS/Linux: bash or zsh available
 - robocopy (Windows, built-in since Vista) or rsync (macOS/Linux standard) available

@@ -28,7 +28,41 @@ Claude Code users whose projects are in OneDrive, Dropbox, Google Drive, or iClo
 - **Platform:** Windows (PowerShell or Git Bash), macOS (zsh/bash), or Linux (bash)
 - **git** installed and available in your shell
 
-## How to Use
+## MCP Server (v3.0.0)
+
+Add the LocalGround MCP server to Claude Code to invoke all operations as native tool calls.
+
+### Installation
+
+**macOS / Linux:**
+```bash
+claude mcp add --transport stdio localground -- npx -y @localground/mcp
+```
+
+**Windows (PowerShell or Command Prompt):**
+```bash
+claude mcp add --transport stdio localground -- cmd /c npx -y @localground/mcp
+```
+
+> **Windows users:** The `cmd /c` prefix is required. Without it, Claude Code cannot spawn `npx` on Windows because `npx` is a batch script (`.cmd` file), not a native executable. This is the most common setup failure on Windows — do not omit it.
+
+### Available Tools
+
+After registration, Claude Code can call these tools directly:
+
+| Tool | Operation | Read-only? |
+|------|-----------|------------|
+| `localground_detect` | Detect OS, shell, cloud service, projects, path-hashes | Yes |
+| `localground_decode_path_hash` | Decode a `.claude/projects/` directory name to a filesystem path | Yes |
+| `localground_seed` | Plant verifiable markers before migration | No |
+| `localground_copy` | Copy a project directory with chunked operation and verification | No |
+| `localground_verify` | Verify seed markers against manifest | Yes |
+| `localground_health_check` | Run 6 health checks on a project (git, placeholders, cloud sync, path-hashes, seed markers, source/target alignment) | Yes |
+| `localground_audit` | Environment-wide read-only audit with incremental findings | Yes |
+| `localground_cleanup_scan` | Identify stale/orphan/source candidates without deleting | Yes |
+| `localground_placeholder_check` | Detect cloud placeholder files in a directory | Yes |
+
+## How to Use (v2.0.0 Prompts)
 
 ### Seed (optional — before migration)
 

@@ -4,7 +4,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { detect, decode, placeholderDetect, detectPlatform } from '@localground/core';
+import { detect, decode, placeholderDetect, detectPlatform, seed } from '@localground/core';
 import type { Result } from '@localground/core';
 import { z } from 'zod';
 
@@ -100,6 +100,24 @@ server.registerTool('localground_placeholder_check', {
     return resultToMcp(platformResult);
   }
   const result = await placeholderDetect(dirPath, platformResult.data.platform);
+  return resultToMcp(result);
+});
+
+// localground_seed — plant verifiable markers before migration
+server.registerTool('localground_seed', {
+  description:
+    'Plant verifiable markers (test file with known checksum + lightweight git tag) in a project directory before migration. Returns a seed manifest that the verify tool checks after migration.',
+  inputSchema: {
+    projectPath: z.string().describe('Absolute path to the project directory to seed'),
+  },
+  annotations: {
+    title: 'Seed Markers',
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+  },
+}, async ({ projectPath }, _extra) => {
+  const result = await seed(projectPath);
   return resultToMcp(result);
 });
 

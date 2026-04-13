@@ -646,7 +646,14 @@ server.registerTool('localground_audit', {
     return resultToMcp(envResult);
   }
 
-  const paths = projectPaths ?? envResult.data.projects.map((p) => p.path);
+  // Auto-discover project paths by decoding path-hash entries.
+  // detect() returns projects: [] by design — decode() is the discovery mechanism.
+  const paths = projectPaths ?? (
+    await Promise.all(
+      envResult.data.pathHashes.map((h) => decode(h.hashDirName))
+    )
+  ).filter((r): r is Success<PathHashEntry> => r.success && r.data.decodedPath !== null && r.data.exists)
+   .map((r) => r.data.decodedPath as string);
   const platformResult = detectPlatform();
   const platform = platformResult.success ? platformResult.data.platform : 'linux';
 

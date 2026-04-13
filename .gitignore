@@ -11,3 +11,14 @@ Desktop.ini
 # Claude Code local directories
 .claude/
 .planning/
+
+# Node.js
+node_modules/
+dist/
+
+# TypeScript
+*.tsbuildinfo
+
+# Build artifacts
+*.js.map
+*.d.ts.map

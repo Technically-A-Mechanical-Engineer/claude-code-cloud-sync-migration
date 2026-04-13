@@ -4,8 +4,8 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { detect, decode, placeholderDetect, detectPlatform, seed, verify, scan, classify } from '@localground/core';
-import type { Result } from '@localground/core';
+import { detect, decode, placeholderDetect, detectPlatform, seed, verify, scan, classify, chunk, copy } from '@localground/core';
+import type { Result, ChunkPlan, CopyData } from '@localground/core';
 import { z } from 'zod';
 
 // --- Constants ---
@@ -44,6 +44,51 @@ function resultToMcp<T>(result: Result<T, string>): {
     content: [{ type: 'text', text: `${result.reason}: ${result.detail}` }],
     isError: true,
   };
+}
+
+// --- Copy Token (Continuation Token for Chunked Copy) ---
+
+/** State persisted between chunked copy calls via base64 JSON token. */
+interface CopyToken {
+  source: string;
+  target: string;
+  plan: ChunkPlan;
+  currentIndex: number;
+  filesCopied: number;
+}
+
+function encodeCopyToken(state: CopyToken): string {
+  return Buffer.from(JSON.stringify(state)).toString('base64');
+}
+
+function decodeCopyToken(token: string): CopyToken | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
+    // Validate expected shape — do not spread
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      typeof parsed.source === 'string' &&
+      typeof parsed.target === 'string' &&
+      typeof parsed.plan === 'object' &&
+      parsed.plan !== null &&
+      Array.isArray(parsed.plan.chunks) &&
+      typeof parsed.plan.totalChunks === 'number' &&
+      typeof parsed.currentIndex === 'number' &&
+      typeof parsed.filesCopied === 'number'
+    ) {
+      return {
+        source: parsed.source,
+        target: parsed.target,
+        plan: parsed.plan as ChunkPlan,
+        currentIndex: parsed.currentIndex,
+        filesCopied: parsed.filesCopied,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // --- Tool Registrations ---

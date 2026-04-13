@@ -21,7 +21,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@localground/core": "workspace:*",
+    "@localground/core": "*",
     "commander": "^13.0.0"
   },
   "engines": {

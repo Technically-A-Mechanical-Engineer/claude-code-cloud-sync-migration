@@ -532,9 +532,11 @@ server.registerTool('localground_health_check', {
     checks.push({ check: 'placeholder_files', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
   }
 
+  // Shared detect() call for checks 3 and 4 — avoids redundant filesystem scan
+  const envResult = await detect();
+
   // Check 3: Cloud sync active
   try {
-    const envResult = await detect();
     if (!envResult.success) {
       checks.push({ check: 'cloud_sync', status: 'FAIL', detail: `${envResult.reason}: ${envResult.detail}` });
     } else {
@@ -552,13 +554,12 @@ server.registerTool('localground_health_check', {
   // Check 4: Path-hash validity
   // decode() each path-hash entry first — detect() returns decodedPath: null by design
   try {
-    const envResult4 = await detect();
-    if (!envResult4.success) {
-      checks.push({ check: 'path_hash_validity', status: 'FAIL', detail: `${envResult4.reason}: ${envResult4.detail}` });
+    if (!envResult.success) {
+      checks.push({ check: 'path_hash_validity', status: 'FAIL', detail: `${envResult.reason}: ${envResult.detail}` });
     } else {
       // Decode all path-hash entries to get real filesystem paths
       const decoded = await Promise.all(
-        envResult4.data.pathHashes.map((h) => decode(h.hashDirName))
+        envResult.data.pathHashes.map((h) => decode(h.hashDirName))
       );
       // Filter for entries that decoded successfully and match this project path
       const projectEntries = decoded

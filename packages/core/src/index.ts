@@ -8,3 +8,12 @@ export {
   ensureTrailingSlash,
   quotePath,
 } from './util/paths.js';
+export {
+  detectPlatform,
+  detectCloudService,
+  isPathCloudSynced,
+  detect,
+  decode,
+  encode,
+  classify,
+} from './environment/index.js';

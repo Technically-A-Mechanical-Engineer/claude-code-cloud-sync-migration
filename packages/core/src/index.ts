@@ -1,2 +1,2 @@
-// @localground/core — placeholder for workspace validation
-export {};
+// @localground/core — barrel export
+export * from './types.js';

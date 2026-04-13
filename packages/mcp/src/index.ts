@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // packages/mcp/src/index.ts
 // @localground/mcp — MCP Server exposing LocalGround operations as Claude Code tool calls
 

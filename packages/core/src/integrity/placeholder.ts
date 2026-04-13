@@ -42,16 +42,23 @@ export async function placeholderDetect(
     let totalFiles = 0;
     let placeholderCount = 0;
 
-    async function walk(currentPath: string): Promise<void> {
+    const maxDepth = 50;
+
+    async function walk(currentPath: string, depth: number): Promise<void> {
+      if (depth > maxDepth) return;
+
       const entries = await fs.readdir(currentPath, { withFileTypes: true });
 
       for (const entry of entries) {
+        // Skip symlinks to prevent infinite loops from symlink cycles
+        if (entry.isSymbolicLink()) continue;
+
         const fullPath = path.join(currentPath, entry.name);
 
         if (entry.isDirectory()) {
           // Skip node_modules and .git for performance
           if (entry.name === 'node_modules' || entry.name === '.git') continue;
-          await walk(fullPath);
+          await walk(fullPath, depth + 1);
         } else if (entry.isFile()) {
           totalFiles++;
 
@@ -80,7 +87,7 @@ export async function placeholderDetect(
       }
     }
 
-    await walk(dirPath);
+    await walk(dirPath, 0);
 
     const percentage = totalFiles > 0 ? (placeholderCount / totalFiles) * 100 : 0;
     const hasPlaceholders = percentage > PLACEHOLDER_THRESHOLD;

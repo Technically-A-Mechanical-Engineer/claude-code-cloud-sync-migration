@@ -203,6 +203,172 @@ server.registerTool('localground_cleanup_scan', {
   return resultToMcp(result);
 });
 
+// localground_copy — chunked project copy with continuation token
+server.registerTool('localground_copy', {
+  description:
+    'Copy one project directory using robocopy (Windows) or rsync (macOS/Linux). Large directories are chunked across multiple calls using a continuation token. First call plans the operation and copies chunk 0. Pass the returned token on subsequent calls to copy remaining chunks.',
+  inputSchema: {
+    source: z.string().describe('Absolute path to the source project directory'),
+    target: z.string().describe('Absolute path to the target directory (must not exist)'),
+    token: z.string().optional().describe('Continuation token from a previous call. Omit for the first call.'),
+  },
+  annotations: {
+    title: 'Copy Project',
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+  },
+}, async ({ source, target, token }, extra) => {
+  // --- FIRST CALL (no token): plan and copy chunk 0 ---
+  if (!token) {
+    const planResult = await chunk(source, target);
+    if (!planResult.success) {
+      return resultToMcp(planResult);
+    }
+
+    const plan = planResult.data;
+
+    // Single-chunk case: copy the whole thing directly
+    if (plan.totalChunks <= 1) {
+      const copyResult = await copy(source, target);
+      if (!copyResult.success) {
+        return resultToMcp(copyResult);
+      }
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify({ done: true, result: copyResult.data }, null, 2),
+        }],
+      };
+    }
+
+    // Multi-chunk case: copy first chunk
+    const firstChunk = plan.chunks[0];
+    const copyResult = await copy(firstChunk.source, firstChunk.target);
+    if (!copyResult.success) {
+      return resultToMcp(copyResult);
+    }
+
+    const state: CopyToken = {
+      source,
+      target,
+      plan,
+      currentIndex: 1,
+      filesCopied: copyResult.data.filesCopied,
+    };
+
+    // Send progress notification if client requested it
+    if (extra._meta?.progressToken !== undefined) {
+      await extra.sendNotification({
+        method: 'notifications/progress',
+        params: {
+          progressToken: extra._meta.progressToken,
+          progress: 1,
+          total: plan.totalChunks,
+          message: `Copied chunk 1/${plan.totalChunks}: ${firstChunk.entries.join(', ')}`,
+        },
+      });
+    }
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          done: false,
+          token: encodeCopyToken(state),
+          progress: `1/${plan.totalChunks} chunks copied`,
+          currentFolder: firstChunk.entries.join(', '),
+        }, null, 2),
+      }],
+    };
+  }
+
+  // --- SUBSEQUENT CALLS (with token): decode and copy next chunk ---
+  const state = decodeCopyToken(token);
+  if (!state) {
+    return {
+      content: [{ type: 'text' as const, text: 'invalid_token: The continuation token could not be decoded or has an invalid structure.' }],
+      isError: true,
+    };
+  }
+
+  // Security: verify token source/target match the input parameters
+  if (state.source !== source || state.target !== target) {
+    return {
+      content: [{ type: 'text' as const, text: 'token_mismatch: The source and target in the continuation token do not match the provided source and target parameters.' }],
+      isError: true,
+    };
+  }
+
+  if (state.currentIndex >= state.plan.totalChunks) {
+    return {
+      content: [{ type: 'text' as const, text: 'token_exhausted: All chunks have already been copied. No continuation needed.' }],
+      isError: true,
+    };
+  }
+
+  const currentChunk = state.plan.chunks[state.currentIndex];
+  const copyResult = await copy(currentChunk.source, currentChunk.target);
+  if (!copyResult.success) {
+    return resultToMcp(copyResult);
+  }
+
+  const newIndex = state.currentIndex + 1;
+  const totalFilesCopied = state.filesCopied + copyResult.data.filesCopied;
+
+  // Send progress notification
+  if (extra._meta?.progressToken !== undefined) {
+    await extra.sendNotification({
+      method: 'notifications/progress',
+      params: {
+        progressToken: extra._meta.progressToken,
+        progress: newIndex,
+        total: state.plan.totalChunks,
+        message: `Copied chunk ${newIndex}/${state.plan.totalChunks}: ${currentChunk.entries.join(', ')}`,
+      },
+    });
+  }
+
+  // Check if this was the last chunk
+  if (newIndex >= state.plan.totalChunks) {
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          done: true,
+          result: {
+            source: state.source,
+            target: state.target,
+            tool: copyResult.data.tool,
+            exitCode: copyResult.data.exitCode,
+            filesCopied: totalFilesCopied,
+            summary: `Copied ${state.plan.totalChunks} chunks (${totalFilesCopied} files total)`,
+          } satisfies CopyData,
+        }, null, 2),
+      }],
+    };
+  }
+
+  // More chunks remain
+  const updatedState: CopyToken = {
+    ...state,
+    currentIndex: newIndex,
+    filesCopied: totalFilesCopied,
+  };
+
+  return {
+    content: [{
+      type: 'text' as const,
+      text: JSON.stringify({
+        done: false,
+        token: encodeCopyToken(updatedState),
+        progress: `${newIndex}/${state.plan.totalChunks} chunks copied`,
+        currentFolder: currentChunk.entries.join(', '),
+      }, null, 2),
+    }],
+  };
+});
+
 // --- Server Startup ---
 
 async function main(): Promise<void> {

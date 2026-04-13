@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: executing
-stopped_at: "12-02 complete"
-last_updated: "2026-04-13T17:10:00.000Z"
+stopped_at: "12-04 complete"
+last_updated: "2026-04-13T21:00:00.000Z"
 last_activity: 2026-04-13
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 7
-  completed_plans: 2
-  percent: 29
+  completed_plans: 4
+  percent: 57
 ---
 
 # Project State
@@ -23,17 +23,17 @@ progress:
 ## Current Position
 
 Phase: 12 (monorepo-foundation-and-core-library) — EXECUTING
-Plan: 3 of 7 (next)
-Status: Plan 12-02 complete — monorepo scaffold (npm workspaces, TypeScript, tsup, Vitest)
-Last activity: 2026-04-13 -- Plan 12-02 complete
+Plan: 5 of 7 (next)
+Status: Plan 12-04 complete — environment module (detect, decode, classify)
+Last activity: 2026-04-13 -- Plan 12-04 complete
 
-Progress: [██░░░░░░░░] 29%
+Progress: [█████░░░░░] 57%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 2 (v3.0.0)
+- Total plans completed: 4 (v3.0.0)
 - Average duration: --
 - Total execution time: --
 
@@ -58,6 +58,7 @@ Progress: [██░░░░░░░░] 29%
 - workspace:* protocol replaced with "*" -- npm does not support workspace: protocol (pnpm/yarn only)
 - Removed incremental from root tsconfig -- composite implies it, and tsup DTS chokes on explicit incremental
 - tsup ^8.5.0 (not ^9.0.0 as planned) -- tsup v9 does not exist, latest is 8.5.1
+- tsup DTS generation requires composite:false override -- tsup's DTS rollup plugin fails with TypeScript composite project references; fixed in all three packages' tsup.config.ts
 
 ### Pending Todos
 
@@ -71,5 +72,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-13
-Stopped at: 12-02 complete
-Resume file: .planning/phases/12-monorepo-foundation-and-core-library/12-02-SUMMARY.md
+Stopped at: 12-04 complete
+Resume file: .planning/phases/12-monorepo-foundation-and-core-library/12-04-SUMMARY.md

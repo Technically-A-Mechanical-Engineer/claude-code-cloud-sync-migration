@@ -81,6 +81,28 @@ server.registerTool('localground_decode_path_hash', {
   return resultToMcp(result);
 });
 
+// localground_placeholder_check — detect cloud storage placeholder files
+server.registerTool('localground_placeholder_check', {
+  description:
+    'Detect cloud storage placeholder files (Files On-Demand / Smart Sync stubs) in a directory. These are files that appear in the filesystem but have not been downloaded — they will cause copy failures or data loss.',
+  inputSchema: {
+    dirPath: z.string().describe('Absolute path to the directory to scan for placeholder files'),
+  },
+  annotations: {
+    title: 'Placeholder Check',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+  },
+}, async ({ dirPath }, _extra) => {
+  const platformResult = detectPlatform();
+  if (!platformResult.success) {
+    return resultToMcp(platformResult);
+  }
+  const result = await placeholderDetect(dirPath, platformResult.data.platform);
+  return resultToMcp(result);
+});
+
 // --- Server Startup ---
 
 async function main(): Promise<void> {

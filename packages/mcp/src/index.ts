@@ -1,26 +1,76 @@
 #!/usr/bin/env node
 // packages/mcp/src/index.ts
-// @localground/mcp — MCP Server (stub — real implementation in Phase 13)
-//
-// D-03: compilable stub that re-exports core types.
-// Proves workspace cross-reference works: @localground/mcp depends on @localground/core.
+// @localground/mcp — MCP Server exposing LocalGround operations as Claude Code tool calls
 
-// Re-export core types for MCP consumers
-export type {
-  Result,
-  EnvironmentInfo,
-  CopyData,
-  SeedManifest,
-  VerifyResult,
-  ScanResult,
-  GitCheckResult,
-  PlaceholderCheckResult,
-  ChunkPlan,
-} from '@localground/core';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { detect } from '@localground/core';
+import type { Result } from '@localground/core';
 
-// Placeholder: MCP server setup (Phase 13 replaces this)
+// --- Constants ---
+
 const SERVER_NAME = 'localground';
 const SERVER_VERSION = '3.0.0';
 
-// Use stderr for logging — stdout is reserved for JSON-RPC transport (CRIT-1)
-console.error(`${SERVER_NAME} MCP server v${SERVER_VERSION} — stub (Phase 13 builds the real server)`);
+// --- Server Instance ---
+
+const server = new McpServer(
+  { name: SERVER_NAME, version: SERVER_VERSION },
+  { capabilities: { logging: {} } },
+);
+
+// --- Result-to-MCP Translation ---
+
+/**
+ * Translate a core Result<T,R> into a CallToolResult for MCP responses.
+ *
+ * Success: JSON-serialized data in a text content block.
+ * Failure: reason + detail as human-readable text with isError flag.
+ *
+ * Per D-05: MCP layer does NOT re-implement safety logic. It calls core
+ * functions and translates Result types. Stack traces never reach the user.
+ */
+function resultToMcp<T>(result: Result<T, string>): {
+  content: Array<{ type: 'text'; text: string }>;
+  isError?: boolean;
+} {
+  if (result.success) {
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result.data, null, 2) }],
+    };
+  }
+  return {
+    content: [{ type: 'text', text: `${result.reason}: ${result.detail}` }],
+    isError: true,
+  };
+}
+
+// --- Tool Registrations ---
+
+// localground_detect — zero-argument, read-only environment detection
+server.registerTool('localground_detect', {
+  description:
+    'Detect OS, shell, cloud sync status, project inventory, and Claude Code path-hash entries. Returns structured environment JSON.',
+  annotations: {
+    title: 'Detect Environment',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+  },
+}, async (_extra) => {
+  const result = await detect();
+  return resultToMcp(result);
+});
+
+// --- Server Startup ---
+
+async function main(): Promise<void> {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error(`${SERVER_NAME} MCP server v${SERVER_VERSION} running on stdio`);
+}
+
+main().catch((error: unknown) => {
+  console.error('Fatal error starting MCP server:', error);
+  process.exit(1);
+});

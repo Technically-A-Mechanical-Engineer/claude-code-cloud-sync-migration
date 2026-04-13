@@ -111,7 +111,7 @@ export async function copy(
  */
 function robocopy(source: string, target: string): Result<CopyData, CopyFailureReason> {
   const args = [source, target, '/E', '/COPY:DAT', '/DCOPY:DAT', '/R:3', '/W:5', '/XJ'];
-  const result = spawnTool('robocopy', args, { shell: true });
+  const result = spawnTool('robocopy', args, { shell: false });
 
   if (!result.success) {
     if (result.reason === 'not_found') {

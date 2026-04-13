@@ -4,7 +4,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { detect, decode, placeholderDetect, detectPlatform, seed, verify } from '@localground/core';
+import { detect, decode, placeholderDetect, detectPlatform, seed, verify, scan, classify } from '@localground/core';
 import type { Result } from '@localground/core';
 import { z } from 'zod';
 
@@ -137,6 +137,24 @@ server.registerTool('localground_verify', {
   },
 }, async ({ projectPath, manifestPath }, _extra) => {
   const result = await verify(projectPath, manifestPath);
+  return resultToMcp(result);
+});
+
+// localground_cleanup_scan — read-only scan for stale cloud path references
+server.registerTool('localground_cleanup_scan', {
+  description:
+    'Read-only scan identifying stale cloud storage path references, orphan path-hash directories, and source folder candidates for cleanup. Never deletes — returns a list of findings for review.',
+  inputSchema: {
+    dirPath: z.string().describe('Absolute path to the directory to scan for stale references'),
+  },
+  annotations: {
+    title: 'Cleanup Scan',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+  },
+}, async ({ dirPath }, _extra) => {
+  const result = await scan(dirPath);
   return resultToMcp(result);
 });
 

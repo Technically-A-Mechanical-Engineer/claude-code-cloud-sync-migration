@@ -24,3 +24,10 @@ export {
   placeholderDetect,
   gitCheck,
 } from './integrity/index.js';
+export {
+  copy,
+  seed,
+  verify,
+  scan,
+  chunk,
+} from './operations/index.js';

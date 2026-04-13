@@ -17,3 +17,10 @@ export {
   encode,
   classify,
 } from './environment/index.js';
+export {
+  checksum,
+  checksumString,
+  compare,
+  placeholderDetect,
+  gitCheck,
+} from './integrity/index.js';

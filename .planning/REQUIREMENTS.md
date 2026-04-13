@@ -28,7 +28,7 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 - [x] **MCP-02**: Expose `localground_detect` tool — returns structured environment JSON (OS, shell, cloud service, projects, path-hashes)
 - [x] **MCP-03**: Expose `localground_decode_path_hash` tool — converts path-hash names to filesystem paths
 - [x] **MCP-04**: Expose `localground_seed` tool — plants verifiable markers, returns manifest JSON
-- [ ] **MCP-05**: Expose `localground_copy` tool — copies one project directory with chunked operation and verification
+- [x] **MCP-05**: Expose `localground_copy` tool — copies one project directory with chunked operation and verification
 - [x] **MCP-06**: Expose `localground_verify` tool — reads manifest, verifies each marker, returns per-marker results
 - [ ] **MCP-07**: Expose `localground_health_check` tool — runs six health checks on one project, returns PASS/WARN/FAIL per check
 - [ ] **MCP-08**: Expose `localground_audit` tool — environment-wide read-only audit, returns structured findings with traffic-light scoring
@@ -36,7 +36,7 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 - [x] **MCP-10**: Expose `localground_placeholder_check` tool — detects cloud placeholder files in a directory
 - [x] **MCP-11**: Apply tool annotations (readOnlyHint, destructiveHint, idempotentHint) to every tool
 - [x] **MCP-12**: Return structured error responses (isError: true) with actionable messages on all failures
-- [ ] **MCP-13**: Send progress notifications during long-running operations (copy, audit)
+- [x] **MCP-13**: Send progress notifications during long-running operations (copy, audit)
 - [x] **MCP-14**: Route all logging to stderr — zero stdout pollution (stdout is the JSON-RPC transport)
 
 ### Standalone CLI
@@ -121,7 +121,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | MCP-02 | Phase 13 | Complete |
 | MCP-03 | Phase 13 | Complete |
 | MCP-04 | Phase 13 | Complete |
-| MCP-05 | Phase 13 | Pending |
+| MCP-05 | Phase 13 | Complete |
 | MCP-06 | Phase 13 | Complete |
 | MCP-07 | Phase 13 | Pending |
 | MCP-08 | Phase 13 | Pending |
@@ -129,7 +129,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | MCP-10 | Phase 13 | Complete |
 | MCP-11 | Phase 13 | Complete |
 | MCP-12 | Phase 13 | Complete |
-| MCP-13 | Phase 13 | Pending |
+| MCP-13 | Phase 13 | Complete |
 | MCP-14 | Phase 13 | Complete |
 | CLI-01 | Phase 14 | Pending |
 | CLI-02 | Phase 14 | Pending |

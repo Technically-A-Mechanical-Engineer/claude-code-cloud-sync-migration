@@ -529,6 +529,132 @@ server.registerTool('localground_health_check', {
   };
 });
 
+// localground_audit — environment-wide read-only audit with progress notifications
+server.registerTool('localground_audit', {
+  description:
+    'Environment-wide read-only audit. Discovers all projects and path-hash entries, runs health checks on each, and returns structured findings with traffic-light scoring. Sends per-project progress notifications during scan.',
+  inputSchema: {
+    projectPaths: z.array(z.string()).optional().describe('Specific project paths to audit. If omitted, auto-discovers all projects via detect().'),
+  },
+  annotations: {
+    title: 'Audit Environment',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+  },
+}, async ({ projectPaths }, extra) => {
+  // Step 1: Discover projects
+  const envResult = await detect();
+  if (!envResult.success) {
+    return resultToMcp(envResult);
+  }
+
+  const paths = projectPaths ?? envResult.data.projects.map((p) => p.path);
+  const platformResult = detectPlatform();
+  const platform = platformResult.success ? platformResult.data.platform : 'linux';
+
+  const auditResults: Array<{
+    projectPath: string;
+    checks: HealthCheck[];
+  }> = [];
+
+  // Step 2: Run health checks per project with progress
+  for (let i = 0; i < paths.length; i++) {
+    const projectPath = paths[i];
+    const checks: HealthCheck[] = [];
+
+    // Abbreviated health checks for audit (checks 1-4 only — no manifest/source needed)
+    // Check 1: Git integrity
+    try {
+      const gitResult = await gitCheck(projectPath);
+      if (!gitResult.success) {
+        checks.push({ check: 'git_integrity', status: 'FAIL', detail: `${gitResult.reason}: ${gitResult.detail}` });
+      } else if (!gitResult.data.fsck.passed) {
+        checks.push({ check: 'git_integrity', status: 'FAIL', detail: `git fsck failed` });
+      } else if (!gitResult.data.status.clean || gitResult.data.dubiousOwnership) {
+        checks.push({ check: 'git_integrity', status: 'WARN', detail: gitResult.data.dubiousOwnership ? 'Dubious ownership' : 'Uncommitted changes' });
+      } else {
+        checks.push({ check: 'git_integrity', status: 'PASS', detail: `OK` });
+      }
+    } catch {
+      checks.push({ check: 'git_integrity', status: 'FAIL', detail: 'Unexpected error' });
+    }
+
+    // Check 2: Placeholder files
+    try {
+      const phResult = await placeholderDetect(projectPath, platform);
+      if (!phResult.success) {
+        checks.push({ check: 'placeholder_files', status: 'FAIL', detail: `${phResult.reason}` });
+      } else if (phResult.data.hasPlaceholders) {
+        checks.push({ check: 'placeholder_files', status: 'WARN', detail: `${phResult.data.placeholderCount} placeholders` });
+      } else {
+        checks.push({ check: 'placeholder_files', status: 'PASS', detail: 'None' });
+      }
+    } catch {
+      checks.push({ check: 'placeholder_files', status: 'FAIL', detail: 'Unexpected error' });
+    }
+
+    // Check 3: Cloud sync
+    const synced = isPathCloudSynced(projectPath, envResult.data.cloud.syncRoot);
+    checks.push({
+      check: 'cloud_sync',
+      status: synced ? 'WARN' : 'PASS',
+      detail: synced ? `Cloud-synced (${envResult.data.cloud.service})` : 'Local storage',
+    });
+
+    // Check 4: Stale references
+    try {
+      const scanResult = await scan(projectPath);
+      if (!scanResult.success) {
+        checks.push({ check: 'stale_references', status: 'FAIL', detail: `${scanResult.reason}` });
+      } else if (scanResult.data.matchCount > 0) {
+        checks.push({ check: 'stale_references', status: 'WARN', detail: `${scanResult.data.matchCount} stale references in ${scanResult.data.filesScanned} files` });
+      } else {
+        checks.push({ check: 'stale_references', status: 'PASS', detail: `Clean (${scanResult.data.filesScanned} files scanned)` });
+      }
+    } catch {
+      checks.push({ check: 'stale_references', status: 'FAIL', detail: 'Unexpected error' });
+    }
+
+    auditResults.push({ projectPath, checks });
+
+    // Send progress notification per project
+    if (extra._meta?.progressToken !== undefined) {
+      await extra.sendNotification({
+        method: 'notifications/progress',
+        params: {
+          progressToken: extra._meta.progressToken,
+          progress: i + 1,
+          total: paths.length,
+          message: `Audited ${i + 1}/${paths.length}: ${projectPath}`,
+        },
+      });
+    }
+  }
+
+  // Step 3: Compute summary
+  const allChecks = auditResults.flatMap((r) => r.checks);
+  const failCount = allChecks.filter((c) => c.status === 'FAIL').length;
+  const warnCount = allChecks.filter((c) => c.status === 'WARN').length;
+  const passCount = allChecks.filter((c) => c.status === 'PASS').length;
+
+  const summary = {
+    projectsAudited: auditResults.length,
+    totalChecks: allChecks.length,
+    pass: passCount,
+    warn: warnCount,
+    fail: failCount,
+    overallStatus: failCount > 0 ? 'FAIL' : warnCount > 0 ? 'WARN' : 'PASS',
+  };
+
+  return {
+    content: [{
+      type: 'text' as const,
+      text: JSON.stringify({ summary, projects: auditResults }, null, 2),
+    }],
+  };
+});
+
 // --- Server Startup ---
 
 async function main(): Promise<void> {

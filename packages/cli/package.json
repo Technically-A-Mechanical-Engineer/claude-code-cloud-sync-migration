@@ -1,0 +1,30 @@
+{
+  "name": "@localground/cli",
+  "version": "3.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "localground": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@localground/core": "workspace:*",
+    "commander": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

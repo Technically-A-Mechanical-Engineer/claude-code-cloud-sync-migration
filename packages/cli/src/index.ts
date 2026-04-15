@@ -116,9 +116,9 @@ program
     console.log('\nMarkers:');
     for (const m of manifest.markers) {
       if (m.type === 'test-file') {
-        console.log(`  ${formatStatus('PASS')}  Test file: ${m.path} (checksum: ${m.checksum?.slice(0, 12)}...)`);
+        console.log(`  ${formatStatus('PASS')}  Test file: ${m.path} (checksum: ${m.checksum?.slice(0, 12) ?? 'N/A'})`);
       } else if (m.type === 'git-tag') {
-        console.log(`  ${formatStatus('PASS')}  Git tag: ${m.tag} (commit: ${m.commitHash?.slice(0, 8)})`);
+        console.log(`  ${formatStatus('PASS')}  Git tag: ${m.tag ?? 'N/A'} (commit: ${m.commitHash?.slice(0, 8) ?? 'N/A'})`);
       }
     }
 

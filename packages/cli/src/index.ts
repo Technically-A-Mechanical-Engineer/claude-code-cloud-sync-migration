@@ -422,6 +422,20 @@ program
       process.exit(EXIT_ERROR);
     }
 
+    // Validate user-supplied project paths are absolute
+    if (options.projects) {
+      const invalidPath = options.projects.find((p) => !path.isAbsolute(p));
+      if (invalidPath) {
+        const msg = `All project paths must be absolute. Invalid: ${invalidPath}`;
+        if (jsonMode) {
+          console.log(JSON.stringify({ success: false, reason: 'invalid_argument', detail: msg }, null, 2));
+        } else {
+          console.error(formatError('invalid_argument', msg));
+        }
+        process.exit(EXIT_ERROR);
+      }
+    }
+
     // Auto-discover project paths by decoding path-hash entries
     const paths = options.projects ?? (
       await Promise.all(

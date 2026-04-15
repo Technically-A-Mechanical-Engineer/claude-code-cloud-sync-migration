@@ -72,7 +72,7 @@
 |-------|------|-------------|-------|
 | 12 | 7/7 | Complete    | 2026-04-13 |
 | 13 | 6/6 | Complete   | 2026-04-13 |
-| 14 | Standalone CLI and Claude Code Skills | CLI-01 through CLI-04, SKILL-01 through SKILL-07 | 11 |
+| 14 | 1/7 | In Progress|  |
 | 15 | Testing, CI, Publishing, and Documentation | INFRA-03, INFRA-04, INFRA-05, INFRA-06, DOC-01, DOC-02 | 6 |
 | | **Total** | | **45** |
 

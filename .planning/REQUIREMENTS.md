@@ -41,10 +41,10 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 
 ### Standalone CLI
 
-- [ ] **CLI-01**: Expose all core operations as CLI commands via Commander.js (`detect`, `seed`, `copy`, `verify`, `reap`, `audit`, `cleanup-scan`)
-- [ ] **CLI-02**: Distribute via npx — `npx @localground/cli <command>` works with zero pre-installation
-- [ ] **CLI-03**: Support `--json` flag on all commands for machine-readable output
-- [ ] **CLI-04**: Human-readable formatted output by default (colored, structured)
+- [x] **CLI-01**: Expose all core operations as CLI commands via Commander.js (`detect`, `seed`, `copy`, `verify`, `reap`, `audit`, `cleanup-scan`)
+- [x] **CLI-02**: Distribute via npx — `npx @localground/cli <command>` works with zero pre-installation
+- [x] **CLI-03**: Support `--json` flag on all commands for machine-readable output
+- [x] **CLI-04**: Human-readable formatted output by default (colored, structured)
 
 ### Claude Code Skills
 
@@ -131,10 +131,10 @@ Explicitly excluded. Documented to prevent scope creep.
 | MCP-12 | Phase 13 | Complete |
 | MCP-13 | Phase 13 | Complete |
 | MCP-14 | Phase 13 | Complete |
-| CLI-01 | Phase 14 | Pending |
-| CLI-02 | Phase 14 | Pending |
-| CLI-03 | Phase 14 | Pending |
-| CLI-04 | Phase 14 | Pending |
+| CLI-01 | Phase 14 | Complete |
+| CLI-02 | Phase 14 | Complete |
+| CLI-03 | Phase 14 | Complete |
+| CLI-04 | Phase 14 | Complete |
 | SKILL-01 | Phase 14 | Pending |
 | SKILL-02 | Phase 14 | Pending |
 | SKILL-03 | Phase 14 | Pending |

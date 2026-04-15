@@ -4,8 +4,11 @@
 
 import { Command } from 'commander';
 import path from 'node:path';
-import { detect, seed, verify } from '@localground/core';
-import type { EnvironmentInfo } from '@localground/core';
+import {
+  detect, seed, verify, gitCheck, placeholderDetect, detectPlatform,
+  isPathCloudSynced, decode, classify, compare,
+} from '@localground/core';
+import type { EnvironmentInfo, Success, PathHashEntry } from '@localground/core';
 import { formatKeyValue, formatTable, formatSummary, formatError, formatStatus, EXIT_SUCCESS, EXIT_FAILURE, EXIT_ERROR } from './format.js';
 
 const program = new Command();
@@ -187,8 +190,180 @@ program
   .argument('<projectPath>', 'Absolute path to the project directory')
   .option('--manifest <path>', 'Path to seed manifest JSON')
   .option('--source <path>', 'Original source path for source/target comparison')
-  .action(async (_projectPath: string) => {
-    console.log('reap: not yet implemented (14-03)');
+  .action(async (projectPath: string, options: { manifest?: string; source?: string }) => {
+    const jsonMode = program.opts().json;
+
+    if (!path.isAbsolute(projectPath)) {
+      const msg = 'projectPath must be an absolute path';
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: 'invalid_argument', detail: msg }, null, 2));
+      } else {
+        console.error(formatError('invalid_argument', msg));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    interface CheckRow {
+      check: string;
+      status: 'PASS' | 'WARN' | 'FAIL' | 'N/A';
+      detail: string;
+    }
+
+    const checks: CheckRow[] = [];
+    const platformResult = detectPlatform();
+    const platform = platformResult.success ? platformResult.data.platform : 'linux';
+
+    // Check 1: Git integrity
+    try {
+      const gitResult = await gitCheck(projectPath);
+      if (!gitResult.success) {
+        checks.push({ check: 'git_integrity', status: 'FAIL', detail: `${gitResult.reason}: ${gitResult.detail}` });
+      } else {
+        const g = gitResult.data;
+        if (!g.fsck.passed) {
+          checks.push({ check: 'git_integrity', status: 'FAIL', detail: `git fsck failed: ${g.fsck.output}` });
+        } else if (!g.status.clean || g.dubiousOwnership) {
+          checks.push({ check: 'git_integrity', status: 'WARN', detail: g.dubiousOwnership ? 'Dubious ownership detected' : `Uncommitted changes: ${g.status.output}` });
+        } else {
+          checks.push({ check: 'git_integrity', status: 'PASS', detail: `Branch: ${g.branch}, commit: ${g.commitHash.slice(0, 8)}` });
+        }
+      }
+    } catch (err: unknown) {
+      checks.push({ check: 'git_integrity', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+    }
+
+    // Check 2: Placeholder files
+    try {
+      const phResult = await placeholderDetect(projectPath, platform);
+      if (!phResult.success) {
+        checks.push({ check: 'placeholder_files', status: 'FAIL', detail: `${phResult.reason}: ${phResult.detail}` });
+      } else if (phResult.data.hasPlaceholders) {
+        checks.push({ check: 'placeholder_files', status: 'WARN', detail: `${phResult.data.placeholderCount} placeholder files detected (${phResult.data.percentage.toFixed(1)}% of ${phResult.data.totalFiles} files)` });
+      } else {
+        checks.push({ check: 'placeholder_files', status: 'PASS', detail: `No placeholder files detected in ${phResult.data.totalFiles} files` });
+      }
+    } catch (err: unknown) {
+      checks.push({ check: 'placeholder_files', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+    }
+
+    // Check 3: Cloud sync status (uses detect())
+    const envResult = await detect();
+    try {
+      if (!envResult.success) {
+        checks.push({ check: 'cloud_sync', status: 'FAIL', detail: `${envResult.reason}: ${envResult.detail}` });
+      } else {
+        const synced = isPathCloudSynced(projectPath, envResult.data.cloud.syncRoot);
+        if (synced) {
+          checks.push({ check: 'cloud_sync', status: 'WARN', detail: `Project is on cloud-synced storage (${envResult.data.cloud.service})` });
+        } else {
+          checks.push({ check: 'cloud_sync', status: 'PASS', detail: 'Project is on local (non-cloud-synced) storage' });
+        }
+      }
+    } catch (err: unknown) {
+      checks.push({ check: 'cloud_sync', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+    }
+
+    // Check 4: Path-hash validity (uses detect() + decode() + classify())
+    try {
+      if (!envResult.success) {
+        checks.push({ check: 'path_hash_validity', status: 'FAIL', detail: `${envResult.reason}: ${envResult.detail}` });
+      } else {
+        const decoded = await Promise.all(
+          envResult.data.pathHashes.map((h) => decode(h.hashDirName))
+        );
+        const projectEntries = decoded
+          .filter((r): r is Success<PathHashEntry> =>
+            r.success && r.data.decodedPath !== null &&
+            r.data.decodedPath.toLowerCase() === projectPath.toLowerCase()
+          )
+          .map((r) => r.data);
+
+        if (projectEntries.length === 0) {
+          checks.push({ check: 'path_hash_validity', status: 'PASS', detail: 'No path-hash entries found for this project path' });
+        } else {
+          const classifications = await Promise.all(projectEntries.map((entry) => classify(entry)));
+          const stale = classifications.filter((c) => c.success && c.data.classification === 'stale');
+          const orphan = classifications.filter((c) => c.success && c.data.classification === 'orphan');
+          if (stale.length > 0 || orphan.length > 0) {
+            checks.push({ check: 'path_hash_validity', status: 'WARN', detail: `Found ${stale.length} stale and ${orphan.length} orphan path-hash entries` });
+          } else {
+            checks.push({ check: 'path_hash_validity', status: 'PASS', detail: `${projectEntries.length} valid path-hash entries` });
+          }
+        }
+      }
+    } catch (err: unknown) {
+      checks.push({ check: 'path_hash_validity', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+    }
+
+    // Check 5: Seed markers (N/A if no manifest)
+    try {
+      const verifyResult = await verify(projectPath, options.manifest);
+      if (!verifyResult.success) {
+        if (verifyResult.reason === 'manifest_not_found') {
+          checks.push({ check: 'seed_markers', status: 'N/A', detail: 'No seed manifest found — seed was not run for this project' });
+        } else {
+          checks.push({ check: 'seed_markers', status: 'FAIL', detail: `${verifyResult.reason}: ${verifyResult.detail}` });
+        }
+      } else if (verifyResult.data.allPassed) {
+        checks.push({ check: 'seed_markers', status: 'PASS', detail: `All ${verifyResult.data.results.length} markers verified` });
+      } else {
+        const failed = verifyResult.data.results.filter((r) => !r.passed);
+        checks.push({ check: 'seed_markers', status: 'FAIL', detail: `${failed.length} of ${verifyResult.data.results.length} markers failed verification` });
+      }
+    } catch (err: unknown) {
+      checks.push({ check: 'seed_markers', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+    }
+
+    // Check 6: Source/target alignment (N/A if no --source)
+    if (!options.source) {
+      checks.push({ check: 'source_target_alignment', status: 'N/A', detail: 'No --source path provided — cannot compare source and target' });
+    } else {
+      try {
+        const compareResult = await compare(options.source, projectPath);
+        if (!compareResult.success) {
+          checks.push({ check: 'source_target_alignment', status: 'FAIL', detail: `${compareResult.reason}: ${compareResult.detail}` });
+        } else {
+          const c = compareResult.data;
+          if (c.fileCountMatch && c.sizeMatch) {
+            checks.push({ check: 'source_target_alignment', status: 'PASS', detail: `Source and target match: ${c.source.fileCount} files, ${c.source.totalSize} bytes` });
+          } else {
+            const mismatches: string[] = [];
+            if (!c.fileCountMatch) mismatches.push(`file count: source=${c.source.fileCount} vs target=${c.target.fileCount}`);
+            if (!c.sizeMatch) mismatches.push(`size: source=${c.source.totalSize} vs target=${c.target.totalSize}`);
+            checks.push({ check: 'source_target_alignment', status: 'WARN', detail: `Mismatch: ${mismatches.join('; ')}` });
+          }
+        }
+      } catch (err: unknown) {
+        checks.push({ check: 'source_target_alignment', status: 'FAIL', detail: `Unexpected error: ${err instanceof Error ? err.message : String(err)}` });
+      }
+    }
+
+    // Output
+    if (jsonMode) {
+      console.log(JSON.stringify({ checks }, null, 2));
+      process.exit(checks.some((c) => c.status === 'FAIL') ? EXIT_FAILURE : EXIT_SUCCESS);
+    }
+
+    const checkLabels: Record<string, string> = {
+      git_integrity: 'Git integrity',
+      placeholder_files: 'Placeholder files',
+      cloud_sync: 'Cloud sync status',
+      path_hash_validity: 'Path-hash validity',
+      seed_markers: 'Seed markers',
+      source_target_alignment: 'Source/target alignment',
+    };
+
+    const rows = checks.map((c) => ({
+      status: c.status,
+      label: checkLabels[c.check] ?? c.check,
+      detail: c.detail,
+    }));
+
+    console.log(formatTable(rows));
+    console.log('');
+    console.log(formatSummary(rows));
+
+    process.exit(checks.some((c) => c.status === 'FAIL') ? EXIT_FAILURE : EXIT_SUCCESS);
   });
 
 // --- audit ---

@@ -53,7 +53,7 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 - [ ] **SKILL-03**: `/localground:reap` skill — calls MCP verify + health_check tools, generates natural language report
 - [ ] **SKILL-04**: `/localground:cleanup` skill — calls cleanup_scan, presents findings, collects per-item confirmation, executes deletions
 - [ ] **SKILL-05**: `/localground:verify` skill — calls audit tool, generates traffic-light report with recommendations
-- [ ] **SKILL-06**: All skills use `allowed-tools` frontmatter to pre-approve MCP tool calls
+- [x] **SKILL-06**: All skills use `allowed-tools` frontmatter to pre-approve MCP tool calls
 - [ ] **SKILL-07**: Migration skill handles two-session design — writes machine-readable state file for Session 2
 
 ### Infrastructure
@@ -140,7 +140,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | SKILL-03 | Phase 14 | Pending |
 | SKILL-04 | Phase 14 | Pending |
 | SKILL-05 | Phase 14 | Pending |
-| SKILL-06 | Phase 14 | Pending |
+| SKILL-06 | Phase 14 | Complete |
 | SKILL-07 | Phase 14 | Pending |
 | INFRA-03 | Phase 15 | Pending |
 | INFRA-04 | Phase 15 | Pending |

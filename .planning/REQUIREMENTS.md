@@ -48,11 +48,11 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 
 ### Claude Code Skills
 
-- [ ] **SKILL-01**: `/localground:seed` skill — calls MCP seed tool, presents results, guides to migration
+- [x] **SKILL-01**: `/localground:seed` skill — calls MCP seed tool, presents results, guides to migration
 - [ ] **SKILL-02**: `/localground:migrate` skill — orchestrates detect → copy → verify flow with confirmation gates per folder
-- [ ] **SKILL-03**: `/localground:reap` skill — calls MCP verify + health_check tools, generates natural language report
+- [x] **SKILL-03**: `/localground:reap` skill — calls MCP verify + health_check tools, generates natural language report
 - [ ] **SKILL-04**: `/localground:cleanup` skill — calls cleanup_scan, presents findings, collects per-item confirmation, executes deletions
-- [ ] **SKILL-05**: `/localground:verify` skill — calls audit tool, generates traffic-light report with recommendations
+- [x] **SKILL-05**: `/localground:verify` skill — calls audit tool, generates traffic-light report with recommendations
 - [x] **SKILL-06**: All skills use `allowed-tools` frontmatter to pre-approve MCP tool calls
 - [ ] **SKILL-07**: Migration skill handles two-session design — writes machine-readable state file for Session 2
 
@@ -135,11 +135,11 @@ Explicitly excluded. Documented to prevent scope creep.
 | CLI-02 | Phase 14 | Complete |
 | CLI-03 | Phase 14 | Complete |
 | CLI-04 | Phase 14 | Complete |
-| SKILL-01 | Phase 14 | Pending |
+| SKILL-01 | Phase 14 | Complete |
 | SKILL-02 | Phase 14 | Pending |
-| SKILL-03 | Phase 14 | Pending |
+| SKILL-03 | Phase 14 | Complete |
 | SKILL-04 | Phase 14 | Pending |
-| SKILL-05 | Phase 14 | Pending |
+| SKILL-05 | Phase 14 | Complete |
 | SKILL-06 | Phase 14 | Complete |
 | SKILL-07 | Phase 14 | Pending |
 | INFRA-03 | Phase 15 | Pending |

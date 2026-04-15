@@ -408,8 +408,142 @@ program
   .command('audit')
   .description('Environment-wide audit: discover projects, run health checks, traffic-light report')
   .option('--projects <paths...>', 'Specific project paths to audit (auto-discovers if omitted)')
-  .action(async () => {
-    console.log('audit: not yet implemented (14-04)');
+  .action(async (options: { projects?: string[] }) => {
+    const jsonMode = program.opts().json;
+
+    // Step 1: Discover projects
+    const envResult = await detect();
+    if (!envResult.success) {
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: envResult.reason, detail: envResult.detail }, null, 2));
+      } else {
+        console.error(formatError(envResult.reason, envResult.detail));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    // Auto-discover project paths by decoding path-hash entries
+    const paths = options.projects ?? (
+      await Promise.all(
+        envResult.data.pathHashes.map((h) => decode(h.hashDirName))
+      )
+    ).filter((r): r is Success<PathHashEntry> => r.success && r.data.decodedPath !== null && r.data.exists)
+     .map((r) => r.data.decodedPath as string);
+
+    if (paths.length === 0) {
+      if (jsonMode) {
+        console.log(JSON.stringify({ summary: { projectsAudited: 0, totalChecks: 0, pass: 0, warn: 0, fail: 0, overallStatus: 'PASS' }, projects: [] }, null, 2));
+      } else {
+        console.log('No projects found to audit.');
+      }
+      process.exit(EXIT_SUCCESS);
+    }
+
+    const platformResult = detectPlatform();
+    const platform = platformResult.success ? platformResult.data.platform : 'linux';
+
+    interface AuditCheck {
+      check: string;
+      status: 'PASS' | 'WARN' | 'FAIL' | 'N/A';
+      detail: string;
+    }
+
+    const auditResults: Array<{ projectPath: string; checks: AuditCheck[] }> = [];
+
+    // Step 2: Run 4 abbreviated health checks per project
+    for (const projectPath of paths) {
+      const checks: AuditCheck[] = [];
+
+      // Check 1: Git integrity
+      try {
+        const gitResult = await gitCheck(projectPath);
+        if (!gitResult.success) {
+          checks.push({ check: 'git_integrity', status: 'FAIL', detail: `${gitResult.reason}: ${gitResult.detail}` });
+        } else if (!gitResult.data.fsck.passed) {
+          checks.push({ check: 'git_integrity', status: 'FAIL', detail: 'git fsck failed' });
+        } else if (!gitResult.data.status.clean || gitResult.data.dubiousOwnership) {
+          checks.push({ check: 'git_integrity', status: 'WARN', detail: gitResult.data.dubiousOwnership ? 'Dubious ownership' : 'Uncommitted changes' });
+        } else {
+          checks.push({ check: 'git_integrity', status: 'PASS', detail: 'OK' });
+        }
+      } catch {
+        checks.push({ check: 'git_integrity', status: 'FAIL', detail: 'Unexpected error' });
+      }
+
+      // Check 2: Placeholder files
+      try {
+        const phResult = await placeholderDetect(projectPath, platform);
+        if (!phResult.success) {
+          checks.push({ check: 'placeholder_files', status: 'FAIL', detail: phResult.reason });
+        } else if (phResult.data.hasPlaceholders) {
+          checks.push({ check: 'placeholder_files', status: 'WARN', detail: `${phResult.data.placeholderCount} placeholders` });
+        } else {
+          checks.push({ check: 'placeholder_files', status: 'PASS', detail: 'None' });
+        }
+      } catch {
+        checks.push({ check: 'placeholder_files', status: 'FAIL', detail: 'Unexpected error' });
+      }
+
+      // Check 3: Cloud sync
+      const synced = isPathCloudSynced(projectPath, envResult.data.cloud.syncRoot);
+      checks.push({
+        check: 'cloud_sync',
+        status: synced ? 'WARN' : 'PASS',
+        detail: synced ? `Cloud-synced (${envResult.data.cloud.service})` : 'Local storage',
+      });
+
+      // Check 4: Stale references
+      try {
+        const scanResult = await scan(projectPath);
+        if (!scanResult.success) {
+          checks.push({ check: 'stale_references', status: 'FAIL', detail: scanResult.reason });
+        } else if (scanResult.data.matchCount > 0) {
+          checks.push({ check: 'stale_references', status: 'WARN', detail: `${scanResult.data.matchCount} stale references in ${scanResult.data.filesScanned} files` });
+        } else {
+          checks.push({ check: 'stale_references', status: 'PASS', detail: `Clean (${scanResult.data.filesScanned} files scanned)` });
+        }
+      } catch {
+        checks.push({ check: 'stale_references', status: 'FAIL', detail: 'Unexpected error' });
+      }
+
+      auditResults.push({ projectPath, checks });
+    }
+
+    // Step 3: Compute summary
+    const allChecks = auditResults.flatMap((r) => r.checks);
+    const failCount = allChecks.filter((c) => c.status === 'FAIL').length;
+    const warnCount = allChecks.filter((c) => c.status === 'WARN').length;
+    const passCount = allChecks.filter((c) => c.status === 'PASS').length;
+
+    const summary = {
+      projectsAudited: auditResults.length,
+      totalChecks: allChecks.length,
+      pass: passCount,
+      warn: warnCount,
+      fail: failCount,
+      overallStatus: failCount > 0 ? 'FAIL' : warnCount > 0 ? 'WARN' : 'PASS',
+    };
+
+    if (jsonMode) {
+      console.log(JSON.stringify({ summary, projects: auditResults }, null, 2));
+      process.exit(failCount > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
+    }
+
+    // Human-readable output: per-project section + overall summary
+    for (const project of auditResults) {
+      console.log(`\n${project.projectPath}`);
+      const rows = project.checks.map((c) => ({
+        status: c.status,
+        label: c.check.replace(/_/g, ' '),
+        detail: c.detail,
+      }));
+      console.log(formatTable(rows));
+    }
+
+    console.log('');
+    console.log(formatSummary(allChecks.map((c) => ({ status: c.status }))));
+
+    process.exit(failCount > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
   });
 
 // --- cleanup-scan ---

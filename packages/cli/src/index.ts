@@ -3,9 +3,10 @@
 // Calls @localground/core directly (D-05). Does NOT go through MCP server.
 
 import { Command } from 'commander';
-import { detect } from '@localground/core';
+import path from 'node:path';
+import { detect, seed, verify } from '@localground/core';
 import type { EnvironmentInfo } from '@localground/core';
-import { formatKeyValue, formatError, EXIT_SUCCESS, EXIT_FAILURE, EXIT_ERROR } from './format.js';
+import { formatKeyValue, formatTable, formatSummary, formatError, formatStatus, EXIT_SUCCESS, EXIT_FAILURE, EXIT_ERROR } from './format.js';
 
 const program = new Command();
 
@@ -73,8 +74,52 @@ program
   .command('seed')
   .description('Plant verifiable markers in a project before migration')
   .argument('<projectPath>', 'Absolute path to the project directory')
-  .action(async (_projectPath: string) => {
-    console.log('seed: not yet implemented (14-03)');
+  .action(async (projectPath: string) => {
+    const jsonMode = program.opts().json;
+
+    if (!path.isAbsolute(projectPath)) {
+      const msg = 'projectPath must be an absolute path';
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: 'invalid_argument', detail: msg }, null, 2));
+      } else {
+        console.error(formatError('invalid_argument', msg));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    const result = await seed(projectPath);
+
+    if (!result.success) {
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: result.reason, detail: result.detail }, null, 2));
+      } else {
+        console.error(formatError(result.reason, result.detail));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    if (jsonMode) {
+      console.log(JSON.stringify(result.data, null, 2));
+      process.exit(EXIT_SUCCESS);
+    }
+
+    const manifest = result.data;
+    console.log(formatKeyValue([
+      ['Project', manifest.projectName],
+      ['Path', manifest.projectPath],
+      ['Markers', `${manifest.markers.length} planted`],
+      ['Manifest', `${projectPath}/.localground-seed-manifest.json`],
+    ]));
+    console.log('\nMarkers:');
+    for (const m of manifest.markers) {
+      if (m.type === 'test-file') {
+        console.log(`  ${formatStatus('PASS')}  Test file: ${m.path} (checksum: ${m.checksum?.slice(0, 12)}...)`);
+      } else if (m.type === 'git-tag') {
+        console.log(`  ${formatStatus('PASS')}  Git tag: ${m.tag} (commit: ${m.commitHash?.slice(0, 8)})`);
+      }
+    }
+
+    process.exit(EXIT_SUCCESS);
   });
 
 // --- copy ---

@@ -138,8 +138,46 @@ program
   .description('Verify seed markers against manifest')
   .argument('<projectPath>', 'Absolute path to the project directory')
   .option('--manifest <path>', 'Path to seed manifest JSON (defaults to .localground-seed-manifest.json in projectPath)')
-  .action(async (_projectPath: string) => {
-    console.log('verify: not yet implemented (14-03)');
+  .action(async (projectPath: string, options: { manifest?: string }) => {
+    const jsonMode = program.opts().json;
+
+    if (!path.isAbsolute(projectPath)) {
+      const msg = 'projectPath must be an absolute path';
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: 'invalid_argument', detail: msg }, null, 2));
+      } else {
+        console.error(formatError('invalid_argument', msg));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    const result = await verify(projectPath, options.manifest);
+
+    if (!result.success) {
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: result.reason, detail: result.detail }, null, 2));
+      } else {
+        console.error(formatError(result.reason, result.detail));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    if (jsonMode) {
+      console.log(JSON.stringify(result.data, null, 2));
+      process.exit(EXIT_SUCCESS);
+    }
+
+    const rows = result.data.results.map((r) => ({
+      status: r.passed ? 'PASS' as const : 'FAIL' as const,
+      label: r.marker.type === 'test-file' ? `Test file checksum` : `Git tag ${r.marker.tag ?? ''}`,
+      detail: r.detail,
+    }));
+
+    console.log(formatTable(rows));
+    console.log('');
+    console.log(formatSummary(rows));
+
+    process.exit(result.data.allPassed ? EXIT_SUCCESS : EXIT_FAILURE);
   });
 
 // --- reap ---

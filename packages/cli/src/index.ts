@@ -3,6 +3,9 @@
 // Calls @localground/core directly (D-05). Does NOT go through MCP server.
 
 import { Command } from 'commander';
+import { detect } from '@localground/core';
+import type { EnvironmentInfo } from '@localground/core';
+import { formatKeyValue, formatError, EXIT_SUCCESS, EXIT_FAILURE, EXIT_ERROR } from './format.js';
 
 const program = new Command();
 
@@ -17,7 +20,52 @@ program
   .command('detect')
   .description('Detect environment: OS, shell, cloud sync status, projects, path-hashes')
   .action(async () => {
-    console.log('detect: not yet implemented (14-02)');
+    const result = await detect();
+    const jsonMode = program.opts().json;
+
+    if (!result.success) {
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: result.reason, detail: result.detail }, null, 2));
+      } else {
+        console.error(formatError(result.reason, result.detail));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    if (jsonMode) {
+      console.log(JSON.stringify(result.data, null, 2));
+      process.exit(EXIT_SUCCESS);
+    }
+
+    const env = result.data;
+    const output = formatKeyValue([
+      ['OS', `${env.platform.platform} (${env.platform.shell})`],
+      ['Home', env.platform.homeDir],
+      ['Cloud sync', env.cloud.service === 'none' ? 'None detected' : `${env.cloud.service} (${env.cloud.syncRoot ?? 'unknown root'})`],
+      ['Cloud synced', env.cloud.isCloudSynced ? 'Yes' : 'No'],
+      ['Projects', env.projects.length > 0 ? `${env.projects.length} discovered` : 'None discovered'],
+      ['Path-hashes', `${env.pathHashes.length} entries in ${env.claudeConfigDir}`],
+    ]);
+    console.log(output);
+
+    if (env.projects.length > 0) {
+      console.log('\nProjects:');
+      for (const p of env.projects) {
+        const cloudLabel = p.isCloudSynced ? ` [${p.cloudService}]` : '';
+        console.log(`  ${p.name}${cloudLabel}: ${p.path}`);
+      }
+    }
+
+    if (env.pathHashes.length > 0) {
+      console.log('\nPath-hash entries:');
+      for (const h of env.pathHashes) {
+        const decoded = h.decodedPath ?? '(undecodable)';
+        const existsLabel = h.exists ? '' : ' [missing]';
+        console.log(`  ${h.hashDirName} -> ${decoded}${existsLabel}`);
+      }
+    }
+
+    process.exit(EXIT_SUCCESS);
   });
 
 // --- seed ---

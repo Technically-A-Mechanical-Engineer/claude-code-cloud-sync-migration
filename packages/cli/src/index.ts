@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import path from 'node:path';
 import {
-  detect, seed, verify, gitCheck, placeholderDetect, detectPlatform,
+  detect, seed, verify, copy, scan, gitCheck, placeholderDetect, detectPlatform,
   isPathCloudSynced, decode, classify, compare,
 } from '@localground/core';
 import type { EnvironmentInfo, Success, PathHashEntry } from '@localground/core';
@@ -131,8 +131,45 @@ program
   .description('Copy a project directory to a local path')
   .argument('<source>', 'Absolute path to the source project directory')
   .argument('<target>', 'Absolute path to the target directory (must not exist)')
-  .action(async (_source: string, _target: string) => {
-    console.log('copy: not yet implemented (14-04)');
+  .action(async (source: string, target: string) => {
+    const jsonMode = program.opts().json;
+
+    if (!path.isAbsolute(source) || !path.isAbsolute(target)) {
+      const msg = 'Both source and target must be absolute paths';
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: 'invalid_argument', detail: msg }, null, 2));
+      } else {
+        console.error(formatError('invalid_argument', msg));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    const result = await copy(source, target);
+
+    if (!result.success) {
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: result.reason, detail: result.detail }, null, 2));
+      } else {
+        console.error(formatError(result.reason, result.detail));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    if (jsonMode) {
+      console.log(JSON.stringify(result.data, null, 2));
+      process.exit(EXIT_SUCCESS);
+    }
+
+    console.log(formatKeyValue([
+      ['Source', result.data.source],
+      ['Target', result.data.target],
+      ['Tool', result.data.tool],
+      ['Files copied', String(result.data.filesCopied)],
+      ['Exit code', String(result.data.exitCode)],
+      ['Status', result.data.summary],
+    ]));
+
+    process.exit(EXIT_SUCCESS);
   });
 
 // --- verify ---

@@ -74,6 +74,7 @@ export function formatSummary(
   const pass = rows.filter((r) => r.status === 'PASS').length;
   const warn = rows.filter((r) => r.status === 'WARN').length;
   const fail = rows.filter((r) => r.status === 'FAIL').length;
+  const na = rows.filter((r) => r.status === 'N/A').length;
   const total = rows.length;
 
   let overall: string;
@@ -85,7 +86,7 @@ export function formatSummary(
     overall = colorize('GREEN', pc.green);
   }
 
-  return `Overall: ${overall} (${total} checks: ${pass} PASS, ${warn} WARN, ${fail} FAIL)`;
+  return `Overall: ${overall} (${total} checks: ${pass} PASS, ${warn} WARN, ${fail} FAIL, ${na} N/A)`;
 }
 
 /**

@@ -9,7 +9,8 @@ Desktop.ini
 *~
 
 # Claude Code local directories
-.claude/
+.claude/*
+!.claude/skills/
 .planning/
 
 # Node.js

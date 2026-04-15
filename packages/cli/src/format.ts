@@ -35,6 +35,7 @@ export function formatStatus(status: 'PASS' | 'WARN' | 'FAIL' | 'N/A'): string {
  *   Cloud sync:  OneDrive (Personal)
  */
 export function formatKeyValue(pairs: Array<[string, string]>): string {
+  if (pairs.length === 0) return '';
   const maxKeyLen = Math.max(...pairs.map(([k]) => k.length));
   return pairs
     .map(([key, value]) => `${key}:${' '.repeat(maxKeyLen - key.length + 1)} ${value}`)

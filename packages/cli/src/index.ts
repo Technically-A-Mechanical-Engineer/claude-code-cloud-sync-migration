@@ -355,6 +355,16 @@ program
     if (!options.source) {
       checks.push({ check: 'source_target_alignment', status: 'N/A', detail: 'No --source path provided — cannot compare source and target' });
     } else {
+      if (!path.isAbsolute(options.source)) {
+        const msg = '--source must be an absolute path';
+        if (jsonMode) {
+          console.log(JSON.stringify({ success: false, reason: 'invalid_argument', detail: msg }, null, 2));
+        } else {
+          console.error(formatError('invalid_argument', msg));
+        }
+        process.exit(EXIT_ERROR);
+      }
+
       try {
         const compareResult = await compare(options.source, projectPath);
         if (!compareResult.success) {

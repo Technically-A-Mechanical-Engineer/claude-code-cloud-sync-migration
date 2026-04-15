@@ -551,8 +551,53 @@ program
   .command('cleanup-scan')
   .description('Scan for stale cloud path references and cleanup candidates (read-only)')
   .argument('<dirPath>', 'Absolute path to the directory to scan')
-  .action(async (_dirPath: string) => {
-    console.log('cleanup-scan: not yet implemented (14-04)');
+  .action(async (dirPath: string) => {
+    const jsonMode = program.opts().json;
+
+    if (!path.isAbsolute(dirPath)) {
+      const msg = 'dirPath must be an absolute path';
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: 'invalid_argument', detail: msg }, null, 2));
+      } else {
+        console.error(formatError('invalid_argument', msg));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    const result = await scan(dirPath);
+
+    if (!result.success) {
+      if (jsonMode) {
+        console.log(JSON.stringify({ success: false, reason: result.reason, detail: result.detail }, null, 2));
+      } else {
+        console.error(formatError(result.reason, result.detail));
+      }
+      process.exit(EXIT_ERROR);
+    }
+
+    if (jsonMode) {
+      console.log(JSON.stringify(result.data, null, 2));
+      process.exit(EXIT_SUCCESS);
+    }
+
+    console.log(formatKeyValue([
+      ['Directory', dirPath],
+      ['Files scanned', String(result.data.filesScanned)],
+      ['Matches found', String(result.data.matchCount)],
+    ]));
+
+    if (result.data.matches.length > 0) {
+      console.log('\nStale references:');
+      for (const match of result.data.matches) {
+        console.log(`  ${match.file}:${match.line}`);
+        console.log(`    Cloud path: ${match.cloudPath}`);
+        console.log(`    Content: ${match.content.trim()}`);
+      }
+    } else {
+      console.log('\nNo stale cloud path references found.');
+    }
+
+    process.exit(EXIT_SUCCESS);
   });
 
 await program.parseAsync(process.argv);

@@ -529,8 +529,21 @@ program
 
     const auditResults: Array<{ projectPath: string; checks: AuditCheck[] }> = [];
 
+    // TIER 1 progress feedback: announce audit scope before the per-project loop.
+    // Routed to stderr so JSON consumers reading stdout stay clean.
+    // Gated on !jsonMode so JSON mode produces zero chatter.
+    if (!jsonMode) {
+      console.error(`Auditing ${paths.length} project${paths.length === 1 ? '' : 's'}...`);
+    }
+
     // Step 2: Run 4 abbreviated health checks per project
-    for (const projectPath of paths) {
+    for (let i = 0; i < paths.length; i++) {
+      const projectPath = paths[i];
+
+      if (!jsonMode) {
+        console.error(`  [${i + 1}/${paths.length}] ${projectPath}`);
+      }
+
       const checks: AuditCheck[] = [];
 
       // Check 1: Git integrity

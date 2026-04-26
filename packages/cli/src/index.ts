@@ -8,7 +8,7 @@ import {
   detect, seed, verify, copy, scan, gitCheck, placeholderDetect, detectPlatform,
   isPathCloudSynced, decode, classify, compare,
 } from '@localground/core';
-import type { EnvironmentInfo, Success, PathHashEntry } from '@localground/core';
+import type { EnvironmentInfo, Success, PathHashEntry, ProjectEntry } from '@localground/core';
 import { formatKeyValue, formatTable, formatSummary, formatError, formatStatus, EXIT_SUCCESS, EXIT_FAILURE, EXIT_ERROR } from './format.js';
 
 const program = new Command();
@@ -36,12 +36,50 @@ program
       process.exit(EXIT_ERROR);
     }
 
+    // Honor the downstream contract documented in packages/core/src/environment/detect.ts:50,58-64.
+    // Core detect() returns decodedPath: null and projects: [] by design — consumers must
+    // invoke decode() per entry to populate them. This pattern matches the audit handler
+    // (see lines ~450-455 in this file) so the two surfaces stay consistent.
+    const decodedResults = await Promise.all(
+      result.data.pathHashes.map((h) => decode(h.hashDirName))
+    );
+
+    // Replace the null decodedPath values in pathHashes with real decoded paths.
+    // Failed decodes keep decodedPath: null (rendered as `(undecodable)` below).
+    const enrichedPathHashes: PathHashEntry[] = decodedResults.map((r, i) => {
+      if (r.success) {
+        return r.data;
+      }
+      return result.data.pathHashes[i]; // keep the null decodedPath shape on decode failure
+    });
+
+    // Auto-populate projects[] from successful decodes whose paths exist.
+    // Same filter as audit (decode-success + exists) — see plan 14-10 for project-shape scoping.
+    const enrichedProjects: ProjectEntry[] = decodedResults
+      .filter((r): r is Success<PathHashEntry> => r.success && r.data.decodedPath !== null && r.data.exists)
+      .map((r) => {
+        const p = r.data.decodedPath as string;
+        const name = path.basename(p);
+        const synced = isPathCloudSynced(p, result.data.cloud.syncRoot);
+        return {
+          name,
+          path: p,
+          isCloudSynced: synced,
+          cloudService: synced ? result.data.cloud.service : ('none' as const),
+        };
+      });
+
+    const env: EnvironmentInfo = {
+      ...result.data,
+      pathHashes: enrichedPathHashes,
+      projects: enrichedProjects,
+    };
+
     if (jsonMode) {
-      console.log(JSON.stringify(result.data, null, 2));
+      console.log(JSON.stringify(env, null, 2));
       process.exit(EXIT_SUCCESS);
     }
 
-    const env = result.data;
     const output = formatKeyValue([
       ['OS', `${env.platform.platform} (${env.platform.shell})`],
       ['Home', env.platform.homeDir],

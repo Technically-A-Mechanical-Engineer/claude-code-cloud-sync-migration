@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: verifying
-stopped_at: Completed 14-09-PLAN.md (gap-closure for Defect A / CLI+MCP detect decode wiring)
-last_updated: "2026-04-26T16:52:55Z"
+stopped_at: Completed 14-10-PLAN.md (gap-closure for audit auto-discovery scope / looksLikeProject predicate)
+last_updated: "2026-04-26T17:05:32Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 4
@@ -18,13 +18,13 @@ progress:
 
 **Status:** Phase complete + gap-closure in progress
 **Last Activity:** 2026-04-26
-**Current focus:** Phase 14 — standalone-cli-and-claude-code-skills (UAT gap closure: 14-08 done; 14-09/10/11 pending)
+**Current focus:** Phase 14 — standalone-cli-and-claude-code-skills (UAT gap closure: 14-08/09/10 done; 14-11 pending)
 
 ## Current Position
 
 Phase: 14 (standalone-cli-and-claude-code-skills) — EXECUTING (gap closure)
-Plan: 7 of 7 baseline complete + 14-08 (Defect B / decoder rewrite) + 14-09 (Defect A / CLI+MCP detect decode wiring) complete
-Status: Phase 14 baseline complete; gap-closure plans 14-08, 14-09 done; 14-10, 14-11 pending
+Plan: 7 of 7 baseline complete + 14-08 (Defect B / decoder rewrite) + 14-09 (Defect A / CLI+MCP detect decode wiring) + 14-10 (gap-3 / audit auto-discovery scope) complete
+Status: Phase 14 baseline complete; gap-closure plans 14-08, 14-09, 14-10 done; 14-11 pending
 Last activity: 2026-04-26
 
 Progress: [██████████] 100%
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 | Phase 14 P07 | 1min | 2 tasks | 2 files |
 | Phase 14 P08 | 6min | 2 tasks | 1 files |
 | Phase 14 P09 | 5min | 2 tasks | 2 files |
+| Phase 14 P10 | 5min | 5 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,10 @@ Progress: [██████████] 100%
 - [Phase 14-09]: Surface-level decode-and-enrich pattern at CLI and MCP detect handlers — core detect() preserves its intentional null-return contract (lines 50, 58-64); consumers invoke decode() in parallel via Promise.all and enrich the response. Mirrors the existing audit handler in both packages for consumer parity.
 - [Phase 14-09]: Use inline `'none' as const` cast on the cloudService literal only, not trailing `as const` on the whole project object — trailing as const produces a readonly type that fails to assign to mutable `ProjectEntry[]`.
 - [Phase 14-09]: Inherited two non-project entries in auto-discovered projects[] (`C:\` and bare home dir) — known design boundary; deferred to plan 14-10 (looksLikeProject scoping). Filter parity with audit is the deliberate choice for this wave.
+- [Phase 14-10]: Path-shape-only `looksLikeProject` predicate — no marker check (no `.git/`, no `package.json`) — Phase 14 D-01 explicitly supports plain-folder projects, so a marker check would over-reject. Cross-platform: case-insensitive on Windows via `process.platform === 'win32'` toLowerCase comparison; case-sensitive elsewhere.
+- [Phase 14-10]: Filter applies only to auto-discovery branch; explicit `--projects` / `projectPaths` user input bypasses it — explicit-over-implicit. Confirmed by running `audit --projects "C:\"` and observing `C:\` IS audited despite predicate rejecting it.
+- [Phase 14-10]: Single core export consumed by both CLI and MCP — replaces the copy-paste filter chain that drifted in the diagnosis baseline. Future drift now requires conscious divergence in core, not silent copy-paste.
+- [Phase 14-10]: Two-statement refactor (`autoDiscovered` + `paths`) over inline `?? + filter chain` — separates filter scope from explicit-input bypass visually; easier to review than the previous one-expression form. Used identically at both CLI and MCP audit sites for structural parity.
 
 ### Pending Todos
 
@@ -105,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-26T16:52:55Z
-Stopped at: Completed 14-09-PLAN.md (gap-closure for Defect A / CLI+MCP detect decode wiring)
+Last session: 2026-04-26T17:05:32Z
+Stopped at: Completed 14-10-PLAN.md (gap-closure for audit auto-discovery scope / looksLikeProject predicate)
 Resume file: None

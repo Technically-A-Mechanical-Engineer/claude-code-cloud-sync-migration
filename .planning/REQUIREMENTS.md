@@ -63,12 +63,12 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 - [x] **INFRA-03**: Automated test suite (Vitest) covering core library deterministic operations
 - [x] **INFRA-04**: GitHub Actions CI running tests on Windows and macOS runners
 - [ ] **INFRA-05**: npm publishing pipeline for @localground/mcp and @localground/cli packages
-- [ ] **INFRA-06**: v2.0.0 prompts preserved in prompts/ directory as no-install fallback
+- [x] **INFRA-06**: v2.0.0 prompts preserved in prompts/ directory as no-install fallback
 
 ### Documentation
 
-- [ ] **DOC-01**: README with installation paths (MCP add, CLI install, legacy prompts) including Windows `cmd /c` setup
-- [ ] **DOC-02**: CLAUDE.md updated for v3.0.0 architecture
+- [x] **DOC-01**: README with installation paths (MCP add, CLI install, legacy prompts) including Windows `cmd /c` setup
+- [x] **DOC-02**: CLAUDE.md updated for v3.0.0 architecture
 
 ## Future Requirements
 
@@ -145,9 +145,9 @@ Explicitly excluded. Documented to prevent scope creep.
 | INFRA-03 | Phase 15 | Complete |
 | INFRA-04 | Phase 15 | Complete (2026-04-26) |
 | INFRA-05 | Phase 15 | Pending |
-| INFRA-06 | Phase 15 | Pending |
-| DOC-01 | Phase 15 | Pending |
-| DOC-02 | Phase 15 | Pending |
+| INFRA-06 | Phase 15 | Complete |
+| DOC-01 | Phase 15 | Complete |
+| DOC-02 | Phase 15 | Complete |
 
 **Coverage:**
 - v3.0.0 requirements: 45 total

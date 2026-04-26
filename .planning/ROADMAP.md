@@ -14,7 +14,7 @@
 
 - [ ] **Phase 12: Monorepo Foundation and Core Library** - Scaffold npm workspaces monorepo and build the shared core library that all packages depend on
 - [ ] **Phase 13: MCP Server** - Build the MCP server exposing all LocalGround operations as Claude Code tool calls
-- [ ] **Phase 14: Standalone CLI and Claude Code Skills** - Build the npx-distributable CLI and Claude Code skills that orchestrate MCP tools
+- [x] **Phase 14: Standalone CLI and Claude Code Skills** - Build the npx-distributable CLI and Claude Code skills that orchestrate MCP tools (completed 2026-04-26)
 - [ ] **Phase 15: Testing, CI, Publishing, and Documentation** - Automated test suite, GitHub Actions CI, npm publishing pipeline, and user-facing documentation
 
 ## Phase Details

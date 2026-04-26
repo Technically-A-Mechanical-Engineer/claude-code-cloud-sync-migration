@@ -62,6 +62,51 @@ After registration, Claude Code can call these tools directly:
 | `localground_cleanup_scan` | Identify stale/orphan/source candidates without deleting | Yes |
 | `localground_placeholder_check` | Detect cloud placeholder files in a directory | Yes |
 
+## CLI (v3.0.0)
+
+Run LocalGround operations directly from your terminal without registering an MCP server. Useful when you want a one-off command, or when you are not running Claude Code interactively.
+
+### Installation
+
+No installation required. The CLI runs through `npx`, which downloads the package on first use:
+
+```bash
+# Detect what is on your machine (read-only)
+npx -y @localground/cli detect
+
+# Audit the environment (read-only, traffic-light findings)
+npx -y @localground/cli audit
+
+# Plant migration markers (writes a test file + git tag)
+npx -y @localground/cli seed /path/to/your/project
+
+# Copy a project safely (never deletes the source)
+npx -y @localground/cli copy /path/to/source /path/to/destination
+
+# Verify markers survived a copy
+npx -y @localground/cli verify /path/to/migrated/project
+
+# Run the six post-migration health checks
+npx -y @localground/cli reap /path/to/migrated/project
+
+# Identify cleanup candidates (read-only, no deletion)
+npx -y @localground/cli cleanup-scan
+```
+
+All commands support `--json` for machine-readable output:
+
+```bash
+npx -y @localground/cli detect --json
+```
+
+Status messages (e.g., progress lines from a long copy) print to stderr; the JSON output prints to stdout. Pipe stdout to `jq` or save it to a file without losing the status output:
+
+```bash
+npx -y @localground/cli audit --json | jq '.findings[] | select(.severity == "fail")'
+```
+
+Unlike the MCP server, the CLI does not require the Windows `cmd /c` prefix — `npx` runs directly because you are typing the command interactively, not having Claude Code spawn it.
+
 ## How to Use (v2.0.0 Prompts)
 
 ### Seed (optional — before migration)
@@ -130,6 +175,10 @@ All five prompts use three-way shell detection to provide platform-correct comma
 - **One file, one paste.** No installation, no dependencies, no plugins. Copy the entire file and paste it into Claude Code.
 - **Platform-correct commands.** Three-way shell detection ensures the right commands for your environment.
 - **Graceful coexistence.** Each prompt interprets missing artifacts as possible prior cleanup, not corruption.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ## License
 

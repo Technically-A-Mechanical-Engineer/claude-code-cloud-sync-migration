@@ -5,7 +5,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   detect, decode, placeholderDetect, detectPlatform, seed, verify, scan,
-  classify, chunk, copy, gitCheck, compare, isPathCloudSynced,
+  classify, chunk, copy, gitCheck, compare, isPathCloudSynced, looksLikeProject,
 } from '@localground/core';
 import type { Result, Success, ChunkPlan, CopyData, PathHashEntry } from '@localground/core';
 import { z } from 'zod';
@@ -706,12 +706,18 @@ server.registerTool('localground_audit', {
 
   // Auto-discover project paths by decoding path-hash entries.
   // detect() returns projects: [] by design — decode() is the discovery mechanism.
-  const paths = projectPaths ?? (
+  // looksLikeProject filters out filesystem root and home directory entries
+  // that decode validly but are not projects. Explicit projectPaths from the
+  // caller are NOT filtered — input is respected.
+  const autoDiscovered = (
     await Promise.all(
       envResult.data.pathHashes.map((h) => decode(h.hashDirName))
     )
   ).filter((r): r is Success<PathHashEntry> => r.success && r.data.decodedPath !== null && r.data.exists)
-   .map((r) => r.data.decodedPath as string);
+   .map((r) => r.data.decodedPath as string)
+   .filter(looksLikeProject);
+
+  const paths = projectPaths ?? autoDiscovered;
   const platformResult = detectPlatform();
   const platform = platformResult.success ? platformResult.data.platform : 'linux';
 

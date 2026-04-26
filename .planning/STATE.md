@@ -3,31 +3,31 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: executing
-stopped_at: Phase 15 context gathered
-last_updated: "2026-04-26T20:15:11.300Z"
+stopped_at: Completed Phase 15 Plan 01 (test infra + bundle strategy decision)
+last_updated: "2026-04-26T20:57:33.173Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 24
-  percent: 80
+  completed_plans: 25
+  percent: 83
 ---
 
 # Project State
 
 **Status:** Ready to execute
 **Last Activity:** 2026-04-26
-**Current focus:** Phase 15 — Testing, CI, Publishing, and Documentation (next up)
+**Current focus:** Phase 15 — testing-ci-publishing-and-documentation
 
 ## Current Position
 
-Phase: 14 (standalone-cli-and-claude-code-skills) — VERIFICATION PASSED ✓
-Plan: 11 of 11 (7 baseline + 4 gap-closure) complete + verification passed (5/5 gap-closure must-haves; 11/11 phase requirements)
+Phase: 15 (testing-ci-publishing-and-documentation) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-04-26 -- Phase 15 planning complete
+Last activity: 2026-04-26
 
-Progress: [██████████] 100%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [██████████] 100%
 | Phase 14 P09 | 5min | 2 tasks | 2 files |
 | Phase 14 P10 | 5min | 5 tasks | 4 files |
 | Phase 14 P11 | 3min | 3 tasks | 1 files |
+| Phase 15 P15-01 | 15min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,7 @@ Progress: [██████████] 100%
 - [Phase 14-11]: Stdout = data, stderr = chatter — conventional Unix split applied at CLI handler layer. JSON consumers reading stdout get clean parseable JSON; humans see status on stderr. Belt-and-suspenders: !jsonMode gate suppresses status lines on BOTH streams in JSON mode.
 - [Phase 14-11]: Three-line copy status block (Copying from / to / via) over single-line — OneDrive corporate paths regularly exceed 80 chars; three labeled lines stay scannable in 80-100 char terminals.
 - [Phase 14-11]: For-of to indexed-for conversion in audit per-iteration progress emission — surfaces position (i+1)/N without restructuring the loop body. checks.push count snapshot before/after edits both 42 (zero behavioral drift in check logic).
+- [Phase 15-01]: Bundle strategy = Option A (core stays private, tsup noExternal inlines into mcp/cli dist) — confirmed by D-20 smoke check (4 metrics in 15-01-SUMMARY.md)
 
 ### Pending Todos
 
@@ -115,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-26T19:15:41.637Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-testing-ci-publishing-and-documentation/15-CONTEXT.md
+Last session: 2026-04-26T20:57:24.429Z
+Stopped at: Completed Phase 15 Plan 01 (test infra + bundle strategy decision)
+Resume file: None

@@ -68,7 +68,7 @@
 
 Plans:
 **Wave 1**
-- [ ] 15-01-PLAN.md — Test infra + tsup noExternal smoke check (D-17 fix, vitest config, bundle strategy decision)
+- [x] 15-01-PLAN.md — Test infra + tsup noExternal smoke check (D-17 fix, vitest config, bundle strategy decision)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 15-02-PLAN.md — Core deep unit tests (12 functions, real os.tmpdir() fixtures)
@@ -90,7 +90,7 @@ Plans:
 | 12 | 7/7 | Complete    | 2026-04-13 |
 | 13 | 6/6 | Complete   | 2026-04-13 |
 | 14 | 11/11 | Complete (incl. gap-closure 14-08..14-11)   | 2026-04-26 |
-| 15 | Testing, CI, Publishing, and Documentation | INFRA-03, INFRA-04, INFRA-05, INFRA-06, DOC-01, DOC-02 | 6 reqs / 6 plans |
+| 15 | 1/6 | In Progress|  |
 | | **Total** | | **45** |
 
 ## Phases (v1.2.0 -- Completed)

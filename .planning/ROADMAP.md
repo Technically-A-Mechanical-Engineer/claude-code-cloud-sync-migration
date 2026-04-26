@@ -67,12 +67,21 @@
 **Plans**: 6 plans
 
 Plans:
+**Wave 1**
 - [ ] 15-01-PLAN.md — Test infra + tsup noExternal smoke check (D-17 fix, vitest config, bundle strategy decision)
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 15-02-PLAN.md — Core deep unit tests (12 functions, real os.tmpdir() fixtures)
 - [ ] 15-03-PLAN.md — MCP and CLI thin smoke tests (9 tools + 7 commands + stdout/JSON discipline)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 15-04-PLAN.md — GitHub Actions CI workflow (Win + Mac + Linux, Node 20.x, npm ci + tsup build + vitest)
-- [ ] 15-05-PLAN.md — Release workflow + npm trusted-publisher setup + first tag push (OIDC, provenance)
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 15-06-PLAN.md — README CLI section + CLAUDE.md refresh + CHANGELOG.md + prompts freeze verification
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 15-05-PLAN.md — Release workflow + npm trusted-publisher setup + first tag push (OIDC, provenance)
 
 ## Phase Summary
 

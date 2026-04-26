@@ -4,94 +4,16 @@
 
 - ✅ **v1.2.0 Cloud-Sync Toolkit** -- Phases 1-4 (shipped 2026-04-11) -- [archive](milestones/v1.2.0-ROADMAP.md)
 - ✅ **v2.0.0 Five-Prompt Toolkit with Unified Versioning** -- Phases 5-11 (shipped 2026-04-12) -- [archive](milestones/v2.0.0-ROADMAP.md)
-- 🚧 **v3.0.0 MCP Server + CLI Tooling** -- Phases 12-15 (in progress)
+- ✅ **v3.0.0 MCP Server + CLI Tooling** -- Phases 12-15 (shipped 2026-04-26) -- [archive](milestones/v3.0.0-ROADMAP.md)
 
 ## Phases
 
 **Phase Numbering:**
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+- 999.x: Backlog parking lot (unsequenced — see Backlog section)
 
-- [ ] **Phase 12: Monorepo Foundation and Core Library** - Scaffold npm workspaces monorepo and build the shared core library that all packages depend on
-- [ ] **Phase 13: MCP Server** - Build the MCP server exposing all LocalGround operations as Claude Code tool calls
-- [x] **Phase 14: Standalone CLI and Claude Code Skills** - Build the npx-distributable CLI and Claude Code skills that orchestrate MCP tools (completed 2026-04-26)
-- [ ] **Phase 15: Testing, CI, Publishing, and Documentation** - Automated test suite, GitHub Actions CI, npm publishing pipeline, and user-facing documentation
-
-## Phase Details
-
-### Phase 12: Monorepo Foundation and Core Library
-**Goal**: Developers can import @localground/core and call every deterministic operation (detect, decode, checksum, copy, seed, verify, scan) with structured return types
-**Depends on**: Nothing (first phase of v3.0.0)
-**Requirements**: INFRA-01, INFRA-02, CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, CORE-08, CORE-09, CORE-10, CORE-11, CORE-12
-**Success Criteria** (what must be TRUE):
-  1. Running `npm install` from the repo root installs all three workspace packages (core, mcp, cli) with correct cross-references
-  2. TypeScript strict mode compiles the core package with zero errors and tsup produces a working build artifact
-  3. Core library exports detect, decode, classify, checksum, compare, placeholder-detect, git-check, copy, seed, verify, scan, and chunk functions that return structured typed results (not raw strings)
-  4. Platform-specific operations (robocopy vs rsync, PowerShell vs bash checksum tools) select the correct implementation based on detected OS and shell
-**Plans**: TBD
-
-### Phase 13: MCP Server
-**Goal**: Claude Code users can add the LocalGround MCP server and invoke all operations as native tool calls with structured JSON responses
-**Depends on**: Phase 12
-**Requirements**: MCP-01, MCP-02, MCP-03, MCP-04, MCP-05, MCP-06, MCP-07, MCP-08, MCP-09, MCP-10, MCP-11, MCP-12, MCP-13, MCP-14
-**Success Criteria** (what must be TRUE):
-  1. Running `claude mcp add localground` registers the server and Claude Code can call `localground_detect` to get structured environment JSON
-  2. All ten tool endpoints (detect, decode_path_hash, seed, copy, verify, health_check, audit, cleanup_scan, placeholder_check) respond with structured JSON and every tool has correct annotations (readOnlyHint, destructiveHint, idempotentHint)
-  3. Errors from any tool return `isError: true` with an actionable human-readable message (not stack traces)
-  4. Long-running operations (copy, audit) send progress notifications that Claude Code can surface to the user
-  5. Server produces zero stdout pollution -- all logging goes to stderr, stdout is reserved for JSON-RPC transport
-**Plans**: TBD
-
-### Phase 14: Standalone CLI and Claude Code Skills
-**Goal**: Users can run `npx @localground/cli <command>` for direct terminal usage, and invoke `/localground:*` skills in Claude Code for guided workflows with confirmation gates
-**Depends on**: Phase 13
-**Requirements**: CLI-01, CLI-02, CLI-03, CLI-04, SKILL-01, SKILL-02, SKILL-03, SKILL-04, SKILL-05, SKILL-06, SKILL-07
-**Success Criteria** (what must be TRUE):
-  1. Running `npx @localground/cli detect` returns human-readable environment summary, and `npx @localground/cli detect --json` returns machine-readable JSON -- same for all commands (detect, seed, copy, verify, reap, audit, cleanup-scan)
-  2. Each of the five `/localground:*` skills (seed, migrate, reap, cleanup, verify) invokes the correct MCP tools and presents results with natural language interpretation
-  3. The migration skill (`/localground:migrate`) orchestrates detect-copy-verify with per-folder confirmation gates, and writes machine-readable state for Session 2 continuation
-  4. All skills declare `allowed-tools` frontmatter to pre-approve their MCP tool calls
-**Plans**: TBD
-**UI hint**: yes
-
-### Phase 15: Testing, CI, Publishing, and Documentation
-**Goal**: The toolkit has automated quality gates, ships to npm for zero-install usage, preserves v2.0.0 prompts as fallback, and has clear installation documentation
-**Depends on**: Phase 12, Phase 13, Phase 14
-**Requirements**: INFRA-03, INFRA-04, INFRA-05, INFRA-06, DOC-01, DOC-02
-**Success Criteria** (what must be TRUE):
-  1. Running `npm test` executes the Vitest suite against core library functions and all tests pass on both Windows and macOS
-  2. Every push to the repo triggers GitHub Actions CI that runs the test suite on Windows and macOS runners and reports pass/fail
-  3. `npx @localground/cli --version` and `npx @localground/mcp --version` work without prior installation (npm packages published and accessible)
-  4. v2.0.0 prompt files exist in `prompts/` directory and remain functional as a no-install fallback
-  5. README documents all three installation paths (MCP server add, CLI install, legacy prompts) including the Windows `cmd /c` setup for MCP, and CLAUDE.md reflects v3.0.0 architecture
-**Plans**: 6 plans
-
-Plans:
-**Wave 1**
-- [x] 15-01-PLAN.md — Test infra + tsup noExternal smoke check (D-17 fix, vitest config, bundle strategy decision)
-
-**Wave 2** *(blocked on Wave 1 completion)*
-- [x] 15-02-PLAN.md — Core deep unit tests (12 functions, real os.tmpdir() fixtures)
-- [x] 15-03-PLAN.md — MCP and CLI thin smoke tests (9 tools + 7 commands + stdout/JSON discipline)
-
-**Wave 3** *(blocked on Wave 2 completion)*
-- [x] 15-04-PLAN.md — GitHub Actions CI workflow (Win + Mac + Linux, Node 20.x, npm ci + tsup build + vitest)
-
-**Wave 4** *(blocked on Wave 3 completion)*
-- [x] 15-06-PLAN.md — README CLI section + CLAUDE.md refresh + CHANGELOG.md + prompts freeze verification
-
-**Wave 5** *(blocked on Wave 4 completion)*
-- [x] 15-05-PLAN.md — Release workflow + npm trusted-publisher setup + first tag push (OIDC, provenance)
-
-## Phase Summary
-
-| Phase | Name | Requirements | Count |
-|-------|------|-------------|-------|
-| 12 | 7/7 | Complete    | 2026-04-13 |
-| 13 | 6/6 | Complete   | 2026-04-13 |
-| 14 | 11/11 | Complete (incl. gap-closure 14-08..14-11)   | 2026-04-26 |
-| 15 | 6/6 | Complete   | 2026-04-26 |
-| | **Total** | | **45** |
+No active phases. Next milestone planning starts with `/gsd-new-milestone`.
 
 ## Phases (v1.2.0 -- Completed)
 
@@ -120,6 +42,20 @@ Plans:
 
 </details>
 
+## Phases (v3.0.0 -- Completed)
+
+<details>
+<summary>v3.0.0 MCP Server + CLI Tooling (Phases 12-15) -- SHIPPED 2026-04-26</summary>
+
+- [x] Phase 12: Monorepo Foundation and Core Library (7/7 plans) -- completed 2026-04-13
+- [x] Phase 13: MCP Server (6/6 plans) -- completed 2026-04-13
+- [x] Phase 14: Standalone CLI and Claude Code Skills (11/11 plans) -- completed 2026-04-26
+- [x] Phase 15: Testing, CI, Publishing, and Documentation (6/6 plans) -- completed 2026-04-26
+
+Full archive: [milestones/v3.0.0-ROADMAP.md](milestones/v3.0.0-ROADMAP.md)
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -135,11 +71,82 @@ Plans:
 | 9. Seed Prompt Build | v2.0.0 | 1/1 | Complete | 2026-04-12 |
 | 10. Seed NEC Evaluation | v2.0.0 | 2/2 | Complete | 2026-04-12 |
 | 11. Documentation, Unified Versioning, and Sow-to-Reap Rename | v2.0.0 | 3/3 | Complete | 2026-04-12 |
-| 12. Monorepo Foundation and Core Library | v3.0.0 | 1/7 | In Progress | - |
-| 13. MCP Server | v3.0.0 | 0/0 | Not started | - |
-| 14. Standalone CLI and Claude Code Skills | v3.0.0 | 7/7 baseline + 3/4 gap closure (14-08, 14-09, 14-10) | Complete + Gap closure in progress | 2026-04-26 (14-10) |
-| 15. Testing, CI, Publishing, and Documentation | v3.0.0 | 0/6 | Planned | - |
+| 12. Monorepo Foundation and Core Library | v3.0.0 | 7/7 | Complete | 2026-04-13 |
+| 13. MCP Server | v3.0.0 | 6/6 | Complete | 2026-04-13 |
+| 14. Standalone CLI and Claude Code Skills | v3.0.0 | 11/11 | Complete | 2026-04-26 |
+| 15. Testing, CI, Publishing, and Documentation | v3.0.0 | 6/6 | Complete | 2026-04-26 |
+
+## Backlog
+
+Unsequenced items captured at v3.0.0 close. Promote with `/gsd-review-backlog` when ready.
+
+### Phase 999.1: UAT Tests 12-16 — localground skills end-to-end MCP routing (BACKLOG)
+
+**Goal:** Register the published `@localground/mcp` server with Claude Code and execute the 5 skill UAT tests that were blocked in Phase 14 and never executed in Phase 15. Test 15 (`/localground:migrate` two-session orchestration) is critical — it is the only test that validates the continuation-token loop and `localground-migrate-state.json` handoff, neither of which are exercised by the CLI smoke tests.
+**Source:** `.planning/phases/14-standalone-cli-and-claude-code-skills/14-UAT.md` Tests 12-16 (all `result: blocked` with `blocked_by: requires-mcp-server-registered`)
+**Requirements:** SKILL-01..SKILL-07 runtime verification (static compliance verified, runtime not)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
+### Phase 999.2: Pipeline first-run validation — ci.yml + release.yml end-to-end (BACKLOG)
+
+**Goal:** Both GitHub Actions workflows are structurally verified but unexecuted end-to-end. First push to `master` triggers `ci.yml` (3-OS matrix, Node 20.x). First `vN.N.N` tag push triggers `release.yml` (OIDC trusted publisher + provenance). If trusted-publisher trust contract doesn't match exactly, the publish step will fail with `403 Forbidden` and need adjustment.
+**Source:** `.planning/phases/15-testing-ci-publishing-and-documentation/15-VERIFICATION.md` "Two pipelines structurally verified but unexecuted end-to-end" section
+**Requirements:** INFRA-04, INFRA-05 runtime verification (structural verification complete)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
+### Phase 999.3: Test infrastructure cleanup (BACKLOG)
+
+**Goal:** Restore tsc as a CI quality gate alongside tsup, fix the Vitest cleanup hang on `npm test` exit, and address two LOW-severity test hygiene findings from the Phase 15 code review.
+**Source:** `.planning/phases/15-testing-ci-publishing-and-documentation/15-VERIFICATION.md` Phase 16+ Carry-Overs table
+**Items:**
+- Vitest cleanup hang — add `afterEach` cleanup to MCP/CLI smoke tests to kill spawned children
+- L-01 — `placeholder.test.ts` silent precondition guard (`expect(platformResult.success).toBe(true)`)
+- L-02 — `decode.test.ts` tautological assertion (`expect(typeof result.success).toBe('boolean')` can never fail)
+- D-18 — `tsc --build` strict-mode regression (~30 implicit-any errors that tsup tolerates)
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
+### Phase 999.4: Packaging polish — `files: ["dist"]` (BACKLOG)
+
+**Goal:** Reduce npm tarball download size by adding `"files": ["dist"]` to `packages/mcp/package.json` and `packages/cli/package.json`. Currently published tarballs include `src/`, `test/`, `tsconfig.json`, `tsup.config.ts`, `vitest.config.ts` — useful for sourcemaps but inflates download roughly 2x.
+**Source:** `.planning/phases/15-testing-ci-publishing-and-documentation/15-05-SUMMARY.md` Phase 16+ carry-overs
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
+### Phase 999.5: TIER 2 streaming refactor of spawnTool — real-time MCP-driven copy progress (BACKLOG)
+
+**Goal:** Phase 14-11 closed CLI silent operations at TIER 1 (three pre-operation stderr status lines). TIER 2 changes `spawnTool` from `spawnSync` with `stdio=['ignore','pipe','pipe']` to either inherited stdio (Option A) or async `spawn()` with line-streaming via `child.stdout('data')` (Option B). Surfaces robocopy/rsync per-line progress to the user during MCP-driven copy operations through the `/localground:migrate` skill.
+**Source:** `.planning/phases/14-standalone-cli-and-claude-code-skills/14-11-SUMMARY.md`; full diagnosis at `.planning/debug/cli-silent-long-operations.md` lines 148-158
+**Requirements:** TBD (CLI-01 UX refinement)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
+### Phase 999.6: encode() regex calibration (WR-01) (BACKLOG)
+
+**Goal:** `packages/core/src/environment/decode.ts` line 89 — `encode()` regex `/[\\/: ,().]/g` is narrower than likely Claude Code behavior. Folders with apostrophes, ampersands, brackets, etc. would silently fail to decode. On the user's machine, 6 of 23 path-hashes returned `no_candidates` — undetermined whether deleted-source folders or encoder-mismatch silent failures.
+**Source:** `.planning/phases/14-standalone-cli-and-claude-code-skills/14-VERIFICATION.md` line 128 (Anti-Patterns Found); CONTEXT.md WR-01
+**Requirements:** TBD (CORE-02 refinement)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
 
 ---
 *Roadmap created: 2026-04-11*
 *v3.0.0 phases added: 2026-04-12*
+*v3.0.0 milestone closed: 2026-04-26*
+*Backlog seeded at v3.0.0 close: 2026-04-26*

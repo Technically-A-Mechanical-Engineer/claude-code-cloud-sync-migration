@@ -1,138 +1,66 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.0.0
-milestone_name: MCP Server + CLI Tooling
-status: phase-verified
-stopped_at: Phase 15 VERIFIED (5/5 ROADMAP success criteria met, 6/6 requirements complete, 0 gaps; @localground/mcp@3.0.0 and @localground/cli@3.0.0 live on npm; v3.0.0 milestone ready for completion)
-last_updated: "2026-04-27T00:05:00Z"
+milestone: none
+milestone_name: ""
+status: milestone-closed
+stopped_at: v3.0.0 milestone closed 2026-04-26 — awaiting next-milestone planning via /gsd-new-milestone
+last_updated: "2026-04-26T22:00:00Z"
 last_activity: 2026-04-26
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 30
-  completed_plans: 30
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
-**Status:** Phase 15 VERIFIED PASSED — milestone v3.0.0 ready for completion
+**Status:** v3.0.0 milestone closed — awaiting next-milestone planning
 **Last Activity:** 2026-04-26
-**Current focus:** Milestone v3.0.0 close-out next
+**Current focus:** Next milestone (v3.0.1) — runs on `/gsd-new-milestone`
+
+## Project Reference
+
+See: `.planning/PROJECT.md` (updated 2026-04-26 after v3.0.0 milestone close)
+
+**Core value:** Get Claude Code users off cloud-synced storage safely — no data loss, no silent failures, every action verified before and after.
+
+**Last shipped:** v3.0.0 MCP Server + CLI Tooling (2026-04-26) — `@localground/mcp@3.0.0` + `@localground/cli@3.0.0` live on npm; full archive at `.planning/milestones/v3.0.0-ROADMAP.md`.
 
 ## Current Position
 
-Phase: 15 (testing-ci-publishing-and-documentation) — VERIFICATION PASSED ✓
-Plan: 6 of 6 complete + 5/5 ROADMAP success criteria met + 6/6 requirements complete + 0 gaps
-Status: Phase verified; milestone v3.0.0 ready for completion (4/4 phases done)
-Last activity: 2026-04-26
+No active milestone. Next step: `/gsd-new-milestone` to start v3.0.1 (or whichever version the user chooses).
 
-Progress: [██████████] 100%
+## Backlog (captured at v3.0.0 close)
 
-## Performance Metrics
+Six unsequenced items in ROADMAP.md `## Backlog` section, ready for promotion via `/gsd-review-backlog`:
 
-**Velocity:**
-
-- Total plans completed: 14 (v3.0.0)
-- Average duration: --
-- Total execution time: --
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 12 | 7 | - | - |
-| Phase 13 P01 | 1min | 3 tasks | 1 files |
-| Phase 13 P02 | 1min | 3 tasks | 1 files |
-| Phase 13 P03 | 2min | 4 tasks | 1 files |
-| Phase 13 P04 | 1min | 3 tasks | 1 files |
-| Phase 13 P05 | 2min | 3 tasks | 1 files |
-| Phase 13 P06 | 2min | 4 tasks | 3 files |
-| Phase 14 P01 | 3min | 4 tasks | 3 files |
-| Phase 14 P05 | 5 min | 2 tasks | 2 files |
-| Phase 14 P02 | 1min | 2 tasks | 1 files |
-| Phase 14 P06 | 2min | 3 tasks | 3 files |
-| Phase 14 P03 | 3min | 4 tasks | 1 files |
-| Phase 14 P04 | 2min | 4 tasks | 1 files |
-| Phase 14 P07 | 1min | 2 tasks | 2 files |
-| Phase 14 P08 | 6min | 2 tasks | 1 files |
-| Phase 14 P09 | 5min | 2 tasks | 2 files |
-| Phase 14 P10 | 5min | 5 tasks | 4 files |
-| Phase 14 P11 | 3min | 3 tasks | 1 files |
-| Phase 15 P15-01 | 15min | 3 tasks | 5 files |
-| Phase 15 P15-02 | 20min | 2 tasks | 13 files |
-| Phase 15 P04 | 5min | 1 tasks | 1 files |
+- **999.1** UAT Tests 12-16 — skill end-to-end MCP routing (Test 15 critical: continuation-token loop + state file handoff)
+- **999.2** Pipeline first-run validation — ci.yml + release.yml live execution
+- **999.3** Test infrastructure cleanup — Vitest hang, L-01, L-02, tsc strict-mode
+- **999.4** Packaging polish — `files: ["dist"]` for tarball size reduction
+- **999.5** TIER 2 streaming refactor of spawnTool
+- **999.6** encode() regex calibration (WR-01)
 
 ## Accumulated Context
 
 ### Decisions
 
-- v3.0.0 direction: NEC findings revealed most issues stemmed from ambiguity in deterministic operations that code would handle without ambiguity
-- Bottom-up build order: core library -> MCP server -> CLI -> skills -> testing/CI -> publishing/docs
-- Project owner is not a developer -- Claude Code is the builder
-- npm workspaces monorepo (not Turborepo/Lerna/Nx) -- three packages with simple deps
-- MCP SDK v1.x (not v2) -- build on stable, upgrade later
-- tsup for compilation (not Webpack/Rollup)
-- Vitest for testing (not Jest -- corrected from initial requirements)
-- v2.0.0 prompts preserved in prompts/ as no-install fallback
-- workspace:* protocol replaced with "*" -- npm does not support workspace: protocol (pnpm/yarn only)
-- Removed incremental from root tsconfig -- composite implies it, and tsup DTS chokes on explicit incremental
-- tsup ^8.5.0 (not ^9.0.0 as planned) -- tsup v9 does not exist, latest is 8.5.1
-- tsup DTS generation requires composite:false override -- tsup's DTS rollup plugin fails with TypeScript composite project references; fixed in all three packages' tsup.config.ts
-- [Phase 13]: Used registerTool() not deprecated tool() per SDK v1.29.0 — SDK documentation marks tool() as deprecated, registerTool() is the idiomatic API
-- [Phase 13]: detectPlatform() called inside placeholder_check callback — user never passes platform — Matches auto-detect first design principle; chained core call pattern reusable by health_check and audit
-- [Phase 13]: [Phase 13]: seed tool marked idempotentHint: false — core seed() refuses to overwrite existing seed files, so repeated calls fail — Matches SDK annotation semantics: idempotent means repeated calls produce the same result, but seed() returns an error on second call
-- [Phase 13]: Token shape validated field-by-field, no spread from parsed JSON — prototype pollution mitigation for continuation token — Threat model identifies token tampering and prototype pollution as MED severity; field-by-field validation and new object construction is the standard mitigation
-- [Phase 13]: Health check calls detect() independently per check for fault isolation — Threat model requires one check failing not to prevent others from running
-- [Phase 13]: Removed shebang from source file — tsup banner config is the sole shebang source, preventing duplication in built artifact — dist/index.js had duplicate shebangs causing Node.js ESM loader to fail; tsup banner is the canonical injection point
-- [Phase 14]: No shebang in CLI source — tsup banner is sole shebang source — Consistent with Phase 13 decision; prevents duplicate shebangs in built artifact
-- [Phase 14]: Global --json flag works both before and after subcommand in Commander v13 — End-to-end testing confirmed both positions produce identical JSON output
-- [Phase 14]: All three simpler skills (seed, reap, verify) kept within 50-51 lines — well within 40-150 line truncation safety zone
-- [Phase 14]: Reap command calls core functions directly — same 6-check pattern as MCP health_check — Avoids MCP overhead while maintaining identical check coverage
-- [Phase 14]: CLI copy calls core copy() directly — one call, no continuation token loop — MCP continuation tokens exist for 60s timeout; CLI has no such constraint
-- [Phase 14]: Audit runs 4 abbreviated checks matching MCP audit tool, not 6 from reap — Audit has no manifest or source path — checks 5-6 require those inputs
-- [Phase 14]: Migrate skill uses localground-migrate-state.json for Session 1->2 handoff; cleanup skill distinguishes file reference cleanup (edit) from directory cleanup (delete) — JSON state file is machine-readable for Session 2 auto-detection; file vs directory distinction prevents accidentally deleting config files that just have stale path references
-- [Phase 14-08]: Decoder algorithm replaced with filesystem-listing reverse encode — sidesteps separator guessing entirely; any folder that physically exists decodes correctly regardless of mixed punctuation. Closes Defect B (UAT Test 3 / Test 8 finding_2).
-- [Phase 14-08]: Windows reparse-point handling: filter readdir Dirent by `!isFile()` not `isDirectory()`. OneDrive folders under user home are reparse points (isDirectory=false, isSymbolicLink=true); the tighter filter would silently drop them and prevent decoding any path under OneDrive.
-- [Phase 14-08]: Windows entry-point arithmetic: skip BOTH segments[0] (drive letter) and segments[1] (empty string from `:\` double-hyphen) — `segments.slice(2).join('-')` is the correct entry hash, not `slice(1)`.
-- [Phase 14-09]: Surface-level decode-and-enrich pattern at CLI and MCP detect handlers — core detect() preserves its intentional null-return contract (lines 50, 58-64); consumers invoke decode() in parallel via Promise.all and enrich the response. Mirrors the existing audit handler in both packages for consumer parity.
-- [Phase 14-09]: Use inline `'none' as const` cast on the cloudService literal only, not trailing `as const` on the whole project object — trailing as const produces a readonly type that fails to assign to mutable `ProjectEntry[]`.
-- [Phase 14-09]: Inherited two non-project entries in auto-discovered projects[] (`C:\` and bare home dir) — known design boundary; deferred to plan 14-10 (looksLikeProject scoping). Filter parity with audit is the deliberate choice for this wave.
-- [Phase 14-10]: Path-shape-only `looksLikeProject` predicate — no marker check (no `.git/`, no `package.json`) — Phase 14 D-01 explicitly supports plain-folder projects, so a marker check would over-reject. Cross-platform: case-insensitive on Windows via `process.platform === 'win32'` toLowerCase comparison; case-sensitive elsewhere.
-- [Phase 14-10]: Filter applies only to auto-discovery branch; explicit `--projects` / `projectPaths` user input bypasses it — explicit-over-implicit. Confirmed by running `audit --projects "C:\"` and observing `C:\` IS audited despite predicate rejecting it.
-- [Phase 14-10]: Single core export consumed by both CLI and MCP — replaces the copy-paste filter chain that drifted in the diagnosis baseline. Future drift now requires conscious divergence in core, not silent copy-paste.
-- [Phase 14-10]: Two-statement refactor (`autoDiscovered` + `paths`) over inline `?? + filter chain` — separates filter scope from explicit-input bypass visually; easier to review than the previous one-expression form. Used identically at both CLI and MCP audit sites for structural parity.
-- [Phase 14-11]: TIER 1 only — three console.error status lines per CLI handler (copy + audit), gated on !jsonMode and routed to stderr. TIER 2 streaming refactor of spawnTool deferred to Phase 15. Matches user-supplied remediation pattern (line 39 of diagnosis) and orchestrator smallest-correct-fix mandate.
-- [Phase 14-11]: Stdout = data, stderr = chatter — conventional Unix split applied at CLI handler layer. JSON consumers reading stdout get clean parseable JSON; humans see status on stderr. Belt-and-suspenders: !jsonMode gate suppresses status lines on BOTH streams in JSON mode.
-- [Phase 14-11]: Three-line copy status block (Copying from / to / via) over single-line — OneDrive corporate paths regularly exceed 80 chars; three labeled lines stay scannable in 80-100 char terminals.
-- [Phase 14-11]: For-of to indexed-for conversion in audit per-iteration progress emission — surfaces position (i+1)/N without restructuring the loop body. checks.push count snapshot before/after edits both 42 (zero behavioral drift in check logic).
-- [Phase 15-01]: Bundle strategy = Option A (core stays private, tsup noExternal inlines into mcp/cli dist) — confirmed by D-20 smoke check (4 metrics in 15-01-SUMMARY.md)
-- [Phase 15-02]: chunk() is async (walks real source directory) — plan pseudocode showed it as sync with array input; tests use real tmpDir fixtures with maxChunkSize to force multi-chunk splits
-- [Phase 15-02]: decode() round-trip test uses real tmpDir fixture via encode(tmpDir) — synthetic hash strings fail because decode() uses filesystem-listing reverse-encode (only succeeds if path exists on disk)
-- [Phase 15-02]: checksum() returns .hash field (not .sha256) — ChecksumResult type has hash:string + algorithm:'sha256' as separate fields
-- [Phase 15-02]: detectPlatform() returns 'windows'/'macos'/'linux' (not 'win32'/'darwin'/'linux') — function maps os.platform() raw values to LocalGround's internal Platform type
-- [Phase 15-02]: placeholderDetect() requires two arguments (dirPath, platform) — platform arg selects .icloud vs 0-byte detection logic
-- [Phase 15-03]: audit tests use --projects <tmpDir> to avoid auto-discovery hang on OneDrive-synced paths — Phase 14-11 stderr suppression invariant still fully verified via explicit project path
-- [Phase 15-03]: stderr banner test uses 2000ms wait (not 500ms) — Windows Node.js startup is slower than plan assumed; 500ms was insufficient
-- [Phase 15-03]: D-01 two-layer scope complete — core unit tests (15-02) + MCP/CLI smoke tests (15-03) both in place; 78 passing tests, 2 platform-guarded skips
-- [Phase ?]: D-04/D-05/D-06/D-18: CI matrix Win+Mac+Linux, Node 20.x, npm ci, npm run build (tsup), push+PR triggers only
-- [Phase 15-05]: Manual first publish for v3.0.0 (no provenance), OIDC + provenance for v3.0.1+ — npm trusted publishers cannot be configured pre-publish (npm/cli#8544); chicken-and-egg resolved by manual `npm login` + `npm publish` for the first release, then post-publish trusted-publisher setup
-- [Phase 15-05]: @localground/core in devDependencies (not dependencies) for mcp + cli — bundled by tsup noExternal, not a runtime dep for consumers; declared as runtime dep would have caused Cannot find package '@localground/core' on every install
-- [Phase 15-05]: release.yml shape — tag-trigger on v*, contents:read + id-token:write, registry-url + cache:'npm', install→build→test→publish (each pkg --provenance --access public), no NPM_TOKEN/NODE_AUTH_TOKEN
-- [Phase 15-05]: v3.0.0 git tag deferred to user discretion — would trigger release.yml + fail with `version exists` (harmless but noisy); v3.0.1 will be the first OIDC-published, tag-anchored release
-- [Phase 15-06]: README has three install paths (MCP/CLI/v2 prompts), CLAUDE.md refreshed (no stale 'in development'/'compilable stub' language), CHANGELOG.md created in Keep a Changelog 1.1.0 format with retroactive [2.0.0] - 2026-04-12 + [3.0.0] - 2026-04-26 entries
+Full decision log moved to PROJECT.md `## Key Decisions` section (15 v3.0.0-era decisions added at milestone close).
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- Project owner has never built an MCP server before -- Phase 12/13 may surface learning-curve blockers
-- MCP timeout constraints (~60s per tool call) require chunked copy operations (CORE-12)
+None at v3.0.0 close. Two known-deferred validation items:
+- ci.yml first run will land on first push to master after this commit cycle
+- release.yml first OIDC + provenance run will land on first `vN.N.N` tag push (v3.0.1+); v3.0.0 was published manually due to npm/cli#8544
 
 ## Session Continuity
 
-Last session: 2026-04-26T21:42:33.277Z
-Stopped at: Completed Phase 15 Plan 04 (GitHub Actions CI workflow — .github/workflows/ci.yml, INFRA-04 complete)
-Resume file: None
+Last session: 2026-04-26 (v3.0.0 milestone close)
+Stopped at: Completed milestone close-out — REQUIREMENTS.md and ROADMAP.md drift reconciled, Backlog seeded with 6 items (999.1-999.6), milestone archive created at `.planning/milestones/v3.0.0-ROADMAP.md` and `.planning/milestones/v3.0.0-REQUIREMENTS.md`, MILESTONES.md updated, PROJECT.md fully evolved
+Resume file: None (clean handoff to `/gsd-new-milestone`)

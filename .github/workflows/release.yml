@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  release:
+    name: Build, test, and publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x with npm registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      - name: Build all workspace packages
+        run: npm run build
+
+      - name: Run test suite
+        run: npm test
+
+      - name: Publish @localground/mcp with provenance
+        run: npm publish -w @localground/mcp --provenance --access public
+
+      - name: Publish @localground/cli with provenance
+        run: npm publish -w @localground/cli --provenance --access public

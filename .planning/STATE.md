@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: executing
-stopped_at: Completed Phase 15 Plan 02 (core unit test suite — 62 tests, 12 files)
-last_updated: "2026-04-26T21:15:43.242Z"
+stopped_at: Completed Phase 15 Plan 03 (MCP and CLI smoke tests — 78 total tests, 16 files)
+last_updated: "2026-04-26T21:27:24.749Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 26
-  percent: 87
+  completed_plans: 27
+  percent: 90
 ---
 
 # Project State
@@ -23,11 +23,11 @@ progress:
 ## Current Position
 
 Phase: 15 (testing-ci-publishing-and-documentation) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [█████████░] 87%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -111,6 +111,9 @@ Progress: [█████████░] 87%
 - [Phase 15-02]: checksum() returns .hash field (not .sha256) — ChecksumResult type has hash:string + algorithm:'sha256' as separate fields
 - [Phase 15-02]: detectPlatform() returns 'windows'/'macos'/'linux' (not 'win32'/'darwin'/'linux') — function maps os.platform() raw values to LocalGround's internal Platform type
 - [Phase 15-02]: placeholderDetect() requires two arguments (dirPath, platform) — platform arg selects .icloud vs 0-byte detection logic
+- [Phase 15-03]: audit tests use --projects <tmpDir> to avoid auto-discovery hang on OneDrive-synced paths — Phase 14-11 stderr suppression invariant still fully verified via explicit project path
+- [Phase 15-03]: stderr banner test uses 2000ms wait (not 500ms) — Windows Node.js startup is slower than plan assumed; 500ms was insufficient
+- [Phase 15-03]: D-01 two-layer scope complete — core unit tests (15-02) + MCP/CLI smoke tests (15-03) both in place; 78 passing tests, 2 platform-guarded skips
 
 ### Pending Todos
 
@@ -123,6 +126,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-26T21:15:43.219Z
+Last session: 2026-04-26T21:27:24.726Z
 Stopped at: Completed Phase 15 Plan 01 (test infra + bundle strategy decision)
 Resume file: None

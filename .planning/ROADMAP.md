@@ -72,7 +72,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [x] 15-02-PLAN.md — Core deep unit tests (12 functions, real os.tmpdir() fixtures)
-- [ ] 15-03-PLAN.md — MCP and CLI thin smoke tests (9 tools + 7 commands + stdout/JSON discipline)
+- [x] 15-03-PLAN.md — MCP and CLI thin smoke tests (9 tools + 7 commands + stdout/JSON discipline)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 15-04-PLAN.md — GitHub Actions CI workflow (Win + Mac + Linux, Node 20.x, npm ci + tsup build + vitest)
@@ -90,7 +90,7 @@ Plans:
 | 12 | 7/7 | Complete    | 2026-04-13 |
 | 13 | 6/6 | Complete   | 2026-04-13 |
 | 14 | 11/11 | Complete (incl. gap-closure 14-08..14-11)   | 2026-04-26 |
-| 15 | 2/6 | In Progress|  |
+| 15 | 3/6 | In Progress|  |
 | | **Total** | | **45** |
 
 ## Phases (v1.2.0 -- Completed)

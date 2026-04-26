@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: executing
-stopped_at: Completed Phase 15 Plan 03 (MCP and CLI smoke tests — 78 total tests, 16 files)
-last_updated: "2026-04-26T21:27:24.749Z"
+stopped_at: Completed Phase 15 Plan 04 (GitHub Actions CI workflow — .github/workflows/ci.yml, INFRA-04 complete)
+last_updated: "2026-04-26T21:34:38.060Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 27
-  percent: 90
+  completed_plans: 28
+  percent: 93
 ---
 
 # Project State
@@ -23,11 +23,11 @@ progress:
 ## Current Position
 
 Phase: 15 (testing-ci-publishing-and-documentation) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [█████████░] 90%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [█████████░] 90%
 | Phase 14 P11 | 3min | 3 tasks | 1 files |
 | Phase 15 P15-01 | 15min | 3 tasks | 5 files |
 | Phase 15 P15-02 | 20min | 2 tasks | 13 files |
+| Phase 15 P04 | 5min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,7 @@ Progress: [█████████░] 90%
 - [Phase 15-03]: audit tests use --projects <tmpDir> to avoid auto-discovery hang on OneDrive-synced paths — Phase 14-11 stderr suppression invariant still fully verified via explicit project path
 - [Phase 15-03]: stderr banner test uses 2000ms wait (not 500ms) — Windows Node.js startup is slower than plan assumed; 500ms was insufficient
 - [Phase 15-03]: D-01 two-layer scope complete — core unit tests (15-02) + MCP/CLI smoke tests (15-03) both in place; 78 passing tests, 2 platform-guarded skips
+- [Phase ?]: D-04/D-05/D-06/D-18: CI matrix Win+Mac+Linux, Node 20.x, npm ci, npm run build (tsup), push+PR triggers only
 
 ### Pending Todos
 
@@ -126,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-26T21:27:24.726Z
-Stopped at: Completed Phase 15 Plan 01 (test infra + bundle strategy decision)
+Last session: 2026-04-26T21:34:38.044Z
+Stopped at: Completed Phase 15 Plan 04 (GitHub Actions CI workflow — .github/workflows/ci.yml, INFRA-04 complete)
 Resume file: None

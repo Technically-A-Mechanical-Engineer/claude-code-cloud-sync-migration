@@ -61,7 +61,7 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 - [ ] **INFRA-01**: Monorepo scaffold with npm workspaces (packages/core, packages/mcp, packages/cli)
 - [ ] **INFRA-02**: TypeScript strict mode with tsup build for all packages
 - [x] **INFRA-03**: Automated test suite (Vitest) covering core library deterministic operations
-- [ ] **INFRA-04**: GitHub Actions CI running tests on Windows and macOS runners
+- [x] **INFRA-04**: GitHub Actions CI running tests on Windows and macOS runners
 - [ ] **INFRA-05**: npm publishing pipeline for @localground/mcp and @localground/cli packages
 - [ ] **INFRA-06**: v2.0.0 prompts preserved in prompts/ directory as no-install fallback
 
@@ -143,7 +143,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | SKILL-06 | Phase 14 | Complete |
 | SKILL-07 | Phase 14 | Complete |
 | INFRA-03 | Phase 15 | Complete |
-| INFRA-04 | Phase 15 | Pending |
+| INFRA-04 | Phase 15 | Complete (2026-04-26) |
 | INFRA-05 | Phase 15 | Pending |
 | INFRA-06 | Phase 15 | Pending |
 | DOC-01 | Phase 15 | Pending |

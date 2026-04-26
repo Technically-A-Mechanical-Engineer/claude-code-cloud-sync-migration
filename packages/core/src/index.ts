@@ -6,6 +6,7 @@
 export { detect } from './environment/detect.js';
 export { decode, encode } from './environment/decode.js';
 export { classify } from './environment/classify.js';
+export { looksLikeProject } from './environment/looksLikeProject.js';
 export { detectPlatform } from './environment/platform.js';
 export { detectCloudService, isPathCloudSynced } from './environment/cloud.js';
 

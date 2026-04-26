@@ -50,7 +50,7 @@ Robert LaSalle
 | `packages/core/src/operations/` | File operations: copy, seed, verify, scan, chunk |
 | `packages/core/src/util/` | Internal utilities: spawn, paths |
 | `packages/mcp/` | `@localground/mcp` — MCP server (9 tools, fully implemented) |
-| `packages/cli/` | `@localground/cli` — standalone CLI (stub, Phase 14) |
+| `packages/cli/` | `@localground/cli` — standalone CLI with 7 commands |
 
 ### v2.0.0 Prompts (legacy fallback)
 

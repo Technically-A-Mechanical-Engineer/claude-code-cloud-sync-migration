@@ -188,7 +188,50 @@ server.registerTool('localground_detect', {
   },
 }, async (_extra) => {
   const result = await detect();
-  return resultToMcp(result);
+  if (!result.success) {
+    return resultToMcp(result);
+  }
+
+  // Honor the downstream contract documented in packages/core/src/environment/detect.ts:50,58-64.
+  // Core detect() returns decodedPath: null and projects: [] by design — consumers must
+  // invoke decode() per entry. This matches the localground_audit pattern below.
+  const decodedResults = await Promise.all(
+    result.data.pathHashes.map((h) => decode(h.hashDirName))
+  );
+
+  const enrichedPathHashes: PathHashEntry[] = decodedResults.map((r, i) => {
+    if (r.success) {
+      return r.data;
+    }
+    return result.data.pathHashes[i];
+  });
+
+  const enrichedProjects = decodedResults
+    .filter((r): r is Success<PathHashEntry> => r.success && r.data.decodedPath !== null && r.data.exists)
+    .map((r) => {
+      const p = r.data.decodedPath as string;
+      const name = path.basename(p);
+      const synced = isPathCloudSynced(p, result.data.cloud.syncRoot);
+      return {
+        name,
+        path: p,
+        isCloudSynced: synced,
+        cloudService: synced ? result.data.cloud.service : ('none' as const),
+      };
+    });
+
+  const enriched = {
+    ...result.data,
+    pathHashes: enrichedPathHashes,
+    projects: enrichedProjects,
+  };
+
+  return {
+    content: [{
+      type: 'text' as const,
+      text: JSON.stringify(enriched, null, 2),
+    }],
+  };
 });
 
 // localground_decode_path_hash — decode Claude Code path-hash directory names

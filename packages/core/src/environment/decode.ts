@@ -163,7 +163,15 @@ async function buildCandidates(
 
   for (const entry of entries) {
     if (results.length >= maxCandidates) break;
-    if (!entry.isDirectory()) continue;
+
+    // Accept directories AND symbolic links (and other reparse points). On Windows,
+    // OneDrive folders under the user home are reparse points that report
+    // isDirectory()=false and isSymbolicLink()=true even though they resolve to
+    // directories. Filtering by isDirectory() alone would incorrectly drop them and
+    // prevent decoding of any path under OneDrive. Files (true files) are excluded.
+    // If a symlink points to a non-directory, the recursive fs.readdir on it will
+    // throw and the catch block returns [] — graceful handling preserved.
+    if (entry.isFile()) continue;
 
     const encodedName = encode(entry.name);
     if (encodedName.length === 0) continue;

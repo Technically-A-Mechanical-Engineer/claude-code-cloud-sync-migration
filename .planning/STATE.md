@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: verifying
-stopped_at: Completed 14-07-PLAN.md
-last_updated: "2026-04-15T19:21:34.236Z"
-last_activity: 2026-04-15
+stopped_at: Completed 14-08-PLAN.md (gap-closure for Defect B / decoder rewrite)
+last_updated: "2026-04-26T16:43:30Z"
+last_activity: 2026-04-26
 progress:
   total_phases: 4
   completed_phases: 3
@@ -16,16 +16,16 @@ progress:
 
 # Project State
 
-**Status:** Phase complete — ready for verification
-**Last Activity:** 2026-04-15
-**Current focus:** Phase 14 — standalone-cli-and-claude-code-skills
+**Status:** Phase complete + gap-closure in progress
+**Last Activity:** 2026-04-26
+**Current focus:** Phase 14 — standalone-cli-and-claude-code-skills (UAT gap closure: 14-08 done; 14-09/10/11 pending)
 
 ## Current Position
 
-Phase: 14 (standalone-cli-and-claude-code-skills) — EXECUTING
-Plan: 7 of 7
-Status: Phase complete — ready for verification
-Last activity: 2026-04-15
+Phase: 14 (standalone-cli-and-claude-code-skills) — EXECUTING (gap closure)
+Plan: 7 of 7 baseline complete + 14-08 gap-closure complete (Defect B / decoder rewrite)
+Status: Phase 14 baseline complete; gap-closure plans 14-08..14-11 in progress
+Last activity: 2026-04-26
 
 Progress: [██████████] 100%
 
@@ -55,6 +55,7 @@ Progress: [██████████] 100%
 | Phase 14 P03 | 3min | 4 tasks | 1 files |
 | Phase 14 P04 | 2min | 4 tasks | 1 files |
 | Phase 14 P07 | 1min | 2 tasks | 2 files |
+| Phase 14 P08 | 6min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Progress: [██████████] 100%
 - [Phase 14]: CLI copy calls core copy() directly — one call, no continuation token loop — MCP continuation tokens exist for 60s timeout; CLI has no such constraint
 - [Phase 14]: Audit runs 4 abbreviated checks matching MCP audit tool, not 6 from reap — Audit has no manifest or source path — checks 5-6 require those inputs
 - [Phase 14]: Migrate skill uses localground-migrate-state.json for Session 1->2 handoff; cleanup skill distinguishes file reference cleanup (edit) from directory cleanup (delete) — JSON state file is machine-readable for Session 2 auto-detection; file vs directory distinction prevents accidentally deleting config files that just have stale path references
+- [Phase 14-08]: Decoder algorithm replaced with filesystem-listing reverse encode — sidesteps separator guessing entirely; any folder that physically exists decodes correctly regardless of mixed punctuation. Closes Defect B (UAT Test 3 / Test 8 finding_2).
+- [Phase 14-08]: Windows reparse-point handling: filter readdir Dirent by `!isFile()` not `isDirectory()`. OneDrive folders under user home are reparse points (isDirectory=false, isSymbolicLink=true); the tighter filter would silently drop them and prevent decoding any path under OneDrive.
+- [Phase 14-08]: Windows entry-point arithmetic: skip BOTH segments[0] (drive letter) and segments[1] (empty string from `:\` double-hyphen) — `segments.slice(2).join('-')` is the correct entry hash, not `slice(1)`.
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-15T19:21:34.230Z
-Stopped at: Completed 14-07-PLAN.md
+Last session: 2026-04-26T16:43:30Z
+Stopped at: Completed 14-08-PLAN.md (gap-closure for Defect B)
 Resume file: None

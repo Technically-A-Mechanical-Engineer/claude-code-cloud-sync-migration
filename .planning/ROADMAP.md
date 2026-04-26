@@ -120,7 +120,7 @@
 | 11. Documentation, Unified Versioning, and Sow-to-Reap Rename | v2.0.0 | 3/3 | Complete | 2026-04-12 |
 | 12. Monorepo Foundation and Core Library | v3.0.0 | 1/7 | In Progress | - |
 | 13. MCP Server | v3.0.0 | 0/0 | Not started | - |
-| 14. Standalone CLI and Claude Code Skills | v3.0.0 | 0/0 | Not started | - |
+| 14. Standalone CLI and Claude Code Skills | v3.0.0 | 7/7 baseline + 1/4 gap closure (14-08) | Complete + Gap closure in progress | 2026-04-26 (14-08) |
 | 15. Testing, CI, Publishing, and Documentation | v3.0.0 | 0/0 | Not started | - |
 
 ---

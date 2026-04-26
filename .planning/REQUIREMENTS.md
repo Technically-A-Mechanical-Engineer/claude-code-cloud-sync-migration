@@ -10,7 +10,7 @@ Requirements for the MCP server + CLI restructure. Each maps to roadmap phases.
 ### Core Library
 
 - [ ] **CORE-01**: Detect OS, shell type, and cloud service from filesystem paths (OneDrive, Dropbox, Google Drive, iCloud)
-- [ ] **CORE-02**: Decode Claude Code path-hash directory names to filesystem paths and vice versa
+- [x] **CORE-02**: Decode Claude Code path-hash directory names to filesystem paths and vice versa
 - [ ] **CORE-03**: Classify path-hash entries (valid, stale, orphan, undecodable)
 - [ ] **CORE-04**: Compute SHA-256 checksums using Node.js crypto (no shell dependency)
 - [ ] **CORE-05**: Compare source and target directories (file counts, total size, hidden directories)
@@ -106,7 +106,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | INFRA-01 | Phase 12 | Pending |
 | INFRA-02 | Phase 12 | Pending |
 | CORE-01 | Phase 12 | Pending |
-| CORE-02 | Phase 12 | Pending |
+| CORE-02 | Phase 12; Phase 14 (14-08 decoder rewrite for mixed-punctuation paths) | Complete (2026-04-26) |
 | CORE-03 | Phase 12 | Pending |
 | CORE-04 | Phase 12 | Pending |
 | CORE-05 | Phase 12 | Pending |

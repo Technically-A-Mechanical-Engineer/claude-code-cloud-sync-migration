@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "localground-mcp": "./dist/index.js"
+    "localground-mcp": "dist/index.js"
   },
   "exports": {
     ".": {

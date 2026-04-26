@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import path from 'node:path';
 import {
   detect, seed, verify, copy, scan, gitCheck, placeholderDetect, detectPlatform,
-  isPathCloudSynced, decode, classify, compare,
+  isPathCloudSynced, decode, classify, compare, looksLikeProject,
 } from '@localground/core';
 import type { EnvironmentInfo, Success, PathHashEntry, ProjectEntry } from '@localground/core';
 import { formatKeyValue, formatTable, formatSummary, formatError, formatStatus, EXIT_SUCCESS, EXIT_FAILURE, EXIT_ERROR } from './format.js';
@@ -484,13 +484,20 @@ program
       }
     }
 
-    // Auto-discover project paths by decoding path-hash entries
-    const paths = options.projects ?? (
+    // Auto-discover project paths by decoding path-hash entries.
+    // looksLikeProject scopes auto-discovery to project-shaped paths only —
+    // excluding filesystem root and home directory (which decode validly but
+    // are not projects). User-supplied paths via --projects are NOT filtered;
+    // explicit input is respected.
+    const autoDiscovered = (
       await Promise.all(
         envResult.data.pathHashes.map((h) => decode(h.hashDirName))
       )
     ).filter((r): r is Success<PathHashEntry> => r.success && r.data.decodedPath !== null && r.data.exists)
-     .map((r) => r.data.decodedPath as string);
+     .map((r) => r.data.decodedPath as string)
+     .filter(looksLikeProject);
+
+    const paths = options.projects ?? autoDiscovered;
 
     if (paths.length === 0) {
       if (jsonMode) {

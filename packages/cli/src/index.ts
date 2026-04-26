@@ -182,6 +182,16 @@ program
       process.exit(EXIT_ERROR);
     }
 
+    // TIER 1 progress feedback: announce the operation before the long-running call.
+    // Routed to stderr so JSON consumers reading stdout stay clean.
+    // Gated on !jsonMode so JSON mode produces zero chatter.
+    if (!jsonMode) {
+      const tool = process.platform === 'win32' ? 'robocopy' : 'rsync';
+      console.error(`Copying from ${source}`);
+      console.error(`         to ${target}`);
+      console.error(`        via ${tool}...`);
+    }
+
     const result = await copy(source, target);
 
     if (!result.success) {

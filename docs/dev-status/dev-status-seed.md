@@ -3,7 +3,7 @@
 **Prompt file:** `localground-seed.md`
 **Current version:** v1.0.0 (built, pending NEC evaluation)
 **Project owner:** Robert LaSalle
-**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\claude-code-cloud-sync-migration`
+**Development environment:** Claude Code CLI from `C:\Users\rlasalle\Projects\localground`
 
 ---
 

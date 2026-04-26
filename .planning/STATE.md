@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: verifying
-stopped_at: Completed 14-08-PLAN.md (gap-closure for Defect B / decoder rewrite)
-last_updated: "2026-04-26T16:43:30Z"
+stopped_at: Completed 14-09-PLAN.md (gap-closure for Defect A / CLI+MCP detect decode wiring)
+last_updated: "2026-04-26T16:52:55Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 4
@@ -23,8 +23,8 @@ progress:
 ## Current Position
 
 Phase: 14 (standalone-cli-and-claude-code-skills) — EXECUTING (gap closure)
-Plan: 7 of 7 baseline complete + 14-08 gap-closure complete (Defect B / decoder rewrite)
-Status: Phase 14 baseline complete; gap-closure plans 14-08..14-11 in progress
+Plan: 7 of 7 baseline complete + 14-08 (Defect B / decoder rewrite) + 14-09 (Defect A / CLI+MCP detect decode wiring) complete
+Status: Phase 14 baseline complete; gap-closure plans 14-08, 14-09 done; 14-10, 14-11 pending
 Last activity: 2026-04-26
 
 Progress: [██████████] 100%
@@ -56,6 +56,7 @@ Progress: [██████████] 100%
 | Phase 14 P04 | 2min | 4 tasks | 1 files |
 | Phase 14 P07 | 1min | 2 tasks | 2 files |
 | Phase 14 P08 | 6min | 2 tasks | 1 files |
+| Phase 14 P09 | 5min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,9 @@ Progress: [██████████] 100%
 - [Phase 14-08]: Decoder algorithm replaced with filesystem-listing reverse encode — sidesteps separator guessing entirely; any folder that physically exists decodes correctly regardless of mixed punctuation. Closes Defect B (UAT Test 3 / Test 8 finding_2).
 - [Phase 14-08]: Windows reparse-point handling: filter readdir Dirent by `!isFile()` not `isDirectory()`. OneDrive folders under user home are reparse points (isDirectory=false, isSymbolicLink=true); the tighter filter would silently drop them and prevent decoding any path under OneDrive.
 - [Phase 14-08]: Windows entry-point arithmetic: skip BOTH segments[0] (drive letter) and segments[1] (empty string from `:\` double-hyphen) — `segments.slice(2).join('-')` is the correct entry hash, not `slice(1)`.
+- [Phase 14-09]: Surface-level decode-and-enrich pattern at CLI and MCP detect handlers — core detect() preserves its intentional null-return contract (lines 50, 58-64); consumers invoke decode() in parallel via Promise.all and enrich the response. Mirrors the existing audit handler in both packages for consumer parity.
+- [Phase 14-09]: Use inline `'none' as const` cast on the cloudService literal only, not trailing `as const` on the whole project object — trailing as const produces a readonly type that fails to assign to mutable `ProjectEntry[]`.
+- [Phase 14-09]: Inherited two non-project entries in auto-discovered projects[] (`C:\` and bare home dir) — known design boundary; deferred to plan 14-10 (looksLikeProject scoping). Filter parity with audit is the deliberate choice for this wave.
 
 ### Pending Todos
 
@@ -101,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-26T16:43:30Z
-Stopped at: Completed 14-08-PLAN.md (gap-closure for Defect B)
+Last session: 2026-04-26T16:52:55Z
+Stopped at: Completed 14-09-PLAN.md (gap-closure for Defect A / CLI+MCP detect decode wiring)
 Resume file: None

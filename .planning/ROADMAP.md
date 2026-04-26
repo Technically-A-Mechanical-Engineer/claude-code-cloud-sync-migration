@@ -64,7 +64,15 @@
   3. `npx @localground/cli --version` and `npx @localground/mcp --version` work without prior installation (npm packages published and accessible)
   4. v2.0.0 prompt files exist in `prompts/` directory and remain functional as a no-install fallback
   5. README documents all three installation paths (MCP server add, CLI install, legacy prompts) including the Windows `cmd /c` setup for MCP, and CLAUDE.md reflects v3.0.0 architecture
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Test infra + tsup noExternal smoke check (D-17 fix, vitest config, bundle strategy decision)
+- [ ] 15-02-PLAN.md — Core deep unit tests (12 functions, real os.tmpdir() fixtures)
+- [ ] 15-03-PLAN.md — MCP and CLI thin smoke tests (9 tools + 7 commands + stdout/JSON discipline)
+- [ ] 15-04-PLAN.md — GitHub Actions CI workflow (Win + Mac + Linux, Node 20.x, npm ci + tsup build + vitest)
+- [ ] 15-05-PLAN.md — Release workflow + npm trusted-publisher setup + first tag push (OIDC, provenance)
+- [ ] 15-06-PLAN.md — README CLI section + CLAUDE.md refresh + CHANGELOG.md + prompts freeze verification
 
 ## Phase Summary
 
@@ -73,7 +81,7 @@
 | 12 | 7/7 | Complete    | 2026-04-13 |
 | 13 | 6/6 | Complete   | 2026-04-13 |
 | 14 | 11/11 | Complete (incl. gap-closure 14-08..14-11)   | 2026-04-26 |
-| 15 | Testing, CI, Publishing, and Documentation | INFRA-03, INFRA-04, INFRA-05, INFRA-06, DOC-01, DOC-02 | 6 |
+| 15 | Testing, CI, Publishing, and Documentation | INFRA-03, INFRA-04, INFRA-05, INFRA-06, DOC-01, DOC-02 | 6 reqs / 6 plans |
 | | **Total** | | **45** |
 
 ## Phases (v1.2.0 -- Completed)
@@ -121,7 +129,7 @@
 | 12. Monorepo Foundation and Core Library | v3.0.0 | 1/7 | In Progress | - |
 | 13. MCP Server | v3.0.0 | 0/0 | Not started | - |
 | 14. Standalone CLI and Claude Code Skills | v3.0.0 | 7/7 baseline + 3/4 gap closure (14-08, 14-09, 14-10) | Complete + Gap closure in progress | 2026-04-26 (14-10) |
-| 15. Testing, CI, Publishing, and Documentation | v3.0.0 | 0/0 | Not started | - |
+| 15. Testing, CI, Publishing, and Documentation | v3.0.0 | 0/6 | Planned | - |
 
 ---
 *Roadmap created: 2026-04-11*

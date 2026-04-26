@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: executing
-stopped_at: Completed Phase 15 Plan 01 (test infra + bundle strategy decision)
-last_updated: "2026-04-26T20:57:33.173Z"
+stopped_at: Completed Phase 15 Plan 02 (core unit test suite — 62 tests, 12 files)
+last_updated: "2026-04-26T21:15:43.242Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 25
-  percent: 83
+  completed_plans: 26
+  percent: 87
 ---
 
 # Project State
@@ -23,11 +23,11 @@ progress:
 ## Current Position
 
 Phase: 15 (testing-ci-publishing-and-documentation) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 87%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [████████░░] 83%
 | Phase 14 P10 | 5min | 5 tasks | 4 files |
 | Phase 14 P11 | 3min | 3 tasks | 1 files |
 | Phase 15 P15-01 | 15min | 3 tasks | 5 files |
+| Phase 15 P15-02 | 20min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,11 @@ Progress: [████████░░] 83%
 - [Phase 14-11]: Three-line copy status block (Copying from / to / via) over single-line — OneDrive corporate paths regularly exceed 80 chars; three labeled lines stay scannable in 80-100 char terminals.
 - [Phase 14-11]: For-of to indexed-for conversion in audit per-iteration progress emission — surfaces position (i+1)/N without restructuring the loop body. checks.push count snapshot before/after edits both 42 (zero behavioral drift in check logic).
 - [Phase 15-01]: Bundle strategy = Option A (core stays private, tsup noExternal inlines into mcp/cli dist) — confirmed by D-20 smoke check (4 metrics in 15-01-SUMMARY.md)
+- [Phase 15-02]: chunk() is async (walks real source directory) — plan pseudocode showed it as sync with array input; tests use real tmpDir fixtures with maxChunkSize to force multi-chunk splits
+- [Phase 15-02]: decode() round-trip test uses real tmpDir fixture via encode(tmpDir) — synthetic hash strings fail because decode() uses filesystem-listing reverse-encode (only succeeds if path exists on disk)
+- [Phase 15-02]: checksum() returns .hash field (not .sha256) — ChecksumResult type has hash:string + algorithm:'sha256' as separate fields
+- [Phase 15-02]: detectPlatform() returns 'windows'/'macos'/'linux' (not 'win32'/'darwin'/'linux') — function maps os.platform() raw values to LocalGround's internal Platform type
+- [Phase 15-02]: placeholderDetect() requires two arguments (dirPath, platform) — platform arg selects .icloud vs 0-byte detection logic
 
 ### Pending Todos
 
@@ -117,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:57:24.429Z
+Last session: 2026-04-26T21:15:43.219Z
 Stopped at: Completed Phase 15 Plan 01 (test infra + bundle strategy decision)
 Resume file: None

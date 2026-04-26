@@ -15,14 +15,18 @@ type DecodeFailureReason = 'invalid_hash' | 'no_candidates' | 'projects_dir_not_
  * (backslash, forward slash, colon, space, comma, etc.) with a single hyphen each.
  * Consecutive hyphens are NOT collapsed — each special character becomes exactly one hyphen.
  *
- * Decoding strategy: segment-by-segment filesystem-aware reconstruction.
- * Start from known root paths (drive letters on Windows, / on Unix), and validate
- * each candidate segment against the actual filesystem. Bail after 20 candidates
- * to prevent combinatorial explosion.
+ * Decoding strategy: filesystem-listing reverse encode.
+ * At each recursion level, list the actual subdirectory entries in currentPath, encode
+ * each entry's name with encode(), and prefix-match the encoded form against the remaining
+ * hash. This sidesteps separator guessing entirely — any folder that physically exists
+ * decodes correctly regardless of mixed punctuation (' - ', ', ', '.', etc.).
+ *
+ * Bounded by maxCandidates=20 to prevent runaway recursion when a hash matches many
+ * sibling subtrees.
  *
  * Example:
- *   Encoded: "C-Users-rlasalle-Projects-localground"
- *   Decoded: "C:\\Users\\rlasalle\\Projects\\localground" (Windows)
+ *   Encoded: "C--Users-rlasalle-OneDrive---ThermoTek--Inc-Documents-Projects-Claude-Home"
+ *   Decoded: "C:\\Users\\rlasalle\\OneDrive - ThermoTek, Inc\\Documents\\Projects\\Claude-Home"
  */
 export async function decode(
   hashDirName: string,
@@ -86,9 +90,8 @@ export function encode(filePath: string): string {
 }
 
 /**
- * Reconstruct a filesystem path from hyphen-separated segments.
- * Uses filesystem-aware validation: each candidate path segment is checked
- * against the actual filesystem to reduce false positives.
+ * Reconstruct a filesystem path from a path-hash directory name.
+ * Uses filesystem-aware reverse-encode validation.
  *
  * Limits to 20 candidates to prevent combinatorial explosion.
  */
@@ -100,19 +103,26 @@ async function reconstructPath(
   const candidates: string[] = [];
 
   if (isWindows) {
-    // Windows: first segment is likely a drive letter (e.g., "C")
+    // Windows: first segment is the drive letter (e.g., "C").
+    // The colon and backslash that follow each encode as one hyphen, producing
+    // two consecutive hyphens after the drive letter. Splitting on '-' therefore
+    // produces an empty-string segment between the drive letter and the first
+    // path component (e.g., ['C', '', 'Users', ...]). Skip BOTH segments[0]
+    // (drive letter) and segments[1] (empty) to land on the path-under-root hash.
     const driveLetter = segments[0];
     if (/^[A-Za-z]$/.test(driveLetter)) {
       const root = `${driveLetter.toUpperCase()}:\\`;
-      const remainingSegments = segments.slice(1);
-      const paths = await buildCandidates(root, remainingSegments, maxCandidates);
+      const remainingHash = segments.slice(2).join('-');
+      const paths = await buildCandidates(root, remainingHash, maxCandidates);
       candidates.push(...paths);
     }
   } else {
-    // Unix: path starts from root /
-    // Segments represent the path components directly
+    // Unix: encode strips a leading hyphen via /^-+|-+$/g. The hash starts with
+    // the first path component directly (e.g., "home-bob-Projects-foo"), so
+    // pass it as-is (rejoined from segments for symmetry with the Windows branch).
     const root = '/';
-    const paths = await buildCandidates(root, segments, maxCandidates);
+    const remainingHash = segments.join('-');
+    const paths = await buildCandidates(root, remainingHash, maxCandidates);
     candidates.push(...paths);
   }
 
@@ -120,55 +130,61 @@ async function reconstructPath(
 }
 
 /**
- * Recursively build path candidates by trying to match segments to filesystem entries.
+ * Recursively build path candidates by listing actual subdirectory entries at currentPath
+ * and prefix-matching each entry's encoded name against the remaining hash.
  *
- * For each segment, we try:
- * 1. Direct match: the segment is a directory name
- * 2. Combined match: this segment + next segment(s) joined by the original separator
- *    (e.g., "OneDrive" + "-" + "ThermoTek" might be "OneDrive - ThermoTek")
+ * This is the inverse of encode(): instead of guessing which separator each hyphen
+ * represents, we let the filesystem tell us — every real subdirectory's encode() is
+ * compared as a prefix of remainingHash. If it matches exactly, that subdirectory is
+ * the final segment. If it matches as `encoded + '-'`, the original folder name is
+ * that subdirectory and the rest of the hash represents the deeper path.
  *
- * This handles the ambiguity where a hyphen in the hash could represent
- * a path separator OR a special character within a directory name.
+ * Bounded by maxCandidates to cap branching when many siblings could match.
  */
 async function buildCandidates(
   currentPath: string,
-  remainingSegments: string[],
+  remainingHash: string,
   maxCandidates: number,
 ): Promise<string[]> {
-  if (remainingSegments.length === 0) {
+  // Base case: nothing left to match — currentPath is a complete decoded path
+  if (remainingHash.length === 0) {
     return [currentPath];
+  }
+
+  let entries;
+  try {
+    entries = await fs.readdir(currentPath, { withFileTypes: true });
+  } catch {
+    // Directory cannot be read (does not exist, permission denied, etc.)
+    return [];
   }
 
   const results: string[] = [];
 
-  // Try combining 1 to min(remaining, 5) segments as a single directory name
-  // (5 is a practical limit — directory names rarely have more than 4 special chars in sequence)
-  const maxCombine = Math.min(remainingSegments.length, 5);
-
-  for (let combineCount = 1; combineCount <= maxCombine; combineCount++) {
+  for (const entry of entries) {
     if (results.length >= maxCandidates) break;
+    if (!entry.isDirectory()) continue;
 
-    const candidateSegments = remainingSegments.slice(0, combineCount);
-    const rest = remainingSegments.slice(combineCount);
+    const encodedName = encode(entry.name);
+    if (encodedName.length === 0) continue;
 
-    // Try common separators that get encoded as hyphens: space, comma+space, period, hyphen itself
-    const separatorsToTry = combineCount === 1 ? [''] : [' ', ', ', '-', '.', ' - '];
+    // Case 1: exact match — this entry IS the final folder, no path remains
+    if (encodedName === remainingHash) {
+      results.push(path.join(currentPath, entry.name));
+      continue;
+    }
 
-    for (const sep of separatorsToTry) {
-      if (results.length >= maxCandidates) break;
-
-      const candidateName = candidateSegments.join(sep);
-      const candidatePath = path.join(currentPath, candidateName);
-
-      try {
-        const stat = await fs.stat(candidatePath);
-        if (stat.isDirectory()) {
-          const subResults = await buildCandidates(candidatePath, rest, maxCandidates - results.length);
-          results.push(...subResults);
-        }
-      } catch {
-        // Path doesn't exist — skip this combination
-      }
+    // Case 2: prefix match — this entry's name encoded, followed by '-' (path separator),
+    // followed by the rest of the hash representing the deeper path
+    const prefix = encodedName + '-';
+    if (remainingHash.startsWith(prefix)) {
+      const nextRemaining = remainingHash.slice(prefix.length);
+      const subResults = await buildCandidates(
+        path.join(currentPath, entry.name),
+        nextRemaining,
+        maxCandidates - results.length,
+      );
+      results.push(...subResults);
     }
   }
 

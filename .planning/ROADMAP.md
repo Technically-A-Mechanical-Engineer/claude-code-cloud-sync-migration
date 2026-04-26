@@ -81,7 +81,7 @@ Plans:
 - [x] 15-06-PLAN.md — README CLI section + CLAUDE.md refresh + CHANGELOG.md + prompts freeze verification
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 15-05-PLAN.md — Release workflow + npm trusted-publisher setup + first tag push (OIDC, provenance)
+- [x] 15-05-PLAN.md — Release workflow + npm trusted-publisher setup + first tag push (OIDC, provenance)
 
 ## Phase Summary
 
@@ -90,7 +90,7 @@ Plans:
 | 12 | 7/7 | Complete    | 2026-04-13 |
 | 13 | 6/6 | Complete   | 2026-04-13 |
 | 14 | 11/11 | Complete (incl. gap-closure 14-08..14-11)   | 2026-04-26 |
-| 15 | 5/6 | In Progress|  |
+| 15 | 6/6 | Complete   | 2026-04-26 |
 | | **Total** | | **45** |
 
 ## Phases (v1.2.0 -- Completed)

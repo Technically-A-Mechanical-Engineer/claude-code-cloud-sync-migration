@@ -3,31 +3,31 @@ gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: MCP Server + CLI Tooling
 status: executing
-stopped_at: Completed Phase 15 Plan 04 (GitHub Actions CI workflow — .github/workflows/ci.yml, INFRA-04 complete)
-last_updated: "2026-04-26T21:42:33.298Z"
+stopped_at: Completed Phase 15 Plan 05 (npm publishing pipeline + manual first publish — INFRA-05 complete; release.yml landed; @localground/mcp@3.0.0 and @localground/cli@3.0.0 live on npm; trusted publishers configured for OIDC + provenance from v3.0.1 onward)
+last_updated: "2026-04-26T22:48:54Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 28
-  percent: 93
+  completed_plans: 30
+  percent: 100
 ---
 
 # Project State
 
-**Status:** Ready to execute
+**Status:** Phase 15 plans complete — pending phase verification + close-out
 **Last Activity:** 2026-04-26
-**Current focus:** Phase 15 — testing-ci-publishing-and-documentation
+**Current focus:** Phase 15 — testing-ci-publishing-and-documentation (verification next)
 
 ## Current Position
 
-Phase: 15 (testing-ci-publishing-and-documentation) — EXECUTING
-Plan: 6 of 6
-Status: Ready to execute
+Phase: 15 (testing-ci-publishing-and-documentation) — ALL 6 PLANS COMPLETE
+Plan: 6 of 6 (verification + phase close-out remaining)
+Status: Plans complete; phase verifier next
 Last activity: 2026-04-26
 
-Progress: [█████████░] 93%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -116,6 +116,11 @@ Progress: [█████████░] 93%
 - [Phase 15-03]: stderr banner test uses 2000ms wait (not 500ms) — Windows Node.js startup is slower than plan assumed; 500ms was insufficient
 - [Phase 15-03]: D-01 two-layer scope complete — core unit tests (15-02) + MCP/CLI smoke tests (15-03) both in place; 78 passing tests, 2 platform-guarded skips
 - [Phase ?]: D-04/D-05/D-06/D-18: CI matrix Win+Mac+Linux, Node 20.x, npm ci, npm run build (tsup), push+PR triggers only
+- [Phase 15-05]: Manual first publish for v3.0.0 (no provenance), OIDC + provenance for v3.0.1+ — npm trusted publishers cannot be configured pre-publish (npm/cli#8544); chicken-and-egg resolved by manual `npm login` + `npm publish` for the first release, then post-publish trusted-publisher setup
+- [Phase 15-05]: @localground/core in devDependencies (not dependencies) for mcp + cli — bundled by tsup noExternal, not a runtime dep for consumers; declared as runtime dep would have caused Cannot find package '@localground/core' on every install
+- [Phase 15-05]: release.yml shape — tag-trigger on v*, contents:read + id-token:write, registry-url + cache:'npm', install→build→test→publish (each pkg --provenance --access public), no NPM_TOKEN/NODE_AUTH_TOKEN
+- [Phase 15-05]: v3.0.0 git tag deferred to user discretion — would trigger release.yml + fail with `version exists` (harmless but noisy); v3.0.1 will be the first OIDC-published, tag-anchored release
+- [Phase 15-06]: README has three install paths (MCP/CLI/v2 prompts), CLAUDE.md refreshed (no stale 'in development'/'compilable stub' language), CHANGELOG.md created in Keep a Changelog 1.1.0 format with retroactive [2.0.0] - 2026-04-12 + [3.0.0] - 2026-04-26 entries
 
 ### Pending Todos
 

@@ -131,7 +131,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | MCP-12 | Phase 13 | Complete |
 | MCP-13 | Phase 13 | Complete |
 | MCP-14 | Phase 13 | Complete |
-| CLI-01 | Phase 14; Phase 14 (14-09 detect surface decode-and-enrich wiring) | Complete (2026-04-26) |
+| CLI-01 | Phase 14; Phase 14 (14-09 detect surface decode-and-enrich wiring); Phase 14 (14-11 silent long operations TIER 1 status lines) | Complete (2026-04-26) |
 | CLI-02 | Phase 14 | Complete |
 | CLI-03 | Phase 14 | Complete |
 | CLI-04 | Phase 14 | Complete |

@@ -28,10 +28,10 @@ Robert LaSalle
 
 ## Current State
 
-- **Toolkit version:** v3.0.0-dev (in development). Monorepo scaffolded with npm workspaces. Core library (`@localground/core`) built with all 12 deterministic operations. MCP server (`@localground/mcp`) built with all 9 tools. CLI is a compilable stub.
+- **Toolkit version:** v3.0.0. Three-layer architecture (`@localground/core` shared library, `@localground/mcp` MCP server with 9 tools, `@localground/cli` standalone CLI with 7 commands). Published to npm with provenance attestation. v2.0.0 paste-and-run prompts preserved in `prompts/` as no-install fallback.
 - **Core library:** `@localground/core` exports 12 CORE functions (detect, decode, classify, checksum, compare, placeholderDetect, gitCheck, copy, seed, verify, scan, chunk) plus utilities and all public types. TypeScript strict mode, zero errors.
 - **MCP server:** `@localground/mcp` — fully implemented with 9 MCP tools (detect, decode_path_hash, seed, copy, verify, health_check, audit, cleanup_scan, placeholder_check). Uses McpServer from @modelcontextprotocol/sdk v1.29.0 with stdio transport. Chunked copy with continuation token, health check composing 6 core functions, audit with per-project progress notifications. All tools have annotations (readOnlyHint, destructiveHint, idempotentHint). Zero stdout pollution.
-- **CLI:** `@localground/cli` — compilable stub re-exporting core types. Real implementation in Phase 14.
+- **CLI:** `@localground/cli` — fully implemented with 7 Commander commands (`detect`, `seed`, `copy`, `verify`, `reap`, `audit`, `cleanup-scan`). Every command supports `--json` for machine-readable output. Status messages route to stderr (gated on `!jsonMode`); JSON output goes to stdout. Exit codes via `EXIT_SUCCESS`/`EXIT_FAILURE`/`EXIT_ERROR` constants. TTY-gated color via picocolors.
 - **v2.0.0 prompts:** All five prompts shipped and preserved in `prompts/` as no-install fallback.
 - **Design spec:** `docs/design/2026-04-10-localground-toolkit-design.md` — approved design for the toolkit expansion. This is the requirements source for all GSD planning.
 - **Evaluation:** All five v2.0.0 prompts passed all applicable NEC prompt frameworks (details in `docs/evaluations/prompt-evaluation-seed.md`, `docs/evaluations/prompt-evaluation-migration.md`, `docs/evaluations/prompt-evaluation-reap.md`, `docs/evaluations/prompt-evaluation-cleanup.md`, and `docs/evaluations/prompt-evaluation-verification.md`)
@@ -189,7 +189,7 @@ A five-prompt toolkit that Claude Code CLI users paste into their terminal to mi
 - tsup ^9.0.0 — TypeScript bundler for all three packages
 - npm workspaces — Monorepo package management (root package.json)
 ## Test Tools
-- Vitest ^3.0.0 — Test runner (configured, test suite to be built)
+- Vitest ^3.0.0 — Test runner. Test suite shipped Phase 15 — covers all 12 core deterministic functions (deep unit tests with real `os.tmpdir()` fixtures) plus thin smoke tests for MCP server (9 tools) and CLI (7 commands). Run via `npm test` from the repo root.
 ## Frameworks
 - Nate's Executive Circle prompt kits (State of Prompt Engineering Kit, Six Weeks Kit, Building Agents Is 80% Plumbing Kit, Skills Are Infrastructure Now Kit) — Used to evaluate prompts against eight frameworks. Not runtime dependencies.
 ## Key Dependencies
@@ -213,7 +213,15 @@ A five-prompt toolkit that Claude Code CLI users paste into their terminal to mi
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+Established during Phases 12-15:
+
+- **Result type pattern:** Every core deterministic function returns `Result<T, R>` (discriminated union of `Success<T>` and `Failure<R>`). Consumers narrow via `if (result.success)` before accessing `result.data` or `result.reason`. No exceptions thrown from core; the type system enforces error handling at every call site. Source: `packages/core/src/types.ts:7-27`.
+- **Stderr-only logging in MCP server:** All diagnostic output uses `console.error`. Stdout is reserved for JSON-RPC traffic. CRIT-1 (stdout pollution) verified by `packages/mcp/test/stdout-discipline.test.ts`.
+- **`--json` flag on every CLI command:** Stdout = JSON when `--json` is set; stderr = status messages, suppressed in JSON mode. Flag works both before and after the subcommand (e.g., `cli --json detect` and `cli detect --json` are equivalent).
+- **Real-fs test fixtures:** Tests use `os.tmpdir()` + `fs.mkdtemp` + `afterEach` cleanup. No mocked filesystem (`vi.mock('node:fs')`, `memfs`). Justification: Phase 14 found Windows reparse-point and OneDrive-path bugs that mocks cannot reproduce.
+- **Process spawning discipline:** All `child_process` calls use `spawnSync`/`spawn` with array args, never `execSync` with string concatenation, never `shell: true`. Matches CRIT-3/MOD-3 mitigations and the security_reminder_hook expectations.
+- **Build via tsup, type-check separately:** `npm run build` calls tsup (clean output). `tsc --build` exists for IDE feedback but reports ~30 implicit-any errors that tsup tolerates; CI uses tsup, not tsc.
+- **No deletions in core/MCP tools:** Same safety model as v2.0.0 prompts. The CLI's `cleanup-scan` command identifies candidates without deleting; the human or skill collects confirmation, then executes.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
@@ -279,6 +287,26 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 <!-- GSD:profile-start -->
 ## Developer Profile
 
-> Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
+> Generated by GSD from session_analysis. Run `/gsd-profile-user --refresh` to update.
+
+| Dimension | Rating | Confidence |
+|-----------|--------|------------|
+| Communication | mixed | HIGH |
+| Decisions | deliberate-informed | HIGH |
+| Explanations | concise | HIGH |
+| Debugging | collaborative | HIGH |
+| UX Philosophy | pragmatic | HIGH |
+| Vendor Choices | pragmatic-fast | MEDIUM |
+| Frustrations | instruction-adherence | MEDIUM |
+| Learning | guided | HIGH |
+
+**Directives:**
+- **Communication:** Adapt response length and structure dynamically to match message register — match terse messages with brief responses, structured multi-part messages with organized answers. Never default to a consistent format across all messages.
+- **Decisions:** Lead with the recommendation and its reasoning in a single pass. Anticipate the 'why' question and answer it before being asked. Do not present options without a stated preference.
+- **Explanations:** Keep explanations tight and decision-focused. Answer the specific question asked without surrounding conceptual scaffolding. Reserve detail for the 'why' behind a specific choice — not how the underlying technology works.
+- **Debugging:** Treat debugging as a shared investigation. Provide clear diagnosis of what you see, what likely caused it, and what to check next — in that order. Avoid presenting a list of possibilities without indicating which to try first.
+- **UX Philosophy:** Prioritize functional correctness and user workflow over visual polish. When UX decisions arise, default to 'does it work and is it clear' over 'does it look refined.' Flag visual issues but don't gold-plate them without explicit request.
+- **Vendor Choices:** Make library and tooling choices directly without presenting menus of options. State the recommendation and rationale. Only present alternatives if the primary recommendation has a material tradeoff the user should know about.
+- **Frustrations:** Stay in the agreed execution lane. Do not introduce new topics, questions, or scope beyond what the current task requires. When workflow state is established (e.g., a GSD phase is complete), treat it as settled unless the user explicitly reopens it.
+- **Learning:** Take the lead on orientation and framing. When the user is uncertain, provide a clear recommended path with reasoning rather than presenting options to research. Assume the user is not going to independently verify claims — make guidance actionable and self-contained.
 <!-- GSD:profile-end -->

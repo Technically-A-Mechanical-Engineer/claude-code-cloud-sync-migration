@@ -8,7 +8,12 @@ describe('decode', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'localground-test-'));
+    // Canonicalize via fs.realpath to resolve 8.3 short-name paths on Windows CI
+    // (e.g. C:\Users\RUNNER~1\... → C:\Users\runneradmin\...). The decoder walks the
+    // filesystem comparing encode(readdir entry name) against the hash, and readdir
+    // returns long names — so the encoded hash must come from a long-name path too.
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'localground-test-'));
+    tmpDir = await fs.realpath(dir);
   });
 
   afterEach(async () => {

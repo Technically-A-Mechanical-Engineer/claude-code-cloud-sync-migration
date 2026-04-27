@@ -1,32 +1,20 @@
 # LocalGround Toolkit for Claude Code
 
-A five-prompt toolkit that helps Claude Code users migrate off cloud-synced storage — with pre-migration verification, migration, post-migration health checks, cleanup, and environment auditing. Each prompt is a single markdown file. Copy the entire file and paste it into Claude Code CLI.
+A toolkit that helps Claude Code users migrate off cloud-synced storage — with pre-migration verification, migration, post-migration health checks, cleanup, and environment auditing. As of v3.0.0, ships in three forms: an MCP server (`@localground/mcp`) for native Claude Code tool calls, a standalone CLI (`@localground/cli`) for direct terminal use, and the original v2.0.0 paste-and-run prompts as a no-install fallback.
 
 ## The Problem
 
 Working in cloud-synced folders (OneDrive, Dropbox, Google Drive, iCloud) causes git errors, file lock failures, and sync conflicts in Claude Code. These services try to sync `.git` internals and Claude Code's settings directories, which breaks things in ways that are hard to diagnose.
 
-## The Toolkit
+## Quick Install
 
-| Order | Prompt | File | What It Does | When to Run |
-|-------|--------|------|-------------|-------------|
-| 1 | **Seed** | [`localground-seed.md`](localground-seed.md) | Plants verifiable markers (test file + git tag) in a project before migration. | Before migrating — plant markers to verify copy integrity later. |
-| 2 | **Migration** | [`localground-migration.md`](localground-migration.md) | Copies project folders from cloud storage to local paths. Never deletes originals. Two-session design. | When you're ready to move off cloud storage. |
-| 3 | **Reap** | [`localground-reap.md`](localground-reap.md) | Verifies seed markers survived the copy and runs six health checks on the migrated project. | After migration — confirms everything survived intact. |
-| 4 | **Cleanup** | [`localground-cleanup.md`](localground-cleanup.md) | Removes stale path-hash directories, orphan entries, and source folders after migration. | After you've confirmed the migration is good. |
-| 5 | **Verification** | [`localground-verification.md`](localground-verification.md) | Audits project health, path-hash integrity, and stale references. Read-only. | Any time — before migration, after migration, after cleanup. |
+| Path | When to use | Install |
+|---|---|---|
+| **MCP server** | You want Claude Code to invoke LocalGround tools natively, with conversational guidance. | `claude mcp add --transport stdio localground -- npx -y @localground/mcp` (see Windows note below) |
+| **Standalone CLI** | You want one-off commands or scripted automation outside Claude Code. | `npx -y @localground/cli detect` (no installation needed) |
+| **Paste-and-run prompts** | You don't want to install anything. | Copy a prompt file from [`prompts/`](prompts/) and paste it into Claude Code CLI. |
 
-Each prompt works independently. Seed and Reap are designed as a pair but neither requires the other. The remaining three prompts function standalone.
-
-## Who This Is For
-
-Claude Code users whose projects are in OneDrive, Dropbox, Google Drive, or iCloud-synced folders — or who have already migrated and want to verify health or clean up what's left behind.
-
-## Requirements
-
-- **Claude Code CLI** (terminal or IDE extension). This toolkit does not work in claude.ai web, Claude desktop app, or Cowork mode.
-- **Platform:** Windows (PowerShell or Git Bash), macOS (zsh/bash), or Linux (bash)
-- **git** installed and available in your shell
+All three paths share the same safety model: migration never deletes, cleanup deletes only with individual confirmation and a verified local copy, verification never modifies anything.
 
 ## MCP Server (v3.0.0)
 
@@ -107,74 +95,87 @@ npx -y @localground/cli audit --json | jq '.findings[] | select(.severity == "fa
 
 Unlike the MCP server, the CLI does not require the Windows `cmd /c` prefix — `npx` runs directly because you are typing the command interactively, not having Claude Code spawn it.
 
-## How to Use (v2.0.0 Prompts)
+## Paste-and-Run Prompts (v2.0.0 Fallback)
 
-### Seed (optional — before migration)
+Five independent markdown prompts that work without any installation. Each prompt is a single file. Copy the entire file and paste it into Claude Code CLI.
 
-1. Download [`localground-seed.md`](localground-seed.md)
+| Order | Prompt | File | What It Does | When to Run |
+|-------|--------|------|-------------|-------------|
+| 1 | **Seed** | [`prompts/localground-seed.md`](prompts/localground-seed.md) | Plants verifiable markers (test file + git tag) in a project before migration. | Before migrating — plant markers to verify copy integrity later. |
+| 2 | **Migration** | [`prompts/localground-migration.md`](prompts/localground-migration.md) | Copies project folders from cloud storage to local paths. Never deletes originals. Two-session design. | When you're ready to move off cloud storage. |
+| 3 | **Reap** | [`prompts/localground-reap.md`](prompts/localground-reap.md) | Verifies seed markers survived the copy and runs six health checks on the migrated project. | After migration — confirms everything survived intact. |
+| 4 | **Cleanup** | [`prompts/localground-cleanup.md`](prompts/localground-cleanup.md) | Removes stale path-hash directories, orphan entries, and source folders after migration. | After you've confirmed the migration is good. |
+| 5 | **Verification** | [`prompts/localground-verification.md`](prompts/localground-verification.md) | Audits project health, path-hash integrity, and stale references. Read-only. | Any time — before migration, after migration, after cleanup. |
+
+Each prompt works independently. Seed and Reap are designed as a pair but neither requires the other. The remaining three prompts function standalone.
+
+### How to Use
+
+**Seed (optional — before migration):**
+1. Download [`prompts/localground-seed.md`](prompts/localground-seed.md)
 2. Open Claude Code CLI from the project you plan to migrate
 3. Copy the entire contents of the file and paste it as your first message
 4. The prompt plants a test file and git tag that the Reap prompt can verify after migration
 
-### Migration
-
-1. Download [`localground-migration.md`](localground-migration.md)
+**Migration:**
+1. Download [`prompts/localground-migration.md`](prompts/localground-migration.md)
 2. Open Claude Code CLI from your current (cloud-stored) project folder: `claude --dangerously-skip-permissions` (recommended — avoids cancelled tool calls during parallel file operations; see the migration prompt for details)
 3. Copy the entire contents of the file and paste it as your first message
 4. Follow the prompts — Session 1 copies folders, Session 2 migrates settings
 
-### Reap (after migration)
-
-1. Download [`localground-reap.md`](localground-reap.md)
+**Reap (after migration):**
+1. Download [`prompts/localground-reap.md`](prompts/localground-reap.md)
 2. Open Claude Code CLI from the migrated project's new local folder
 3. Copy the entire contents of the file and paste it as your first message
 4. The prompt checks for seed markers and runs six health checks — results are reported with pass/fail evidence
 
-### Cleanup (after confirming migration)
-
-1. Download [`localground-cleanup.md`](localground-cleanup.md)
+**Cleanup (after confirming migration):**
+1. Download [`prompts/localground-cleanup.md`](prompts/localground-cleanup.md)
 2. Open Claude Code CLI from your local project folder
 3. Copy the entire contents of the file and paste it as your first message
 4. The prompt works with or without migration artifacts — it detects everything independently
 
-### Verification (audit at any time)
-
-1. Download [`localground-verification.md`](localground-verification.md)
+**Verification (audit at any time):**
+1. Download [`prompts/localground-verification.md`](prompts/localground-verification.md)
 2. Open Claude Code CLI from your local project folder
 3. Copy the entire contents of the file and paste it as your first message
 4. Review the traffic light summary and findings — each finding includes a plain-language explanation and recommended next step
 
-## Platform Support
+## Who This Is For
 
-- Windows (PowerShell / Git Bash)
-- macOS (zsh/bash)
-- Linux (bash)
+Claude Code users whose projects are in OneDrive, Dropbox, Google Drive, or iCloud-synced folders — or who have already migrated and want to verify health or clean up what's left behind.
 
-All five prompts use three-way shell detection to provide platform-correct commands throughout.
+## Requirements
+
+- **Claude Code CLI** (terminal or IDE extension). This toolkit does not work in claude.ai web, Claude desktop app, or Cowork mode.
+- **Node.js >= 20.0.0** for the MCP server and CLI. Not required if you only use the v2.0.0 paste-and-run prompts.
+- **Platform:** Windows (PowerShell or Git Bash), macOS (zsh/bash), or Linux (bash)
+- **git** installed and available in your shell
+
+All five prompts and the CLI use three-way shell detection to provide platform-correct commands throughout. The MCP server selects platform-appropriate tools (robocopy on Windows, rsync on macOS/Linux) deterministically.
 
 ## Documentation
 
 | File | Purpose |
 |------|---------|
+| [`CHANGELOG.md`](CHANGELOG.md) | Full version history (Keep a Changelog 1.1.0 format) |
 | [`docs/dev-status/dev-status-seed.md`](docs/dev-status/dev-status-seed.md) | Seed prompt build summary, NEC evaluation, testing plan |
 | [`docs/dev-status/dev-status-migration.md`](docs/dev-status/dev-status-migration.md) | Migration prompt version history, test results, findings |
 | [`docs/dev-status/dev-status-reap.md`](docs/dev-status/dev-status-reap.md) | Reap prompt build summary, NEC evaluation, testing plan |
 | [`docs/dev-status/dev-status-cleanup.md`](docs/dev-status/dev-status-cleanup.md) | Cleanup prompt build summary, NEC evaluation, testing plan |
 | [`docs/dev-status/dev-status-verification.md`](docs/dev-status/dev-status-verification.md) | Verification prompt build summary, NEC evaluation, testing plan |
-| [`docs/evaluations/prompt-evaluation-seed.md`](docs/evaluations/prompt-evaluation-seed.md) | Seed prompt NEC framework evaluation |
-| [`docs/evaluations/prompt-evaluation-migration.md`](docs/evaluations/prompt-evaluation-migration.md) | Migration prompt eight-framework NEC evaluation |
-| [`docs/evaluations/prompt-evaluation-reap.md`](docs/evaluations/prompt-evaluation-reap.md) | Reap prompt NEC framework evaluation |
-| [`docs/evaluations/prompt-evaluation-cleanup.md`](docs/evaluations/prompt-evaluation-cleanup.md) | Cleanup prompt NEC framework evaluation |
-| [`docs/evaluations/prompt-evaluation-verification.md`](docs/evaluations/prompt-evaluation-verification.md) | Verification prompt NEC framework evaluation |
+| [`docs/evaluations/`](docs/evaluations/) | Per-prompt NEC framework evaluations |
+| [`docs/design/2026-04-10-localground-toolkit-design.md`](docs/design/2026-04-10-localground-toolkit-design.md) | Approved design spec for the v3.0.0 expansion |
+| [`docs/design/v3-brainstorm-context.md`](docs/design/v3-brainstorm-context.md) | v3.0.0 design context captured during v2.0.0 audit gap remediation |
 
 ## Design Principles
 
 - **Safety first.** Migration never deletes. Cleanup deletes only with individual confirmation and verified local copy. Verification never modifies.
 - **Verifiable migration.** Seed markers planted before migration are verified after — no trust, only evidence.
-- **Auto-detect first, ask second.** If it can be determined from the filesystem, the prompt doesn't ask.
-- **One file, one paste.** No installation, no dependencies, no plugins. Copy the entire file and paste it into Claude Code.
-- **Platform-correct commands.** Three-way shell detection ensures the right commands for your environment.
-- **Graceful coexistence.** Each prompt interprets missing artifacts as possible prior cleanup, not corruption.
+- **Auto-detect first, ask second.** If it can be determined from the filesystem, the toolkit doesn't ask.
+- **One file, one paste (prompts) — or one command (CLI/MCP).** No plugins, no servers, no config files.
+- **Platform-correct commands.** Three-way shell detection in prompts; deterministic platform selection in code.
+- **Graceful coexistence.** Each tool interprets missing artifacts as possible prior cleanup, not corruption.
 
 ## Changelog
 

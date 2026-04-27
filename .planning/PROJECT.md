@@ -1,0 +1,156 @@
+# LocalGround Toolkit for Claude Code
+
+## What This Is
+
+A toolkit that helps Claude Code CLI users migrate project folders off cloud-synced storage, verify migration integrity, clean up stale artifacts, and audit environment health. As of v3.0.0, the toolkit ships in two forms: a hybrid Node.js architecture (MCP server + standalone CLI + Claude Code skills) for full-fidelity workflow integration, and the original v2.0.0 paste-and-run prompts as a no-install fallback. Target audience: Claude Code users hitting git errors, file lock failures, or sync conflicts from working in OneDrive, Dropbox, Google Drive, or iCloud folders.
+
+## Core Value
+
+Get Claude Code users off cloud-synced storage safely — no data loss, no silent failures, every action verified before and after.
+
+## Current State
+
+**v3.0.0 shipped 2026-04-26** to npm:
+- `@localground/mcp@3.0.0` — MCP server with 9 tool calls
+- `@localground/cli@3.0.0` — standalone CLI with 7 commands
+- `@localground/core` — shared deterministic operations library (workspace-internal, bundled into mcp + cli)
+- 5 Claude Code skills: `/localground:seed`, `/localground:migrate`, `/localground:reap`, `/localground:cleanup`, `/localground:verify`
+- v2.0.0 paste-and-run prompts preserved in `prompts/` as no-install fallback
+
+**Quality gates:** 79-test Vitest suite (real-fs fixtures, no mocks); 3-OS GitHub Actions CI (Win/Mac/Linux on Node 20.x); tag-triggered OIDC release workflow with provenance attestation (configured for v3.0.1+; v3.0.0 was published manually due to npm/cli#8544).
+
+**Codebase:** 5,877 LOC TypeScript across 47 `.ts` files in `packages/`. Result-typed core (no exceptions thrown), strict TypeScript, tsup bundled.
+
+## Requirements
+
+### Validated
+
+**v1.2.0 (shipped 2026-04-11):**
+- ✓ Auto-detect OS, shell, cloud sync service, and project inventory — v1.2.0
+- ✓ Phased migration with verification at every step — v1.2.0
+- ✓ No deletions during migration — v1.2.0
+- ✓ Two-session design with generated Session 2 prompt — v1.2.0
+- ✓ Five-dimension constraint model (Must/Must-not/Prefer/Escalate/Recover) — v1.2.0
+- ✓ Three-way shell detection (PowerShell / bash-on-Windows / native bash) — v1.2.0
+- ✓ Multi-signal prior migration detection (four-signal cascade) — v1.2.0
+- ✓ Pre-copy placeholder verification (detect cloud-only stubs before copying) — v1.2.0
+- ✓ Cleanup prompt with dual-mode detection (post-migration / standalone) — v1.2.0
+- ✓ Individual confirmation on every deletion in cleanup — v1.2.0
+- ✓ Verification prompt auditing project health, path-hash integrity, stale references — v1.2.0
+
+**v2.0.0 (shipped 2026-04-12):**
+- ✓ Sow/Reap prompt — post-migration marker verification + health checks — v2.0.0
+- ✓ Seed prompt — pre-migration marker planting — v2.0.0
+- ✓ Unified toolkit versioning across all prompts — v2.0.0
+- ✓ All five prompts passed eight NEC prompt frameworks — v2.0.0
+- ✓ LocalGround rename and repo restructure — v2.0.0
+
+**v3.0.0 (shipped 2026-04-26):**
+- ✓ Three-package monorepo (`@localground/core`, `@localground/mcp`, `@localground/cli`) with TypeScript strict mode — v3.0.0
+- ✓ MCP server exposing 9 tools (detect, decode_path_hash, seed, copy, verify, health_check, audit, cleanup_scan, placeholder_check) with annotations and structured error responses — v3.0.0
+- ✓ Standalone CLI with 7 commands and global `--json` flag — v3.0.0
+- ✓ 5 Claude Code skills with `allowed-tools` frontmatter (gated skills use `disable-model-invocation: true`) — v3.0.0
+- ✓ Vitest test suite with real-fs fixtures (no mocked filesystem) — v3.0.0
+- ✓ GitHub Actions CI on Windows/macOS/Linux — v3.0.0
+- ✓ npm publishing pipeline with OIDC trusted publishing and provenance — v3.0.0 (manual first publish; OIDC for v3.0.1+)
+- ✓ v2.0.0 prompts preserved as no-install fallback — v3.0.0
+- ✓ README documents three install paths (MCP add, CLI install, legacy prompts) including Windows `cmd /c` setup — v3.0.0
+- ✓ Decoder handles Windows mixed-punctuation OneDrive paths via filesystem-listing reverse-encode — v3.0.0 (Phase 14-08 gap-closure)
+- ✓ Audit auto-discovery scoped via `looksLikeProject` predicate — v3.0.0 (Phase 14-10 gap-closure)
+- ✓ CLI long operations emit stderr status lines (TIER 1) gated on `!jsonMode` — v3.0.0 (Phase 14-11 gap-closure)
+
+### Active
+
+(Empty — no active milestone. Next milestone planning starts with `/gsd-new-milestone`.)
+
+### Backlog (captured in ROADMAP.md `## Backlog`, 999.x numbering)
+
+- **999.1** UAT Tests 12-16 (skill end-to-end MCP routing, Test 15 critical)
+- **999.2** Pipeline first-run validation (ci.yml + release.yml live execution)
+- **999.3** Test infrastructure cleanup (Vitest hang, L-01, L-02, tsc strict-mode)
+- **999.4** Packaging polish (`files: ["dist"]` for tarball size)
+- **999.5** TIER 2 streaming refactor of spawnTool
+- **999.6** encode() regex calibration (WR-01)
+
+### Out of Scope
+
+- Automation of cloud sync pause/resume — too fragile across services, risk of false confidence in file locality
+- Multi-user or team migration workflows — these are individual-user tools
+- Interactive/TUI elements — one file, one paste, user drives through confirmation gates (legacy prompts) / structured tool calls drive (v3.0.0 hybrid)
+- CONTRIBUTING.md — zero contributors, no signal anyone needs contribution guidance yet
+- Scheduled re-verification — contradicts one-paste design; "consider re-running" recommendations in reports are sufficient
+- Comparison mode (audit two states) — heavy feature for unclear value; defer until someone actually requests it
+- Remote/cloud MCP server — LocalGround operates on local filesystem; stdio transport is correct
+- Persistent background daemon — Claude Code manages MCP lifecycle; no daemon needed
+- GUI or TUI — Claude Code is the UI layer; CLI outputs structured data
+- Auto-deletion in MCP tools — safety model: scan tool returns candidates, skill collects confirmation, then executes
+- Cross-platform shell emulation — platform-specific tools (robocopy/rsync) are more reliable than abstractions
+- Configuration file (`.localgroundrc`) — fixed safety model should not be configurable; CLI flags for one-time options
+- Monorepo tooling beyond npm workspaces — three packages with simple deps; Turborepo/Lerna/Nx are overkill
+- MCP SDK v2 migration — build on stable v1.x; upgrade when v2 stabilizes (migration will be mechanical)
+- Webpack/Rollup bundling — Node.js tools via npm; tsup handles compilation; no bundler needed
+
+## Context
+
+- Project originated from Robert LaSalle's own OneDrive-to-local migration (April 9-10, 2026)
+- Generalized into a distributable tool through iterative review against NEC prompt frameworks
+- v1.2.0 milestone shipped 2026-04-11 — three prompts (migration, cleanup, verification)
+- v2.0.0 milestone shipped 2026-04-12 — five prompts (added seed + reap), unified versioning, LocalGround rename
+- v3.0.0 milestone shipped 2026-04-26 — hybrid architecture: MCP server + CLI + skills, with v2.0.0 prompts preserved as fallback. 14 days, 30 plans, 160 commits, 5,877 LOC TypeScript.
+- v3.0.0 brainstorm context preserved in `docs/design/v3-brainstorm-context.md` — captured during v2.0.0 audit gap remediation when NEC findings revealed most issues stemmed from ambiguity in deterministic operations that code would handle without ambiguity
+- Repo public on GitHub: `Technically-A-Mechanical-Engineer/localground`
+- Project owner is not a developer — uses Claude Code as a workflow automation tool. First major npm publishing flow completed in v3.0.0 (manual first publish + OIDC for subsequent).
+- Every Claude Code user has Node.js installed — `npx` is zero-install for the target audience.
+- Two pipelines (`ci.yml` + `release.yml`) are structurally verified but unexecuted at v3.0.0 close — first runs land at v3.0.1.
+
+## Constraints
+
+- **Distribution format**: Three install paths supported — `claude mcp add @localground/mcp` for MCP server integration, `npx @localground/cli` for direct terminal usage, paste-and-run prompts in `prompts/` as no-install fallback.
+- **Platform support**: Windows (PowerShell and Git Bash), macOS (zsh/bash), Linux (bash). Platform detection handled deterministically in code (core library).
+- **Runtime**: Node.js >=20.0.0 for v3.0.0 packages. Claude Code CLI as of April 2026 for MCP integration.
+- **Safety**: v2.0.0 safety model preserved in v3.0.0 — migration never deletes, cleanup deletes only with confirmed local copy, verification never modifies. Now enforced in code (Result types, no thrown exceptions from core) rather than natural language instructions.
+- **Testing**: Deterministic core gets automated tests (Vitest with real-fs fixtures); skills get manual UAT against reduced surface area. CI matrix on three OSes.
+- **Backward compatibility**: v2.0.0 prompts remain functional in `prompts/` directory.
+
+## Key Decisions
+
+| Decision | Rationale | Outcome |
+|----------|-----------|---------|
+| Three independent prompts (v1.2.0) | Simple scales — each prompt works standalone. Cross-references by filename, no runtime dependency. | ✓ Validated in v1.2.0 |
+| Cleanup prompt has dual-mode detection (v1.2.0) | Works whether user ran migration prompt or not. | ✓ Validated in v1.2.0 |
+| No automation of cloud sync pause/resume | Commands undocumented, version-dependent, service-specific. Silent failure would give false confidence. | ✓ Good |
+| Prompts, not agents (v1.2.0/v2.0.0) | One-shot playbooks driven by user through confirmation gates. No autonomy, no scheduling. | ✓ Good for v2.0.0; partially superseded by v3.0.0 skills (which are still user-driven, not autonomous) |
+| Graceful cross-prompt state (v1.2.0) | Each prompt interprets missing path-hash directories as possible cleanup, not corruption. | ✓ Validated in v1.2.0 |
+| Unified toolkit versioning (v2.0.0) | Per-prompt versions create bookkeeping overhead. One toolkit version eliminates the matrix. | ✓ Validated in v2.0.0 |
+| Hybrid architecture (v3.0.0) | NEC findings revealed v2.0.0 ambiguity stemmed from deterministic operations encoded in natural language. Code handles those without ambiguity; skills handle judgment. | ✓ Validated in v3.0.0 |
+| npm workspaces (not Turborepo/Lerna/Nx) — v3.0.0 | Three packages with simple deps; abstractions premature. | ✓ Validated in v3.0.0 |
+| MCP SDK v1.x (not v2) — v3.0.0 | Build on stable; v2 still pre-stable as of April 2026. | ✓ Validated in v3.0.0 |
+| tsup for compilation, Vitest for testing — v3.0.0 | Native ESM, faster, integrates cleanly. | ✓ Validated in v3.0.0 |
+| Bundle Option A: `noExternal` core in mcp/cli — v3.0.0 | Core stays private; mcp + cli inline its source via tsup. Required moving core to `devDependencies` to avoid phantom runtime dep. | ✓ Validated in v3.0.0 (post-fix) |
+| Manual first publish + OIDC for subsequent — v3.0.0 | npm/cli#8544: pre-publish trusted-publisher config not possible. v3.0.0 lacks provenance; v3.0.1+ has full OIDC + provenance. | ✓ Pragmatic — accepts trade-off for first publish |
+| Result type pattern (`Result<T, R>`) — v3.0.0 | Discriminated union; consumers narrow before access; type system enforces error handling at every call site. | ✓ Validated in v3.0.0 |
+| Stderr-only logging in MCP server — v3.0.0 | Stdout reserved for JSON-RPC; CRIT-1 invariant. | ✓ Validated in v3.0.0 (`stdout-discipline.test.ts` enforces) |
+| `--json` flag on every CLI command — v3.0.0 | Stdout = JSON in JSON mode; stderr = status, suppressed in JSON mode. | ✓ Validated in v3.0.0 |
+| Real-fs test fixtures (not mocked) — v3.0.0 | Phase 14 found Windows reparse-point and OneDrive-path bugs that mocks cannot reproduce. | ✓ Validated in v3.0.0 (caught real platform bugs) |
+| Filesystem-listing reverse-encode decoder — v3.0.0 | Sidesteps separator-guessing; any folder that physically exists decodes correctly. | ✓ Validated in v3.0.0 (closed UAT Defect B) |
+| Path-shape-only `looksLikeProject` predicate — v3.0.0 | No `.git`/`package.json` marker check. Supports plain-folder projects (D-01) without polluting audit with root paths. | ✓ Validated in v3.0.0 |
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
+---
+*Last updated: 2026-04-26 after v3.0.0 milestone close — three-package monorepo (@localground/core, @localground/mcp, @localground/cli) shipped to npm; 5 Claude Code skills delivered with `allowed-tools` frontmatter; v2.0.0 prompts preserved as no-install fallback; UAT-discovered defects (decoder mixed-punctuation, audit scope, silent operations) closed via gap-closure plans 14-08..14-11; 79-test Vitest suite with 3-OS CI matrix; OIDC trusted-publisher contract configured for v3.0.1+.*

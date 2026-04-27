@@ -1,0 +1,25 @@
+{
+  "name": "localground",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "npm run build -w packages/core && npm run build -w packages/mcp && npm run build -w packages/cli",
+    "build:check": "tsc --build tsconfig.json",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "tsup": "^8.5.1",
+    "typescript": "~5.7",
+    "vitest": "^3.2.4"
+  }
+}
